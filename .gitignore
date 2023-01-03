@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+Vocabulary/*.txt
+
+**/**/.idea/
+
+cmake-build-debug/
+
+simulatorDataSets/
+
+**/**/build/
