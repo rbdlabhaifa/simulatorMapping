@@ -30,9 +30,7 @@ void saveFrame(cv::Mat &img, cv::Mat &pose, int frameCount) {
               << ',' << Rwc.at<float>(1, 0) << ',' << Rwc.at<float>(1, 1) << ',' << Rwc.at<float>(1, 2) << ','
               << Rwc.at<float>(2, 0)
               << ',' << Rwc.at<float>(2, 1) << ',' << Rwc.at<float>(2, 2) << std::endl;
-    cv::imwrite(
-            simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + "_" + std::to_string(frameCount) + ".png",
-            img);
+    cv::imwrite(simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + ".png", img);
     frameData.close();
 }
 
@@ -41,10 +39,18 @@ void saveMap(int mapNumber) {
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
         if (p != nullptr && !p->isBad()) {
-            auto frameId = p->GetReferenceKeyFrame()->mnFrameId;
             auto point = p->GetWorldPos();
             Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
-            pointData << v.x() << "," << v.y() << "," << v.z() << "," << frameId << std::endl;
+            pointData << v.x() << "," << v.y() << "," << v.z();
+            std::map<KeyFrame*, size_t> observations = p->GetObservations();
+            for (auto obs : observations) {
+                KeyFrame *currentFrame = obs.first;
+                size_t pointIndex = obs.second;
+                cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
+                cv::Point2f featurePoint = keyPoint.pt;
+                pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
+            }
+            pointData << std::endl;
         }
     }
     pointData.close();
@@ -128,7 +134,7 @@ int main() {
         capture.release();
     }
 
-    saveMap(amountOfAttepmpts);
+    //saveMap(amountOfAttepmpts);
     if (isSavingMap) {
         SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
     }
