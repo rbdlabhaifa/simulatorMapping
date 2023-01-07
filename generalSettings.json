@@ -2,7 +2,7 @@
   "VocabularyPath": "/home/liam/dev/rbd/tmp/AutonomousDroneCPP/Vocabulary/ORBvoc.txt",
   "DroneYamlPathSlam": "/home/liam/dev/rbd/tmp/AutonomousDroneCPP/config/tello_9F5EC2_640.yaml",
   "sizeOfFrameStack": 20,
-  "offlineVideoTestPath": "/home/liam/Downloads/videos/cut_mapping.avi",
+  "offlineVideoTestPath": "/home/liam/Downloads/videos/output.avi",
   "onlineVideoPath": "udp://0.0.0.0:11111?overrun_nonfatal=1&fifo_size=1000",
   "loadMap": false,
   "loadMapCSV" : "/home/ronel/CSVMaps/pointData1.csv",

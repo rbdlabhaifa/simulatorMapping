@@ -17,9 +17,13 @@ std::unique_ptr<ORB_SLAM2::System> SLAM;
 std::string simulatorOutputDir;
 
 
-void saveFrame(cv::Mat &img, cv::Mat &pose, int frameCount) {
+void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId) {
+    if (img.empty()) 
+    {
+        std::cout << "Image is empty!!!" << std::endl;
+        return;
+    }
     std::ofstream frameData;
-    int currentFrameId = SLAM->GetTracker()->mCurrentFrame.mnId;
     frameData.open(simulatorOutputDir + "frameData" +
                    std::to_string(currentFrameId) + ".csv");
 
@@ -42,13 +46,21 @@ void saveMap(int mapNumber) {
             auto point = p->GetWorldPos();
             Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
             pointData << v.x() << "," << v.y() << "," << v.z();
-            std::map<KeyFrame*, size_t> observations = p->GetObservations();
+            std::map<ORB_SLAM2::KeyFrame*, size_t> observations = p->GetObservations();
             for (auto obs : observations) {
-                KeyFrame *currentFrame = obs.first;
-                size_t pointIndex = obs.second;
-                cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
-                cv::Point2f featurePoint = keyPoint.pt;
-                pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
+                ORB_SLAM2::KeyFrame *currentFrame = obs.first;
+                if (!currentFrame->image.empty())
+                {
+                    size_t pointIndex = obs.second;
+                    cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
+                    cv::Point2f featurePoint = keyPoint.pt;
+                    pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
+                    saveFrame(currentFrame->image, currentFrame->GetPose(), currentFrame->mnId);
+                    //cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(currentFrame->mnId) + ".png");
+                    //cv::arrowedLine(image, featurePoint, cv::Point2f(featurePoint.x, featurePoint.y - 100), cv::Scalar(0, 0, 255), 2, 8, 0, 0.1);
+                    //cv::imshow("image", image);
+                    //cv::waitKey(0);
+                }
             }
             pointData << std::endl;
         }
@@ -117,7 +129,7 @@ int main() {
         for (;;) {
             auto pose = SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC));
             if (!pose.empty()) {
-                saveFrame(frame, pose, amount_of_frames++);
+                // saveFrame(frame, *pose, SLAM->GetTracker()->mCurrentFrame.mnId);
             }
             capture >> frame;
 
