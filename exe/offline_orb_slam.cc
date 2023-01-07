@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include <unistd.h>
+#include <unordered_set>
 #include <nlohmann/json.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
@@ -40,6 +41,8 @@ void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId) {
 
 void saveMap(int mapNumber) {
     std::ofstream pointData;
+    std::unordered_set<int> seen_frames;
+
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
         if (p != nullptr && !p->isBad()) {
@@ -55,11 +58,15 @@ void saveMap(int mapNumber) {
                     cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
                     cv::Point2f featurePoint = keyPoint.pt;
                     pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
-                    saveFrame(currentFrame->image, currentFrame->GetPose(), currentFrame->mnId);
-                    //cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(currentFrame->mnId) + ".png");
-                    //cv::arrowedLine(image, featurePoint, cv::Point2f(featurePoint.x, featurePoint.y - 100), cv::Scalar(0, 0, 255), 2, 8, 0, 0.1);
-                    //cv::imshow("image", image);
-                    //cv::waitKey(0);
+                    if (seen_frames.count(currentFrame->mnId) <= 0)
+                    {
+                        saveFrame(currentFrame->image, currentFrame->GetPose(), currentFrame->mnId);
+                        seen_frames.insert(currentFrame->mnId);
+                    }
+                    // cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(currentFrame->mnId) + ".png");
+                    // cv::arrowedLine(image, featurePoint, cv::Point2f(featurePoint.x, featurePoint.y - 100), cv::Scalar(0, 0, 255), 2, 8, 0, 0.1);
+                    // cv::imshow("image", image);
+                    // cv::waitKey(0);
                 }
             }
             pointData << std::endl;
