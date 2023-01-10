@@ -15,6 +15,7 @@ Point::Point() {
     this->label = -1;
     this->frameId = 0;
 }
+
 Point::Point(double x, double y, double z){
     this->x = x;
     this->y = y;
@@ -22,6 +23,7 @@ Point::Point(double x, double y, double z){
     this->label = -1;
     this->frameId = 0;
 }
+
 Point::Point(const Point &point) {
     this->x = point.x;
     this->y = point.y;
@@ -38,4 +40,17 @@ Point::Point(double x, double y, double z,const cv::Mat &rotationMatrix, int fra
     this->rotationMatrix =rotationMatrix;
     this->label = label;
     this->frameId = frameId;
+}
+
+bool Point::compare(Point point) {
+    if (this->x == point.x &&
+        this->y == point.y &&
+        this->z == point.z)
+        return true;
+    return false;
+}
+
+Point2D::Point2D(double x, double y) {
+    this->x = x;
+    this->y = y;
 }

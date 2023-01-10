@@ -8,6 +8,7 @@
   "loadMapCSV" : "/home/ronel/CSVMaps/pointData1.csv",
   "loadMapPath": "/home/ronel/AutonomousDrone/slamMaps/HaifaLab.bin",
   "saveMap": true,
-  "simulatorOutputDir": "/home/liam/dev/rbd/slamMaps/"
+  "simulatorOutputDir": "/home/liam/dev/rbd/slamMaps/",
+  "getPointDataCsv": "/home/liam/dev/rbd/slamMaps/example_mapping/cloud1.csv"
 }
 

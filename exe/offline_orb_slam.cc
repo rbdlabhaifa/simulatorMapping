@@ -134,10 +134,6 @@ int main() {
         int amount_of_frames = 1;
 
         for (;;) {
-            auto pose = SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC));
-            if (!pose.empty()) {
-                // saveFrame(frame, *pose, SLAM->GetTracker()->mCurrentFrame.mnId);
-            }
             capture >> frame;
 
             if (frame.empty()) {
@@ -153,11 +149,10 @@ int main() {
         capture.release();
     }
 
-    //saveMap(amountOfAttepmpts);
     if (isSavingMap) {
         SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
     }
-    //sleep(20);
+
     SLAM->Shutdown();
     cvDestroyAllWindows();
 

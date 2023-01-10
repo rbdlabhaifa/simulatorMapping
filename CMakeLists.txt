@@ -101,3 +101,6 @@ target_link_libraries(${PROJECT_NAME}
         )
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
+
+add_executable(get_point_data exe/get_point_data.cc)
+target_link_libraries(get_point_data ${PROJECT_NAME})

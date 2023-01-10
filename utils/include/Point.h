@@ -41,6 +41,8 @@ public:
         return ss.str();
     }
 
+    bool compare(Point point);
+
     double x;
     double y;
     double z;
@@ -70,6 +72,14 @@ namespace std {
         }
     };
 
+};
+
+class Point2D {
+public:
+    Point2D(double x, double y);
+
+    double x;
+    double y;
 };
 
 #endif //TELLO_POINT_H
