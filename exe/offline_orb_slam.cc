@@ -129,11 +129,12 @@ int main() {
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         for (int i = 0; i < 170; ++i) {
             capture >> frame;
-
         }
         int amount_of_frames = 1;
 
         for (;;) {
+            SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC));
+
             capture >> frame;
 
             if (frame.empty()) {
