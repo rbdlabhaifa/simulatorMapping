@@ -5,9 +5,13 @@
 #include "include/Point.h"
 #include "include/Auxiliary.h"
 
-#define X (0-0.497015)
-#define Y (-0.150409)
-#define Z (0.551933)
+#define X1 (0.0649042)
+#define Y1 (-0.180186)
+#define Z1 (0.51533)
+
+#define X2 (0.118669)
+#define Y2 (-0.158835)
+#define Z2 (0.513098)
 
 void getFramesWithPoints(std::vector<std::string> row, std::map<int, Point2D>* framesWithPoint) {
     for(int i=3; i<row.size(); i+=3) {
@@ -51,10 +55,23 @@ bool searchPoint(std::string csvPath, Point point, std::map<int, Point2D>* frame
     return false;
 }
 
-void printFrames(std::map<int, Point2D> framesWithPoint) {
-    for(const auto &myPair : framesWithPoint)
-    {
-        std::cout << myPair.first << ": (" << myPair.second.x << ", " << myPair.second.y << ")" << std::endl;
+void searchAllPoints(std::string csvPath, std::vector<Point> points, std::vector<std::map<int, Point2D>>* framesWithPoints) {
+    for (auto point : points) {
+        std::map<int, Point2D> framesWithPoint;
+        if (!searchPoint(csvPath, point, &framesWithPoint)) {
+            std::cout << "Point (" << point.x << ", " << point.y << ", " << point.z << ") is not in the cloud points!" << std::endl;
+        }
+        (*framesWithPoints).push_back(framesWithPoint);
+    }
+}
+
+void printFrames(std::vector<Point> points, std::vector<std::map<int, Point2D>> framesWithPoints) {
+    for (int i=0; i < framesWithPoints.size(); i++) {
+        std::cout << "Point (" << points[i].x << ", " << points[i].y << ", " << points[i].z << ")" << std::endl;
+        for(const auto &myPair : framesWithPoints[i])
+        {
+            std::cout << "\t" << myPair.first << ": (" << myPair.second.x << ", " << myPair.second.y << ")" << std::endl;
+        }
     }
 }
 
@@ -66,14 +83,15 @@ int main() {
     programData.close();
 
     std::string csvPath = data["getPointDataCsv"];
-    std::map<int, Point2D> framesWithPoint;
+    std::vector<std::map<int, Point2D>> framesWithPoints;
+    std::vector<Point> points;
 
-    if (!searchPoint(csvPath, Point(X, Y, Z), &framesWithPoint)) {
-        std::cout << "There is no such point!" << std::endl;
-        return -1;
-    }
+    points.push_back(Point(X1, Y1, Z1));
+    points.push_back(Point(X2, Y2, Z2));
 
-    printFrames(framesWithPoint);
+    searchAllPoints(csvPath, points, &framesWithPoints);
+
+    printFrames(points, framesWithPoints);
 
     return 0;
 }
