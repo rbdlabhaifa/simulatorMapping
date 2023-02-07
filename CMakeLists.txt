@@ -104,3 +104,6 @@ target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 
 add_executable(get_point_data exe/get_point_data.cc)
 target_link_libraries(get_point_data ${PROJECT_NAME})
+
+add_executable(get_points_from_camera exe/get_points_from_camera.cc)
+target_link_libraries(get_points_from_camera ${PROJECT_NAME})
