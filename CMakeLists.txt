@@ -45,7 +45,7 @@ find_package(Pangolin REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
-find_package(image_geometry REQUIRED)
+
 include_directories(
 
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/
@@ -58,7 +58,6 @@ include_directories(
         ${Pangolin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
-        ${image_geometry_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -99,8 +98,8 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
         ${Boost_LIBRARIES}
-        ${image_geometry_LIBRARIES}
         )
+
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 

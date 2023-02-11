@@ -5,41 +5,6 @@
 
 #include "include/Auxiliary.h"
 
-// Default camera field of view of tello drone
-const float DEFAULT_TELLO_FOV = 82.6;
-
-void getPoints(std::string csvPath, std::vector<cv::Point3f> *points, const cv::Point3f &camera_position, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree) {
-    std::fstream pointData;
-    pointData.open(csvPath, std::ios::in);
-
-    std::vector<std::string> row;
-    std::string line, word, temp;
-
-    while (!pointData.eof()) {
-        cv::Point3f pointToCompare;
-
-        row.clear();
-        
-        std::getline(pointData, line);
-
-        std::stringstream words(line);
-
-        if (line == "") {
-            continue;
-        }
-
-        while (std::getline(words, word, ',')) {
-            row.push_back(word);
-        }
-        
-        pointToCompare = cv::Point3f(std::stod(row[0]), std::stod(row[1]), std::stod(row[2]));
-        if (Auxiliary::isPointVisible(pointToCompare, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, yaw_degree, pitch_degree)) {
-            (*points).push_back(pointToCompare);
-        }
-    }
-    pointData.close();
-}
-
 int main()
 {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -63,7 +28,7 @@ int main()
     // Between -180 to 180, pitch
     double bottom_to_up_degree = data["bottomToUpDegree"];
     // between -180 to 180, roll
-    double roll_degree = data["rollDegree"]
+    double roll_degree = data["rollDegree"];
 
     float fx = fsSettings["Camera.fx"];
     float fy = fsSettings["Camera.fy"];
@@ -78,7 +43,7 @@ int main()
     int height = fsSettings["Camera.height"];
 
     std::vector<cv::Point3f> points;
-    getPoints(data["getPointDataCsv"], &points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, left_to_right_degree, bottom_to_up_degree);
+    Auxiliary::getPoints(data["getPointDataCsv"], &points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, left_to_right_degree, bottom_to_up_degree);
 
     for(cv::Point3f  point : points)
     {

@@ -10,11 +10,11 @@
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/dev/rbd/slamMaps/",
   "getPointDataCsv": "/home/liam/dev/rbd/slamMaps/example_mapping/cloud1.csv",
-  "cameraPosX": 100,
-  "cameraPosY": -100,
+  "cameraPosX": 0.1,
+  "cameraPosY": 0.1,
   "cameraPosZ": 0,
-  "leftToRightDegree": -35.0,
-  "bottomToUpDegree": 23.0,
+  "leftToRightDegree": 0.0,
+  "bottomToUpDegree": 0.0,
   "rollDegree": 0.0
 }
 

@@ -1,33 +1,12 @@
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <string>
+#include <sstream>
+
+#include "Python.h"
 
 #include "include/Auxiliary.h"
-
-// Default camera field of view of tello drone
-const float DEFAULT_TELLO_FOV = 82.6;
-
-void checkVisiblePoints(cv::Point3f cameraPos, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree) {
-    // Generate many 3D points
-    std::vector<cv::Point3f> points;
-    for (int x = -100; x <= 100; x++) {
-        for (int y = -100; y <= 100; y++) {
-            for (int z = 0; z <= 100; z++) {
-                points.push_back(cv::Point3f(x, y, z));
-            }
-        }
-    }
-
-    // Plot visible points
-    cv::Mat image(800, 800, CV_8UC3, cv::Scalar(0, 0, 0));
-    for (cv::Point3f point : points) {
-        if (Auxiliary::isPointVisible(point, cameraPos, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, yaw_degree, pitch_degree)) {
-            cv::circle(image, cv::Point2f(point.x + 10, -point.y + 10), 2, cv::Scalar(0, 255, 0), -1);
-        }
-    }
-    cv::imshow("Visible Points", image);
-    cv::waitKey(0);
-}
 
 int main(void)
 {
@@ -49,10 +28,10 @@ int main(void)
 
     // Between -180 to 180, yaw
     double left_to_right_degree = data["leftToRightDegree"];
-    // Between -90 to 90, pitch
+    // Between -180 to 180, pitch
     double bottom_to_up_degree = data["bottomToUpDegree"];
     // between -180 to 180, roll
-    double roll_degree = data["rollDegree"]
+    double roll_degree = data["rollDegree"];
 
     float fx = fsSettings["Camera.fx"];
     float fy = fsSettings["Camera.fy"];
@@ -66,5 +45,43 @@ int main(void)
     int width = fsSettings["Camera.width"];
     int height = fsSettings["Camera.height"];
 
-    checkVisiblePoints(camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, left_to_right_degree, bottom_to_up_degree);
-}
+    std::vector<cv::Point3f> points;
+    Auxiliary::getPoints(data["getPointDataCsv"], &points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, left_to_right_degree, bottom_to_up_degree);
+
+    for(cv::Point3f  point : points)
+    {
+        std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+    }
+
+    std::stringstream command, command2;
+    Py_Initialize();
+    command << "ax.scatter([";
+    for(cv::Point3f  point : points)
+    {
+        command << point.x << ", ";
+    }
+    command << "0.0], [";
+    for(cv::Point3f  point : points)
+    {
+        command << point.y << ", ";
+    }
+    command << "0.0], [";
+    for(cv::Point3f  point : points)
+    {
+        command << point.z << ", ";
+    }
+    command << "0.0], c='r', marker='o')";
+
+    command2 << "ax.scatter(" << camera_position.x << ", " << camera_position.y << ", " << camera_position.z << ", c='b', marker='o')";
+    PyRun_SimpleString("import matplotlib.pyplot as plt");
+    PyRun_SimpleString("fig = plt.figure()");
+    PyRun_SimpleString("ax = fig.add_subplot(111, projection='3d')");
+    PyRun_SimpleString(command.str().c_str());
+    PyRun_SimpleString("ax.scatter(0, 0, 0, c='g', marker='o')");
+    PyRun_SimpleString(command2.str().c_str());
+    PyRun_SimpleString("ax.set_xlabel('X Label')");
+    PyRun_SimpleString("ax.set_xlabel('Y Label')");
+    PyRun_SimpleString("ax.set_xlabel('Z Label')");
+    PyRun_SimpleString("plt.show()");
+    Py_Exit(0);
+    return 0;}
