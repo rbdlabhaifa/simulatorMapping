@@ -114,3 +114,6 @@ target_link_libraries(test_is_point_visible ${PROJECT_NAME})
 
 add_executable(get_points_from_camera_second exe/get_points_from_camera_second.cc)
 target_link_libraries(get_points_from_camera_second ${PROJECT_NAME})
+
+add_executable(points_seen_by_camera_by_frame exe/points_seen_by_camera_by_frame.cc)
+target_link_libraries(points_seen_by_camera_by_frame ${PROJECT_NAME})
