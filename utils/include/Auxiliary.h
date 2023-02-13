@@ -32,5 +32,6 @@ public:
 
     static void getPoints(std::string csvPath, std::vector<cv::Point3f> *points, const cv::Point3f &camera_position, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
 
+    static std::vector<cv::Point3f> FilterPointsInView(std::vector<cv::Point3f> points, cv::Point3f cam_pos, cv::Vec3f cam_angle, cv::Vec3f focal);
 };
 #endif //ORB_SLAM2_AUXILIARY_H

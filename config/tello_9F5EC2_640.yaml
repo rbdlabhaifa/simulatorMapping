@@ -22,16 +22,16 @@ Camera.height: 480
 Camera.orig_width: 640
 Camera.orig_height: 480
 
-Camera.fx: 619.6508392029048
-Camera.fy: 618.5264705043031
-Camera.cx: 321.88905699582324
-Camera.cy: 243.8086797913814
+Camera.fx: 620
+Camera.fy: 620
+Camera.cx: 320
+Camera.cy: 244
 
-Camera.k1: 0.009693927827194616
-Camera.k2: -0.21228109011574828
-Camera.p1: 0.0017187525493674242
-Camera.p2: 0.005490467786087225
-Camera.k3: 0.7833587140073683
+Camera.k1: 0
+Camera.k2: 0
+Camera.p1: 0
+Camera.p2: 0
+Camera.k3: 0
 
 
 

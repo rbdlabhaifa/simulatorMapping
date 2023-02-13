@@ -80,3 +80,95 @@ void Auxiliary::getPoints(std::string csvPath, std::vector<cv::Point3f> *points,
     }
     pointData.close();
 }
+
+std::vector<cv::Point3f> Auxiliary::FilterPointsInView(std::vector<cv::Point3f> points, cv::Point3f cam_pos, cv::Vec3f cam_angle, cv::Vec3f focal)
+{
+    // Extract the rotations from the rotation matrix
+    float Yaw = cam_angle[0];
+    float Pitch = cam_angle[1];
+    float Roll = cam_angle[2];
+
+    // Calculate the rotation matrices
+
+    // The rotation on the YZ-plane is the pitch
+    float cp = cos(Pitch);
+    float sp = sin(Pitch);
+    cv::Mat Rx = (cv::Mat_<float>(4, 4) << 1, 0, 0, 0,
+                   0, cp, -sp, 0,
+                   0, sp, cp, 0,
+                   0, 0, 0, 1);
+    
+    // The rotation on the XZ-plane is the yaw
+    float cy = cos(-Yaw);
+    float sy = sin(-Yaw);
+    cv::Mat Ry = (cv::Mat_<float>(4, 4) << cy, 0, sy, 0,
+                   0, 1, 0, 0,
+                   -sy, 0, cy, 0,
+                   0, 0, 0, 1);
+    
+    // The rotation on the XY-plane is the roll
+    float cr = cos(Roll);
+    float sr = sin(Roll);
+    cv::Mat Rz = (cv::Mat_<float>(4, 4) << cr, -sr, 0, 0,
+                   sr, cr, 0, 0,
+                   0, 0, 1, 0,
+                   0, 0, 0, 1);
+
+    // Matrix to represent the change to cameras axises
+    float Cx = cam_pos.x;
+    float Cy = cam_pos.y;
+    float Cz = cam_pos.z;
+    cv::Mat Tc = (cv::Mat_<float>(4, 4) << 1, 0, 0, -Cx,
+                   0, 1, 0, -Cy,
+                   0, 0, 1, -Cz,
+                   0, 0, 0, 1);
+    
+    // Calculate the extrinsic transformation
+    cv::Mat Rt = Rz * Rx * Ry * Tc;
+
+    // Empty set to hold the points that in the view range
+    std::vector<cv::Point3f> SeenPoints;
+
+    // Calculate the lengths seen on the picture frame
+    float f_depth = focal[0];
+    float f_height = focal[1];
+    float f_width = focal[2];
+    float vt = f_height / f_depth / 2;
+    float ht = f_width  / f_depth / 2;
+
+    // Iterate on the points, and deside which point is in the field of view
+    for (cv::Point3f point : points)
+    {
+        // Extract point coordinates
+        float Pwx = point.x;
+        float Pwy = point.y;
+        float Pwz = point.z;
+
+        // Create homogeneous vector for the point 
+        cv::Mat Pw = (cv::Mat_<float>(4, 1) << Pwx, Pwy, Pwz, 1);
+
+        // Calculate the position relative to the camera
+        cv::Mat Pc = Rt * Pw;
+
+        // If the point have negative side of z-axis, its behind the camera
+        if (Pc.at<float>(2, 0) <= 0) {
+            continue;
+        }
+
+        // Check if horizantlly, relative to the camera, the point inside the FOV
+        if (abs(Pc.at<float>(0, 0) / Pc.at<float>(2, 0)) > vt) {
+            continue;
+        }
+
+        // Check if vertically, relative to the camera, the point inside the FOV
+        if (abs(Pc.at<float>(1, 0) / Pc.at<float>(2, 0)) > ht) {
+            continue;
+        }
+
+        // All the checks passed, the point is seen by the camera.
+        // Append the point to the seen points
+        SeenPoints.push_back(cv::Point3f(Pwx, Pwy, Pwz));
+    }
+    
+    return SeenPoints;
+}
