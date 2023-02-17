@@ -28,13 +28,23 @@ void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId) {
     frameData.open(simulatorOutputDir + "frameData" +
                    std::to_string(currentFrameId) + ".csv");
 
-    cv::Mat Rwc = pose.rowRange(0, 3).colRange(0, 3);
-    cv::Mat twc = -Rwc.t() * pose.rowRange(0, 3).col(3);
-    frameData << currentFrameId << ',' << twc.at<float>(0) << ',' << twc.at<float>(2) << ',' << twc.at<float>(1) << ','
-              << Rwc.at<float>(0, 0) << ',' << Rwc.at<float>(0, 1) << ',' << Rwc.at<float>(0, 2)
-              << ',' << Rwc.at<float>(1, 0) << ',' << Rwc.at<float>(1, 1) << ',' << Rwc.at<float>(1, 2) << ','
-              << Rwc.at<float>(2, 0)
-              << ',' << Rwc.at<float>(2, 1) << ',' << Rwc.at<float>(2, 2) << std::endl;
+    // Extract position from pose matrix
+    double x = pose.at<float>(0,3);
+    double y = pose.at<float>(1,3);
+    double z = pose.at<float>(2,3);
+
+    cv::Point3d camera_position(x, y, z);
+
+    // Extract orientation from pose matrix
+    double yaw, pitch, roll;
+    yaw = atan2(pose.at<float>(1,0), pose.at<float>(0,0));
+    pitch = atan2(-pose.at<float>(2,0), sqrt(pose.at<float>(2,1)*pose.at<float>(2,1) + pose.at<float>(2,2)*pose.at<float>(2,2)));
+    roll = atan2(pose.at<float>(2,1), pose.at<float>(2,2));
+
+    //cv::Mat Rwc = pose.rowRange(0, 3).colRange(0, 3);
+    //cv::Mat twc = -Rwc.t() * pose.rowRange(0, 3).col(3);
+    frameData << currentFrameId << ',' << camera_position.x << ',' << camera_position.y << ',' << camera_position.z << ','
+              << yaw << ',' << pitch << ',' << roll << std::endl;
     cv::imwrite(simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + ".png", img);
     frameData.close();
 }

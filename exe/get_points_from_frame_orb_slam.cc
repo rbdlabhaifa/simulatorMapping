@@ -43,7 +43,8 @@ int main(int argc, char **argv)
         }
     }
 
-    std::cout << counter << std::endl;
+    std::cout << "total: " << frame_points.size() << std::endl;
+    std::cout << "Valid: " << counter << std::endl;
 
     return 0;
 }

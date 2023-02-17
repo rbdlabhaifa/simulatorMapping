@@ -47,29 +47,19 @@ int main()
 
     pointData.close();
     
-    cv::Mat twc = (cv::Mat_<double>(1, 3) << stod(row[1]), stod(row[3]), stod(row[2]));
-    cv::Mat rwc = (cv::Mat_<double>(3, 3) << stod(row[4]), stod(row[5]), stod(row[6]),
-                                            stod(row[7]), stod(row[8]), stod(row[9]),
-                                            stod(row[10]), stod(row[11]), stod(row[12]));
-
-    cv::Matx33d r;
-    cv::Matx33d eulerAngles;
-
-    cv::RQDecomp3x3(rwc, r, eulerAngles);
-
     // Extract the camera position
-    double x = twc.at<double>(0);
-    double y = twc.at<double>(1);
-    double z = twc.at<double>(2);
+    double x = stod(row[1]);
+    double y = stod(row[2]);
+    double z = stod(row[3]);
 
-    double roll_rad = std::atan2(eulerAngles(2, 1), eulerAngles(2, 2));
-    double pitch_rad = std::asin(-eulerAngles(2, 0));
-    double yaw_rad = std::atan2(eulerAngles(1, 0), eulerAngles(0, 0));
+    double yaw_rad = stod(row[4]);
+    double pitch_rad = stod(row[5]);
+    double roll_rad = stod(row[6]);
     
     // Convert the Euler angles to degrees
-    double roll_degree = roll_rad * 180.0 / CV_PI;
-    double pitch_degree = pitch_rad * 180.0 / CV_PI;
     double yaw_degree = yaw_rad * 180.0 / CV_PI;
+    double pitch_degree = pitch_rad * 180.0 / CV_PI;
+    double roll_degree = roll_rad * 180.0 / CV_PI;
 
     pointData.open(map_inpur_dir + "cloud1.csv");
 
