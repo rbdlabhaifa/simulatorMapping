@@ -101,5 +101,7 @@ int main()
         std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
     }
 
+    std::cout << seen_points.size() << std::endl;
+
     return 0;
 }
