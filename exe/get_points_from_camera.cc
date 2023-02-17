@@ -24,11 +24,11 @@ int main()
     const cv::Point3f camera_position(data["cameraPosX"], data["cameraPosY"], data["cameraPosZ"]);
 
     // Between -180 to 180, yaw
-    double left_to_right_degree = data["leftToRightDegree"];
+    double yaw = data["leftToRightDegree"];
     // Between -180 to 180, pitch
-    double bottom_to_up_degree = data["bottomToUpDegree"];
+    double pitch = data["bottomToUpDegree"];
     // between -180 to 180, roll
-    double roll_degree = data["rollDegree"];
+    double roll = data["rollDegree"];
 
     float fx = fsSettings["Camera.fx"];
     float fy = fsSettings["Camera.fy"];
@@ -43,7 +43,7 @@ int main()
     int height = fsSettings["Camera.height"];
 
     std::vector<cv::Point3f> points;
-    Auxiliary::getPoints(data["getPointDataCsv"], &points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, left_to_right_degree, bottom_to_up_degree);
+    Auxiliary::getPoints(data["getPointDataCsv"], &points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll, yaw, pitch);
 
     for(cv::Point3f  point : points)
     {

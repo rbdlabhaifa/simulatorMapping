@@ -26,13 +26,6 @@ int main()
     float fy = fsSettings["Camera.fy"];
     float cx = fsSettings["Camera.cx"];
     float cy = fsSettings["Camera.cy"];
-    float k1 = fsSettings["Camera.k1"];
-    float k2 = fsSettings["Camera.k2"];
-    float k3 = fsSettings["Camera.k3"];
-    float p1 = fsSettings["Camera.p1"];
-    float p2 = fsSettings["Camera.p2"];
-    int width = fsSettings["Camera.width"];
-    int height = fsSettings["Camera.height"];
 
     std::vector<cv::Point3f> points;
 
@@ -55,20 +48,18 @@ int main()
     pointData.close();
     
     // Extract the camera position
-    float x = stof(row[1]);
-    float y = stof(row[2]);
-    float z = stof(row[3]);
+    double x = stod(row[1]);
+    double y = stod(row[2]);
+    double z = stod(row[3]);
 
-    cv::Point3f camera_position(x, y, z);
-
-    float yaw_rad = stof(row[4]);
-    float pitch_rad = stof(row[5]);
-    float roll_rad = stof(row[6]);
+    double yaw_rad = stod(row[4]);
+    double pitch_rad = stod(row[5]);
+    double roll_rad = stod(row[6]);
     
     // Convert the Euler angles to degrees
-    float yaw_degree = yaw_rad * 180.0 / CV_PI;
-    float pitch_degree = pitch_rad * 180.0 / CV_PI;
-    float roll_degree = roll_rad * 180.0 / CV_PI;
+    double yaw_degree = yaw_rad * 180.0 / CV_PI;
+    double pitch_degree = pitch_rad * 180.0 / CV_PI;
+    double roll_degree = roll_rad * 180.0 / CV_PI;
 
     pointData.open(map_inpur_dir + "cloud1.csv");
 
@@ -93,7 +84,7 @@ int main()
 
     std::vector<cv::Point3f> seen_points;
 
-    Auxiliary::getPoints(data["getPointDataCsv"], &seen_points, camera_position, fx, fy, cx, cy, k1, k2, k3, p1, p2, width, height, roll_degree, yaw_degree, pitch_degree);
+    seen_points = Auxiliary::FilterPointsInView(points, cv::Point3f(x, y, z), cv::Vec3f(yaw_rad, pitch_rad, roll_rad), cv::Vec3f(fx, cy*2, cx*2));
 
     for(cv::Point3f  point : seen_points)
     {

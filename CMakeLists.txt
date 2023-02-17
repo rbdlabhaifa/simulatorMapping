@@ -118,6 +118,9 @@ target_link_libraries(get_points_from_camera_second ${PROJECT_NAME})
 add_executable(points_seen_by_camera_by_frame exe/points_seen_by_camera_by_frame.cc)
 target_link_libraries(points_seen_by_camera_by_frame ${PROJECT_NAME})
 
+add_executable(points_seen_by_camera_by_frame_second exe/points_seen_by_camera_by_frame_second.cc)
+target_link_libraries(points_seen_by_camera_by_frame_second ${PROJECT_NAME})
+
 add_executable(get_points_from_frame_orb_slam exe/get_points_from_frame_orb_slam.cc)
 target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
 
