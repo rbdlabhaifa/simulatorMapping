@@ -59,6 +59,7 @@ void saveMap(int mapNumber) {
             auto point = p->GetWorldPos();
             Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
             pointData << v.x() << "," << v.y() << "," << v.z();
+            pointData << p->GetMinDistanceInvariance() << p->GetMaxDistanceInvariance() << p->GetNormal().at<double>(0) << p->GetNormal().at<double>(1) << p->GetNormal().at<double>(2);
             std::map<ORB_SLAM2::KeyFrame*, size_t> observations = p->GetObservations();
             for (auto obs : observations) {
                 ORB_SLAM2::KeyFrame *currentFrame = obs.first;

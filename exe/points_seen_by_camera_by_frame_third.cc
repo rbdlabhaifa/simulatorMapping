@@ -75,7 +75,7 @@ int main()
     fsSettings["Camera.fy"] >> K.at<double>(1, 1);
     fsSettings["Camera.cx"] >> K.at<double>(0, 2);
     fsSettings["Camera.cy"] >> K.at<double>(1, 2);
-    K.at<double>(2, 2) = 1.0;
+    // K.at<double>(2, 2) = 1.0;
 
     cv::Size image_size(fsSettings["Camera.width"], fsSettings["Camera.height"]);
 
