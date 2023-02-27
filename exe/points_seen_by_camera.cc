@@ -150,11 +150,14 @@ int main()
             continue;
 
         // Check viewing angle
+        // cv::Mat vec = Pc - mOw;
+        // cv::Mat n = vec / cv::norm(vec);
+        // cv::Mat n_w = Rwc * n; 
+        // cv::Mat Pn = PO/cv::norm(PO);
         cv::Mat Pn = cv::Mat(3, 1, CV_64F);
         Pn.at<double>(0) = point[5];
         Pn.at<double>(1) = point[6];
         Pn.at<double>(2) = point[7];
-
         std::cout << "P: " << worldPos << ", Pn: " << Pn << std::endl;
 
         const double viewCos = PO.dot(Pn)/dist;
@@ -165,11 +168,11 @@ int main()
         seen_points.push_back(cv::Point3d(point[0], point[1], point[2]));
     }
     
-    for(cv::Point3d point: seen_points)
-    {
-        std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-    }
-    std::cout << "total: " << seen_points.size() << std::endl;
+    // for(cv::Point3d point: seen_points)
+    // {
+    //     std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+    // }
+    // std::cout << "total: " << seen_points.size() << std::endl;
 
     return 0;
 }

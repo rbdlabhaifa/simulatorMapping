@@ -315,6 +315,7 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
         return false;
     if(v<mnMinY || v>mnMaxY)
         return false;
+    // std::cout << "MinX: " << mnMinX << ", MaxX: " << mnMaxX << ", MinY: " << mnMinY << ", MaxY: " << mnMaxY << std::endl;
 
     // Check distance is in the scale invariance region of the MapPoint
     const float maxDistance = pMP->GetMaxDistanceInvariance();
@@ -327,6 +328,7 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
 
    // Check viewing angle
     cv::Mat Pn = pMP->GetNormal();
+    std::cout << "P: " << P << ", Pn: " << Pn << std::endl;
 
     const float viewCos = PO.dot(Pn)/dist;
 
@@ -522,6 +524,7 @@ void Frame::ComputeImageBounds(const cv::Mat &imLeft)
         mnMaxX = max(mat.at<float>(1,0),mat.at<float>(3,0));
         mnMinY = min(mat.at<float>(0,1),mat.at<float>(1,1));
         mnMaxY = max(mat.at<float>(2,1),mat.at<float>(3,1));
+
 
     }
     else

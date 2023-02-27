@@ -55,6 +55,7 @@ void saveMap(int mapNumber) {
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
         if (p != nullptr && !p->isBad()) {
             auto point = p->GetWorldPos();
+            p->UpdateNormalAndDepth();
             Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
             pointData << v.x() << "," << v.y() << "," << v.z();
             pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << p->GetNormal().at<double>(0) << "," << p->GetNormal().at<double>(1) << "," <<  p->GetNormal().at<double>(2);
@@ -165,32 +166,6 @@ int main() {
 
     SLAM->Shutdown();
     cvDestroyAllWindows();
-
-    // ORB_SLAM2::System system(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, simulatorOutputDir + "simulatorMap.bin", true, false);
-
-    // // Track the monocular camera and get the current camera pose
-    // int frame_to_check = data["frameToCheck"];
-    // cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(frame_to_check) + ".png");
-    // cv::Mat pose = system.TrackMonocular(image, 0);
-
-    //  // Get the current Frame
-    // ORB_SLAM2::Frame currentFrame = system.GetTracker()->mCurrentFrame;
-
-    // std::vector<ORB_SLAM2::MapPoint*> frame_points = currentFrame.mvpMapPoints;
-
-    // std::ofstream pointData;
-    // pointData.open(simulatorOutputDir + "cloud" + std::to_string(0) + ".csv");
-    // for (auto &p: frame_points) {
-    //     if (p != nullptr && !p->isBad()) {
-    //         auto point = p->GetWorldPos();
-    //         Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
-    //         pointData << v.x() << "," << v.y() << "," << v.z();
-    //         pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << p->GetNormal().at<double>(0) << "," << p->GetNormal().at<double>(1) << "," <<  p->GetNormal().at<double>(2);
-            
-    //         pointData << std::endl;
-    //     }
-    // }
-    // pointData.close();
 
     return 0;
 }

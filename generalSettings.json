@@ -9,7 +9,7 @@
   "loadMapPath": "/home/ronel/AutonomousDrone/slamMaps/HaifaLab.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/dev/rbd/slamMaps/",
-  "mapInputDir": "/home/liam/dev/rbd/slamMaps/example_mapping5/",
+  "mapInputDir": "/home/liam/dev/rbd/slamMaps/example_mapping8/",
   "getPointDataCsv": "/home/liam/example.csv",
   "cameraPosX": 0,
   "cameraPosY": 0,
@@ -17,6 +17,6 @@
   "leftToRightDegree": -14.0362435,
   "bottomToUpDegree": -31.2300698,
   "rollDegree": 0.0,
-  "frameToCheck": 3
+  "frameToCheck": 1
 }
 
