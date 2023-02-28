@@ -38,8 +38,7 @@ int main(int argc, char **argv)
         if (point)
         {
             cv::Mat currPoint = point->GetWorldPos();
-            std::cout << "P: " << currPoint << ", Pn: " << point->GetNormal() << std::endl;
-            //std::cout << "(" << currPoint.at<float>(0) << ", " << currPoint.at<float>(1) << ", " << currPoint.at<float>(2) << ")" << std::endl;
+            std::cout << "(" << currPoint.at<float>(0) << ", " << currPoint.at<float>(1) << ", " << currPoint.at<float>(2) << ")" << std::endl;
             counter++;
         }
     }

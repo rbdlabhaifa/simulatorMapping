@@ -132,3 +132,6 @@ target_link_libraries(points_seen_by_camera_by_frame_third ${PROJECT_NAME})
 
 add_executable(points_seen_by_camera exe/points_seen_by_camera.cc)
 target_link_libraries(points_seen_by_camera ${PROJECT_NAME})
+
+add_executable(points_seen_by_pos exe/points_seen_by_pos.cc)
+target_link_libraries(points_seen_by_pos ${PROJECT_NAME})

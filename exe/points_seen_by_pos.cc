@@ -16,45 +16,30 @@ int main()
     nlohmann::json data;
     programData >> data;
     programData.close();
+    
+    std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
 
     // Check settings file
-    cv::FileStorage fsSettings(data["DroneYamlPathSlam"], cv::FileStorage::READ);
+    cv::FileStorage fsSettings(droneYamlPathSlam, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
-       std::cerr << "Failed to open settings file at: " << data["DroneYamlPathSlam"] << std::endl;
+       std::cerr << "Failed to open settings file at: " << droneYamlPathSlam << std::endl;
        exit(-1);
     }
 
-    int frame_to_check = data["frameToCheck"];
     std::string map_input_dir = data["mapInputDir"];
     std::string vocPath = data["VocabularyPath"];
-    std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
-    std::ifstream pointData;
-    pointData.open(map_input_dir + "frameData" + std::to_string(frame_to_check) + ".csv");
-
-    std::vector<std::string> row;
-    std::string line, word, temp;
-    
-    std::getline(pointData, line);
-
-    std::stringstream words(line);
-
-    while (std::getline(words, word, ',')) {
-        row.push_back(word);
-    }
-
-    pointData.close();
     
     // Extract the camera position
-    double x = stod(row[1]);
-    double y = stod(row[2]);
-    double z = stod(row[3]);
+    double x = data["cameraPosX"];
+    double y = data["cameraPosY"];
+    double z = data["cameraPosZ"];
 
     cv::Point3d camera_position(x, y, z);
 
-    double yaw_rad = stod(row[4]);
-    double pitch_rad = stod(row[5]);
-    double roll_rad = stod(row[6]);
+    double yaw_rad = data["leftToRightDegree"];
+    double pitch_rad = data["bottomToUpDegree"];
+    double roll_rad = data["rollDegree"];
 
     double fx = fsSettings["Camera.fx"];
     double fy = fsSettings["Camera.fy"];

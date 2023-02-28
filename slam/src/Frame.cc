@@ -315,7 +315,6 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
         return false;
     if(v<mnMinY || v>mnMaxY)
         return false;
-    // std::cout << "MinX: " << mnMinX << ", MaxX: " << mnMaxX << ", MinY: " << mnMinY << ", MaxY: " << mnMaxY << std::endl;
 
     // Check distance is in the scale invariance region of the MapPoint
     const float maxDistance = pMP->GetMaxDistanceInvariance();
@@ -328,7 +327,6 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
 
    // Check viewing angle
     cv::Mat Pn = pMP->GetNormal();
-    std::cout << "P: " << P << ", Pn: " << Pn << std::endl;
 
     const float viewCos = PO.dot(Pn)/dist;
 
