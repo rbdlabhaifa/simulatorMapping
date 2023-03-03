@@ -55,10 +55,16 @@ void saveMap(int mapNumber) {
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
         if (p != nullptr && !p->isBad()) {
             auto point = p->GetWorldPos();
+            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(point);
+            cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
+            worldPos.at<double>(0) = vector.x();
+            worldPos.at<double>(1) = vector.y();
+            worldPos.at<double>(2) = vector.z();
             p->UpdateNormalAndDepth();
-            Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
-            pointData << v.x() << "," << v.y() << "," << v.z();
-            pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << p->GetNormal().at<double>(0) << "," << p->GetNormal().at<double>(1) << "," <<  p->GetNormal().at<double>(2);
+            cv::Mat Pn = p->GetNormal();
+            Pn.convertTo(Pn, CV_64F);
+            pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
+            pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
             std::map<ORB_SLAM2::KeyFrame*, size_t> observations = p->GetObservations();
             for (auto obs : observations) {
                 ORB_SLAM2::KeyFrame *currentFrame = obs.first;

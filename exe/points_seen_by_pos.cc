@@ -5,8 +5,6 @@
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "System.h"
-
 #include "include/Auxiliary.h"
 
 int main()
@@ -16,6 +14,11 @@ int main()
     nlohmann::json data;
     programData >> data;
     programData.close();
+
+     std::ifstream pointData;
+
+    std::vector<std::string> row;
+    std::string line, word, temp;
     
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
 
@@ -71,61 +74,85 @@ int main()
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat mOw = -Rcw.t()*tcw;
 
-    ORB_SLAM2::System system(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, map_input_dir + "simulatorMap.bin", true, false);
+    std::vector<cv::Vec<double, 8>> points;
+
+    pointData.open(map_input_dir + "cloud1.csv", std::ios::in);
+
+    while (!pointData.eof()) {
+        row.clear();
+        
+        std::getline(pointData, line);
+
+        std::stringstream words(line);
+
+        if (line == "") {
+            continue;
+        }
+
+        while (std::getline(words, word, ',')) {
+            try 
+            {
+                std::stod(word);
+            } 
+            catch(std::out_of_range)
+            {
+                word = "0";
+            }
+            row.push_back(word);
+        }
+        points.push_back(cv::Vec<double, 8>(std::stod(row[0]), std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7])));
+    }
+    pointData.close();
 
     std::vector<cv::Point3d> seen_points;
 
-    for(auto point : system.GetMap()->GetAllMapPoints())
+    for(cv::Vec<double, 8>  point : points)
     {
-        if(point)
-        {
-            auto point_pos = point->GetWorldPos();
-            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(point_pos);
-            cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
-            worldPos.at<double>(0) = vector.x();
-            worldPos.at<double>(1) = vector.y();
-            worldPos.at<double>(2) = vector.z();
+        cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
+        worldPos.at<double>(0) = point[0];
+        worldPos.at<double>(1) = point[1];
+        worldPos.at<double>(2) = point[2];
 
+        const cv::Mat Pc = Rcw*worldPos+tcw;
+        const double &PcX = Pc.at<double>(0);
+        const double &PcY= Pc.at<double>(1);
+        const double &PcZ = Pc.at<double>(2);
 
-            const cv::Mat Pc = Rcw*worldPos+tcw;
-            const double &PcX = Pc.at<double>(0);
-            const double &PcY= Pc.at<double>(1);
-            const double &PcZ = Pc.at<double>(2);
+        // Check positive depth
+        if(PcZ<0.0f)
+            continue;
 
-            // Check positive depth
-            if(PcZ<0.0f)
-                continue;
+        // Project in image and check it is not outside
+        const double invz = 1.0f/PcZ;
+        const double u=fx*PcX*invz+cx;
+        const double v=fy*PcY*invz+cy;
 
-            // Project in image and check it is not outside
-            const double invz = 1.0f/PcZ;
-            const double u=fx*PcX*invz+cx;
-            const double v=fy*PcY*invz+cy;
+        if(u<minX || u>maxX)
+            continue;
+        if(v<minY || v>maxY)
+            continue;
 
-            if(u<minX || u>maxX)
-                continue;
-            if(v<minY || v>maxY)
-                continue;
+        // Check distance is in the scale invariance region of the MapPoint
+        const double minDistance = point[3];
+        const double maxDistance = point[4];
+        const cv::Mat PO = worldPos-mOw;
+        const double dist = cv::norm(PO);
 
-            // Check distance is in the scale invariance region of the MapPoint
-            const double minDistance = point->GetMinDistanceInvariance();
-            const double maxDistance = point->GetMaxDistanceInvariance();
-            const cv::Mat PO = worldPos-mOw;
-            const double dist = cv::norm(PO);
+        if(dist<minDistance || dist>maxDistance)
+            continue;
 
-            if(dist<minDistance || dist>maxDistance)
-                continue;
+        // Check viewing angle
+        cv::Mat Pn = cv::Mat(3, 1, CV_64F);
+        Pn.at<double>(0) = point[5];
+        Pn.at<double>(1) = point[6];
+        Pn.at<double>(2) = point[7];
 
-            // Check viewing angle
-            cv::Mat Pn = point->GetNormal();
-            Pn.convertTo(Pn, CV_64F);
+        const double viewCos = PO.dot(Pn)/dist;
 
-            const float viewCos = PO.dot(Pn)/dist;
+        if(viewCos<0.5)
+            continue;
 
-            if(viewCos<0.5)
-                continue;
-
-            seen_points.push_back(cv::Point3d(worldPos.at<double>(0), worldPos.at<double>(1), worldPos.at<double>(2)));
-        }
+        seen_points.push_back(cv::Point3d(worldPos.at<double>(0), worldPos.at<double>(1), worldPos.at<double>(2)));
     }
     
     for(cv::Point3d point: seen_points)
