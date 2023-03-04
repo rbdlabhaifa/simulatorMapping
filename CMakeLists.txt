@@ -138,3 +138,6 @@ target_link_libraries(points_seen_by_frames ${PROJECT_NAME})
 
 add_executable(points_seen_by_pos exe/points_seen_by_pos.cc)
 target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
+
+add_executable(simulator exe/simulator.cc)
+target_link_libraries(simulator ${PROJECT_NAME})
