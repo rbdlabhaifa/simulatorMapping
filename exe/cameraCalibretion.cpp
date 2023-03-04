@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <ctello.h>
 #include "include/Auxiliary.h"
+
 // Defining the dimensions of checkerboard
 int CHECKERBOARD[2]{6, 9};
 std::shared_ptr<cv::VideoCapture> capture;

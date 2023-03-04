@@ -106,32 +106,35 @@ target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 add_executable(get_point_data exe/get_point_data.cc)
 target_link_libraries(get_point_data ${PROJECT_NAME})
 
-add_executable(get_points_from_camera exe/get_points_from_camera.cc)
-target_link_libraries(get_points_from_camera ${PROJECT_NAME})
+add_executable(unused_get_points_from_camera exe/unused/get_points_from_camera.cc)
+target_link_libraries(unused_get_points_from_camera ${PROJECT_NAME})
 
-add_executable(test_is_point_visible exe/test_is_point_visible.cc)
-target_link_libraries(test_is_point_visible ${PROJECT_NAME})
+add_executable(unused_test_is_point_visible exe/unused/test_is_point_visible.cc)
+target_link_libraries(unused_test_is_point_visible ${PROJECT_NAME})
 
-add_executable(get_points_from_camera_second exe/get_points_from_camera_second.cc)
-target_link_libraries(get_points_from_camera_second ${PROJECT_NAME})
+add_executable(unused_get_points_from_camera_second exe/unused/get_points_from_camera_second.cc)
+target_link_libraries(unused_get_points_from_camera_second ${PROJECT_NAME})
 
-add_executable(points_seen_by_camera_by_frame exe/points_seen_by_camera_by_frame.cc)
-target_link_libraries(points_seen_by_camera_by_frame ${PROJECT_NAME})
+add_executable(unused_points_seen_by_camera_by_frame exe/unused/points_seen_by_camera_by_frame.cc)
+target_link_libraries(unused_points_seen_by_camera_by_frame ${PROJECT_NAME})
 
-add_executable(points_seen_by_camera_by_frame_second exe/points_seen_by_camera_by_frame_second.cc)
-target_link_libraries(points_seen_by_camera_by_frame_second ${PROJECT_NAME})
+add_executable(unused_points_seen_by_camera_by_frame_second exe/unused/points_seen_by_camera_by_frame_second.cc)
+target_link_libraries(unused_points_seen_by_camera_by_frame_second ${PROJECT_NAME})
 
 add_executable(get_points_from_frame_orb_slam exe/get_points_from_frame_orb_slam.cc)
 target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
 
-add_executable(get_points_from_camera_third exe/get_points_from_camera_third.cc)
-target_link_libraries(get_points_from_camera_third ${PROJECT_NAME})
+add_executable(unused_get_points_from_camera_third exe/unused/get_points_from_camera_third.cc)
+target_link_libraries(unused_get_points_from_camera_third ${PROJECT_NAME})
 
-add_executable(points_seen_by_camera_by_frame_third exe/points_seen_by_camera_by_frame_third.cc)
-target_link_libraries(points_seen_by_camera_by_frame_third ${PROJECT_NAME})
+add_executable(unused_points_seen_by_camera_by_frame_third exe/unused/points_seen_by_camera_by_frame_third.cc)
+target_link_libraries(unused_points_seen_by_camera_by_frame_third ${PROJECT_NAME})
 
-add_executable(points_seen_by_camera exe/points_seen_by_camera.cc)
-target_link_libraries(points_seen_by_camera ${PROJECT_NAME})
+add_executable(points_seen_by_frame_data exe/points_seen_by_frame_data.cc)
+target_link_libraries(points_seen_by_frame_data ${PROJECT_NAME})
+
+add_executable(points_seen_by_frames exe/points_seen_by_frames.cc)
+target_link_libraries(points_seen_by_frames ${PROJECT_NAME})
 
 add_executable(points_seen_by_pos exe/points_seen_by_pos.cc)
 target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
