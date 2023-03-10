@@ -312,25 +312,6 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     // }
 }
 
-std::ofstream drone_destinations_file;
-void Tracking::SaveDestination()
-{
-    if(!drone_destinations_file.is_open())
-        drone_destinations_file.open("drone_destinations.txt");
-    cv::Mat pose = mCurrentFrame.mTcw.clone();
-    if(pose.empty()){
-        std::cout << "Pose is empty Can't save destination." << std::endl;
-        drone_destinations_file << "0 0 0" << std::endl;
-        return;
-    }
-    cv::Mat Rcw = pose.rowRange(0, 3).colRange(0, 3).clone();
-    cv::Mat tcw = pose.rowRange(0, 3).col(3).clone();
-    cv::Mat Rwc = Rcw.t();
-    cv::Mat cam_pose_wc = -Rwc * tcw;
-    std::cout << "Saving destination: " << cam_pose_wc << std::endl;
-    drone_destinations_file << cam_pose_wc.at<float>(0, 0) << " " << cam_pose_wc.at<float>(0, 1) << " " << cam_pose_wc.at<float>(0, 2) << std::endl;
-}
-
 void Tracking::Track()
 {
     if(mState==NO_IMAGES_YET)

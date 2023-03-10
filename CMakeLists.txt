@@ -6,8 +6,8 @@ IF (NOT CMAKE_BUILD_TYPE)
 ENDIF ()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -lncurses")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -lncurses")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -march=native")
 
@@ -138,6 +138,9 @@ target_link_libraries(points_seen_by_frames ${PROJECT_NAME})
 
 add_executable(points_seen_by_pos exe/points_seen_by_pos.cc)
 target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
+
+add_executable(mapping exe/mapping.cc)
+target_link_libraries(mapping ${PROJECT_NAME})
 
 add_executable(simulator exe/simulator.cc)
 target_link_libraries(simulator ${PROJECT_NAME})

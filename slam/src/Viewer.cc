@@ -77,7 +77,7 @@ namespace ORB_SLAM2 {
         pangolin::Var<bool> menuShowGraph("menu.Show Graph", true, true);
         pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode", mbReuse, true);
         pangolin::Var<bool> menuReset("menu.Reset", false, false);
-        pangolin::Var<bool> menuSaveDestination("menu.Save Destination", false, false);
+        pangolin::Var<bool> menuOpenSimulator("menu.Open Simulator", false, false);
         pangolin::Var<bool> menuShutDown("menu.ShutDown", false, false);
 
         // Define Camera Render Object (for view / scene browsing)
@@ -168,9 +168,8 @@ namespace ORB_SLAM2 {
                 menuReset = false;
             }
 
-            if (menuSaveDestination) {
-                mpTracker->SaveDestination();
-                menuSaveDestination = false;
+            if (menuOpenSimulator) {
+                // ToDo: Open simulator here
             }
 
             if (menuShutDown) {

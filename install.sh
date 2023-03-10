@@ -18,6 +18,7 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 echo "Configuring and building Thirdparty/Pangolin ..."
+sudo apt-get install libncurses5-dev
 sudo apt-get install libglew-dev
 sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 sudo apt-get install ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev

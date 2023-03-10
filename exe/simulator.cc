@@ -1,16 +1,20 @@
+#include <opencv2/opencv.hpp>
+#include <termios.h> // for getch()
 #include <iostream>
-#include <vector>
-#include <chrono>
-#include "include/Auxiliary.h" // include the header file for your function
-#include "opencv2/opencv.hpp" // include the OpenCV library
-#include "opencv2/viz.hpp" // include the OpenCV Viz module
 
-int main()
-{
-    // Initialize the data structure
+#include "include/Auxiliary.h"
+
+int main() {
+     // Initialize the data structure
     std::vector<cv::Point3d> points_seen;
     cv::Point3d start_position(0, 0, 0); // Change to your desired starting position
     double yaw = 0, pitch = 0, roll = 0; // Change to your desired starting orientation
+
+    termios old_settings, new_settings;
+    tcgetattr(STDIN_FILENO, &old_settings);
+    new_settings = old_settings;
+    new_settings.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
 
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -22,77 +26,77 @@ int main()
 
     points_seen = Auxiliary::getPointsFromPos(cloud_points, start_position, yaw, pitch, roll);
 
-    // Initialize the Viz window
-    cv::viz::Viz3d viz_window("Viz Window");
-    viz_window.showWidget("Coordinate System", cv::viz::WCoordinateSystem());
-    cv::viz::WCube cube_widget(cv::Point3d(0.5, 0.5, 0.5), cv::Point3d(-0.5, -0.5, -0.5), true, cv::viz::Color::gray());
-    viz_window.showWidget("Cube", cube_widget);
-
-    // Define variables to keep track of position and orientation
     cv::Point3d current_position = start_position;
     double current_yaw = yaw, current_pitch = pitch, current_roll = roll;
 
-    // Define variables for time measurement
-    auto last_time = std::chrono::high_resolution_clock::now();
-    double delta_time;
-
-    while (true) {
-        // Wait for user input
-        int key = cv::waitKey(1);
-        if (key == 27) break; // Exit if the Esc key is pressed
-
-        // Calculate delta time
-        auto current_time = std::chrono::high_resolution_clock::now();
-        delta_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_time).count() / 1000.0;
-        last_time = current_time;
-
-        // Update position and orientation based on user input
-        if (key == 'w') {
-            current_position.x += delta_time * std::cos(current_yaw) * std::cos(current_pitch);
-            current_position.y += delta_time * std::sin(current_yaw) * std::cos(current_pitch);
-            current_position.z += delta_time * std::sin(current_pitch);
-        }
-        else if (key == 's') {
-            current_position.x -= delta_time * std::cos(current_yaw) * std::cos(current_pitch);
-            current_position.y -= delta_time * std::sin(current_yaw) * std::cos(current_pitch);
-            current_position.z -= delta_time * std::sin(current_pitch);
-        }
-        else if (key == 'd') {
-            current_position.x += delta_time * std::cos(current_yaw - M_PI / 2);
-            current_position.y += delta_time * std::sin(current_yaw - M_PI / 2);
-        }
-        else if (key == 'a') {
-            current_position.x += delta_time * std::cos(current_yaw + M_PI / 2);
-            current_position.y += delta_time * std::sin(current_yaw + M_PI / 2);
-        }
-        else if (key == 'up') {
-            current_pitch += delta_time;
-        }
-        else if (key == 'down') {
-            current_pitch -= delta_time;
-        }
-        else if (key == 'right') {
-            current_yaw -= delta_time;
-        }
-        else if (key == 'left') {
-            current_yaw += delta_time;
-        }
-
+    // Wait for user input and update position/orientation
+    char ch = '\0';
+    do {
         // Update the points seen
         std::vector<cv::Point3d> new_points_seen = Auxiliary::getPointsFromPos(cloud_points, current_position, current_yaw, current_pitch, current_roll);
+
+        std::vector<cv::Point3d>::iterator it;
+        for (it = new_points_seen.begin(); it != new_points_seen.end();)
+        {
+            if (std::find(points_seen.begin(), points_seen.end(), *it) != points_seen.end())
+            {
+                it = new_points_seen.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+
+        std::cout << "new: " << new_points_seen.size() << std::endl;
         points_seen.insert(points_seen.end(), new_points_seen.begin(), new_points_seen.end());
+        std::cout << "total: " << points_seen.size() << std::endl;
+        // Wait for user input
 
-        // Draw the points seen
-        cv::viz::WCloud cloud_widget(points_seen, cv::viz::Color::white());
-        viz_window.showWidget("Points Seen", cloud_widget);
+        // Print current position and orientation
+        std::cout << "Position: (" << current_position.x << ", " << current_position.y << ", " << current_position.z << ")" << std::endl;
+        std::cout << "Yaw: " << current_yaw << ", Pitch: " << current_pitch << ", Roll: " << current_roll << std::endl;
 
-        // Draw the new points observed
-        cv::viz::WCloud new_cloud_widget(new_points_seen, cv::viz::Color::red());
-        viz_window.showWidget("New Points Observed", new_cloud_widget);
+        ch = std::cin.get();
 
-        // Wait for a short time
-        cv::waitKey(10);
-    }
+        // Update position/orientation based on input
+        switch(ch) {
+            case 'a':
+                current_yaw -= 0.05;
+                break;
+            case 'd':
+                current_yaw += 0.05;
+                break;
+            case 'w':
+                current_pitch += 0.05;
+                break;
+            case 's':
+                current_pitch -= 0.05;
+                break;
+            case 65: // up arrow
+                current_position.y += 0.1 * cos(current_pitch) * cos(current_yaw);
+                current_position.x -= 0.1 * cos(current_pitch) * sin(current_yaw);
+                current_position.z -= 0.1 * sin(current_pitch);
+                break;
+            case 66: // down arrow
+                current_position.y -= 0.1 * cos(current_pitch) * cos(current_yaw);
+                current_position.x += 0.1 * cos(current_pitch) * sin(current_yaw);
+                current_position.z += 0.1 * sin(current_pitch);
+                break;
+            case 68: // left arrow
+                current_position.x += 0.1 * cos(current_yaw);
+                current_position.y += 0.1 * sin(current_yaw);
+                break;
+            case 67: // right arrow
+                current_position.x -= 0.1 * cos(current_yaw);
+                current_position.y -= 0.1 * sin(current_yaw);
+                break;
+        }
+
+    } while(ch != 27); // 27 is the ASCII code for escape
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);
+
+    return 0;
 }
-
-return 0;
