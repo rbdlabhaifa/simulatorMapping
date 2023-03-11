@@ -23,6 +23,8 @@
 
 #include <mutex>
 
+#include "include/Auxiliary.h"
+
 namespace ORB_SLAM2 {
 
     Viewer::Viewer(System *pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking,
@@ -76,8 +78,8 @@ namespace ORB_SLAM2 {
         pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames", true, true);
         pangolin::Var<bool> menuShowGraph("menu.Show Graph", true, true);
         pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode", mbReuse, true);
+        pangolin::Var<bool> menuOpenSimulator("menu.Open Simulator", false, true);
         pangolin::Var<bool> menuReset("menu.Reset", false, false);
-        pangolin::Var<bool> menuOpenSimulator("menu.Open Simulator", false, false);
         pangolin::Var<bool> menuShutDown("menu.ShutDown", false, false);
 
         // Define Camera Render Object (for view / scene browsing)
@@ -102,63 +104,89 @@ namespace ORB_SLAM2 {
         while (1) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc);
+            if (!menuOpenSimulator)
+                mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc);
 
-            if (menuFollowCamera && bFollow) {
+            if (!menuOpenSimulator && menuFollowCamera && bFollow) {
                 s_cam.Follow(Twc);
-            } else if (menuFollowCamera && !bFollow) {
+            } else if (!menuOpenSimulator && menuFollowCamera && !bFollow) {
                 s_cam.SetModelViewMatrix(
                         pangolin::ModelViewLookAt(mViewpointX, mViewpointY, mViewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
                 s_cam.Follow(Twc);
                 bFollow = true;
-            } else if (!menuFollowCamera && bFollow) {
+            } else if (!menuOpenSimulator && !menuFollowCamera && bFollow) {
                 bFollow = false;
             }
 
-            if (menuLocalizationMode && !bLocalizationMode) {
+            if (menuLocalizationMode && !bLocalizationMode && !menuOpenSimulator) {
                 mpSystem->ActivateLocalizationMode();
                 bLocalizationMode = true;
-            } else if (!menuLocalizationMode && bLocalizationMode) {
+            } else if (!menuLocalizationMode && bLocalizationMode && !menuOpenSimulator) {
                 mpSystem->DeactivateLocalizationMode();
                 bLocalizationMode = false;
             }
 
-            d_cam.Activate(s_cam);
+            if (!menuOpenSimulator)
+                d_cam.Activate(s_cam);
+
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             // mpMapDrawer->DrawCurrentCamera(Twc);
-            if (menuShowKeyFrames || menuShowGraph)
+            if (!menuOpenSimulator && (menuShowKeyFrames || menuShowGraph))
                 mpMapDrawer->DrawKeyFrames(menuShowKeyFrames, menuShowGraph);
             if (menuShowPoints) {
-                cv::Mat Rwc(3, 3, CV_32F);
-                cv::Mat twc(3, 1, CV_32F);
-                auto &M = Twc;
-                Rwc.at<float>(0, 0) = M.m[0];
-                Rwc.at<float>(1, 0) = M.m[1];
-                Rwc.at<float>(2, 0) = M.m[2];
-                Rwc.at<float>(0, 1) = M.m[4];
-                Rwc.at<float>(1, 1) = M.m[5];
-                Rwc.at<float>(2, 1) = M.m[6];
-                Rwc.at<float>(0, 2) = M.m[8];
-                Rwc.at<float>(1, 2) = M.m[9];
-                Rwc.at<float>(2, 2) = M.m[10];
+                if (!menuOpenSimulator)
+                {
+                    cv::Mat Rwc(3, 3, CV_32F);
+                    cv::Mat twc(3, 1, CV_32F);
+                    auto &M = Twc;
+                    Rwc.at<float>(0, 0) = M.m[0];
+                    Rwc.at<float>(1, 0) = M.m[1];
+                    Rwc.at<float>(2, 0) = M.m[2];
+                    Rwc.at<float>(0, 1) = M.m[4];
+                    Rwc.at<float>(1, 1) = M.m[5];
+                    Rwc.at<float>(2, 1) = M.m[6];
+                    Rwc.at<float>(0, 2) = M.m[8];
+                    Rwc.at<float>(1, 2) = M.m[9];
+                    Rwc.at<float>(2, 2) = M.m[10];
 
-                twc.at<float>(0) = M.m[12];
-                twc.at<float>(1) = M.m[13];
-                twc.at<float>(2) = M.m[14];
-                mpMapDrawer->DrawMapPoints();
+                    twc.at<float>(0) = M.m[12];
+                    twc.at<float>(1) = M.m[13];
+                    twc.at<float>(2) = M.m[14];
+                    mpMapDrawer->DrawMapPoints();
+                }
+                else
+                {
+                    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+                    std::ifstream programData(settingPath);
+                    nlohmann::json data;
+                    programData >> data;
+                    programData.close();
+
+                    std::string map_input_dir = data["mapInputDir"];
+                    const std::string cloud_points = map_input_dir + "cloud1.csv";
+
+                    std::vector<cv::Point3d> seen_points;
+                    std::vector<cv::Point3d> new_points_seen = Auxiliary::getPointsFromPos(cloud_points, cv::Point3d(0, 0, 0), 0, 0, 0);
+                    mpMapDrawer->DrawMapPoints(true, seen_points, new_points_seen);
+                }
+                
             }
 
             pangolin::FinishFrame();
 
-            cv::Mat im = mpFrameDrawer->DrawFrame();
-            cv::imshow("ORB-SLAM2: Current Frame", im);
-            cv::waitKey(mT);
+            if (!menuOpenSimulator)
+            {
+                cv::Mat im = mpFrameDrawer->DrawFrame();
+                cv::imshow("ORB-SLAM2: Current Frame", im);
+                cv::waitKey(mT);
+            }
 
             if (menuReset) {
                 menuShowGraph = true;
                 menuShowKeyFrames = true;
                 menuShowPoints = true;
                 menuLocalizationMode = false;
+                menuOpenSimulator = false;
                 if (bLocalizationMode)
                     mpSystem->DeactivateLocalizationMode();
                 bLocalizationMode = false;
@@ -166,10 +194,6 @@ namespace ORB_SLAM2 {
                 menuFollowCamera = true;
                 mpSystem->Reset();
                 menuReset = false;
-            }
-
-            if (menuOpenSimulator) {
-                // ToDo: Open simulator here
             }
 
             if (menuShutDown) {

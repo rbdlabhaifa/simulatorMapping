@@ -65,6 +65,9 @@ private:
     MapDrawer* mpMapDrawer;
     Tracking* mpTracker;
 
+    std::vector<cv::Point3d> seen_points;
+    std::vector<cv::Point3d> new_points_seen;
+
     // 1/fps in ms
     double mT;
     float mImageWidth, mImageHeight;
