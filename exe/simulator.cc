@@ -74,21 +74,21 @@ int main() {
             case 's':
                 current_pitch -= 0.05;
                 break;
-            case 65: // up arrow
+            case 'i': // up arrow
                 current_position.y += 0.1 * cos(current_pitch) * cos(current_yaw);
                 current_position.x -= 0.1 * cos(current_pitch) * sin(current_yaw);
                 current_position.z -= 0.1 * sin(current_pitch);
                 break;
-            case 66: // down arrow
+            case 'k': // down arrow
                 current_position.y -= 0.1 * cos(current_pitch) * cos(current_yaw);
                 current_position.x += 0.1 * cos(current_pitch) * sin(current_yaw);
                 current_position.z += 0.1 * sin(current_pitch);
                 break;
-            case 68: // left arrow
+            case 'j': // left arrow
                 current_position.x += 0.1 * cos(current_yaw);
                 current_position.y += 0.1 * sin(current_yaw);
                 break;
-            case 67: // right arrow
+            case 'l': // right arrow
                 current_position.x -= 0.1 * cos(current_yaw);
                 current_position.y -= 0.1 * sin(current_yaw);
                 break;

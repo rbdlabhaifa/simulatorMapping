@@ -51,6 +51,23 @@ namespace ORB_SLAM2 {
         mViewpointF = fSettings["Viewer.ViewpointF"];
         mbReuse = bReuse;
         this->isPangolinExists = isPangolinExists;
+
+        std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+        std::ifstream programData(settingPath);
+        nlohmann::json data;
+        programData >> data;
+        programData.close();
+
+        std::string map_input_dir = data["mapInputDir"];
+        mCloudPoints = map_input_dir + "cloud1.csv";
+
+        mCurrentPosition = cv::Point3d(0, 0, 0);
+        mCurrentYaw = 0;
+        mCurrentPitch = 0;
+        mCurrentRoll = 0;
+
+        mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+        mPointsSeen = std::vector<cv::Point3d>();
     }
 
     void Viewer::Run() {
@@ -81,6 +98,14 @@ namespace ORB_SLAM2 {
         pangolin::Var<bool> menuOpenSimulator("menu.Open Simulator", false, true);
         pangolin::Var<bool> menuReset("menu.Reset", false, false);
         pangolin::Var<bool> menuShutDown("menu.ShutDown", false, false);
+        pangolin::Var<bool> menuMoveLeft("menu.Move Left", false, false);
+        pangolin::Var<bool> menuMoveRight("menu.Move Right", false, false);
+        pangolin::Var<bool> menuMoveDown("menu.Move Down", false, false);
+        pangolin::Var<bool> menuMoveUp("menu.Move Up", false, false);
+        pangolin::Var<bool> menuRotateLeft("menu.Rotate Left", false, false);
+        pangolin::Var<bool> menuRotateRight("menu.Rotate Right", false, false);
+        pangolin::Var<bool> menuRotateDown("menu.Rotate Down", false, false);
+        pangolin::Var<bool> menuRotateUp("menu.Rotate Up", false, false);
 
         // Define Camera Render Object (for view / scene browsing)
         pangolin::OpenGlRenderState s_cam(
@@ -155,18 +180,7 @@ namespace ORB_SLAM2 {
                 }
                 else
                 {
-                    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-                    std::ifstream programData(settingPath);
-                    nlohmann::json data;
-                    programData >> data;
-                    programData.close();
-
-                    std::string map_input_dir = data["mapInputDir"];
-                    const std::string cloud_points = map_input_dir + "cloud1.csv";
-
-                    std::vector<cv::Point3d> seen_points;
-                    std::vector<cv::Point3d> new_points_seen = Auxiliary::getPointsFromPos(cloud_points, cv::Point3d(0, 0, 0), 0, 0, 0);
-                    mpMapDrawer->DrawMapPoints(true, seen_points, new_points_seen);
+                    mpMapDrawer->DrawMapPoints(true, mPointsSeen, mNewPointsSeen);
                 }
                 
             }
@@ -178,6 +192,188 @@ namespace ORB_SLAM2 {
                 cv::Mat im = mpFrameDrawer->DrawFrame();
                 cv::imshow("ORB-SLAM2: Current Frame", im);
                 cv::waitKey(mT);
+            }
+
+            if (menuMoveLeft)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPosition.x += 0.1 * cos(mCurrentYaw);
+                mCurrentPosition.y += 0.1 * sin(mCurrentYaw);
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuMoveLeft = false;
+            }
+
+            if (menuMoveRight)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPosition.x -= 0.1 * cos(mCurrentYaw);
+                mCurrentPosition.y -= 0.1 * sin(mCurrentYaw);
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuMoveRight = false;
+            }
+
+            if (menuMoveDown)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPosition.y -= 0.1 * cos(mCurrentPitch) * cos(mCurrentYaw);
+                mCurrentPosition.x += 0.1 * cos(mCurrentPitch) * sin(mCurrentYaw);
+                mCurrentPosition.z += 0.1 * sin(mCurrentPitch);
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuMoveDown = false;
+            }
+
+            if (menuMoveUp)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPosition.y += 0.1 * cos(mCurrentPitch) * cos(mCurrentYaw);
+                mCurrentPosition.x -= 0.1 * cos(mCurrentPitch) * sin(mCurrentYaw);
+                mCurrentPosition.z -= 0.1 * sin(mCurrentPitch);
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuMoveUp = false;
+            }
+
+            if (menuRotateLeft)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentYaw -= 0.05;
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuRotateLeft = false;
+            }
+
+            if (menuRotateRight)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentYaw += 0.05;
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuRotateRight = false;
+            }
+
+            if (menuRotateDown)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPitch -= 0.05;
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuRotateDown = false;
+            }
+
+            if (menuRotateUp)
+            {
+                mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
+
+                mCurrentPitch += 0.05;
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                std::vector<cv::Point3d>::iterator it;
+                for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
+                {
+                    if (std::find(mPointsSeen.begin(), mPointsSeen.end(), *it) != mPointsSeen.end())
+                    {
+                        it = mNewPointsSeen.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+                menuRotateUp = false;
             }
 
             if (menuReset) {
@@ -193,6 +389,14 @@ namespace ORB_SLAM2 {
                 menuFollowCamera = true;
                 mpSystem->Reset();
                 menuReset = false;
+
+                mCurrentPosition = cv::Point3d(0, 0, 0);
+                mCurrentYaw = 0;
+                mCurrentPitch = 0;
+                mCurrentRoll = 0;
+
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mPointsSeen = std::vector<cv::Point3d>();
             }
 
             if (menuShutDown) {
