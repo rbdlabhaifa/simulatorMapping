@@ -126,8 +126,7 @@ namespace ORB_SLAM2 {
                 bLocalizationMode = false;
             }
 
-            if (!menuOpenSimulator)
-                d_cam.Activate(s_cam);
+            d_cam.Activate(s_cam);
 
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             // mpMapDrawer->DrawCurrentCamera(Twc);

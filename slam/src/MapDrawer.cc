@@ -102,22 +102,23 @@ void MapDrawer::DrawMapPoints(bool is_simulator, std::vector<cv::Point3d> seen_p
     }
     else
     {
+        glPointSize(mPointSize);
         glBegin(GL_POINTS);
-        glColor3d(0.0,0.0,0.0);
+        glColor3f(0.0,0.0,0.0);
 
         for(auto point : seen_points)
         {
-            glVertex3d(point.x, point.y, point.z);
+            glVertex3f((float)point.x, (float)point.y, (float)point.z);
         }
         glEnd();
 
         glPointSize(mPointSize);
         glBegin(GL_POINTS);
-        glColor3d(1.0,0.0,0.0);
+        glColor3f(1.0,0.0,0.0);
 
         for(auto point : new_points_seen)
         {
-            glVertex3d(point.x, point.y, point.z);
+            glVertex3f((float)point.x, (float)point.y, (float)point.z);
 
         }
 
