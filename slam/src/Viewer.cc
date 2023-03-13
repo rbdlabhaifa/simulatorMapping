@@ -68,6 +68,9 @@ namespace ORB_SLAM2 {
 
         mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
         mPointsSeen = std::vector<cv::Point3d>();
+
+        mMovingScale = data["movingScale"];
+        mRotateScale = data["rotateScale"];
     }
 
     void Viewer::Run() {
@@ -198,8 +201,8 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPosition.x += 0.1 * cos(mCurrentYaw);
-                mCurrentPosition.y += 0.1 * sin(mCurrentYaw);
+                mCurrentPosition.x += mMovingScale * cos(mCurrentYaw);
+                mCurrentPosition.y += mMovingScale * sin(mCurrentYaw);
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -221,8 +224,8 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPosition.x -= 0.1 * cos(mCurrentYaw);
-                mCurrentPosition.y -= 0.1 * sin(mCurrentYaw);
+                mCurrentPosition.x -= mMovingScale * cos(mCurrentYaw);
+                mCurrentPosition.y -= mMovingScale * sin(mCurrentYaw);
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -244,9 +247,9 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPosition.y -= 0.1 * cos(mCurrentPitch) * cos(mCurrentYaw);
-                mCurrentPosition.x += 0.1 * cos(mCurrentPitch) * sin(mCurrentYaw);
-                mCurrentPosition.z += 0.1 * sin(mCurrentPitch);
+                mCurrentPosition.y -= mMovingScale * cos(mCurrentPitch) * cos(mCurrentYaw);
+                mCurrentPosition.x += mMovingScale * cos(mCurrentPitch) * sin(mCurrentYaw);
+                mCurrentPosition.z += mMovingScale * sin(mCurrentPitch);
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -268,9 +271,9 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPosition.y += 0.1 * cos(mCurrentPitch) * cos(mCurrentYaw);
-                mCurrentPosition.x -= 0.1 * cos(mCurrentPitch) * sin(mCurrentYaw);
-                mCurrentPosition.z -= 0.1 * sin(mCurrentPitch);
+                mCurrentPosition.y += mMovingScale * cos(mCurrentPitch) * cos(mCurrentYaw);
+                mCurrentPosition.x -= mMovingScale * cos(mCurrentPitch) * sin(mCurrentYaw);
+                mCurrentPosition.z -= mMovingScale * sin(mCurrentPitch);
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -292,7 +295,7 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentYaw -= 0.05;
+                mCurrentYaw -= mRotateScale;
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -314,7 +317,7 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentYaw += 0.05;
+                mCurrentYaw += mRotateScale;
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -336,7 +339,7 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPitch -= 0.05;
+                mCurrentPitch -= mRotateScale;
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;
@@ -358,7 +361,7 @@ namespace ORB_SLAM2 {
             {
                 mPointsSeen.insert(mPointsSeen.end(), mNewPointsSeen.begin(), mNewPointsSeen.end());
 
-                mCurrentPitch += 0.05;
+                mCurrentPitch += mRotateScale;
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
                 std::vector<cv::Point3d>::iterator it;

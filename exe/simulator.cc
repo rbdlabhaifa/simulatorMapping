@@ -60,37 +60,40 @@ int main() {
 
         ch = std::cin.get();
 
+        double rotateScale = data["rotateScale"];
+        double movingScale = data["movingScale"];
+
         // Update position/orientation based on input
         switch(ch) {
             case 'a':
-                current_yaw -= 0.05;
+                current_yaw -= rotateScale;
                 break;
             case 'd':
-                current_yaw += 0.05;
+                current_yaw += rotateScale;
                 break;
             case 'w':
-                current_pitch += 0.05;
+                current_pitch += rotateScale;
                 break;
             case 's':
-                current_pitch -= 0.05;
+                current_pitch -= rotateScale;
                 break;
             case 'i': // up arrow
-                current_position.y += 0.1 * cos(current_pitch) * cos(current_yaw);
-                current_position.x -= 0.1 * cos(current_pitch) * sin(current_yaw);
-                current_position.z -= 0.1 * sin(current_pitch);
+                current_position.y += movingScale * cos(current_pitch) * cos(current_yaw);
+                current_position.x -= movingScale * cos(current_pitch) * sin(current_yaw);
+                current_position.z -= movingScale * sin(current_pitch);
                 break;
             case 'k': // down arrow
-                current_position.y -= 0.1 * cos(current_pitch) * cos(current_yaw);
-                current_position.x += 0.1 * cos(current_pitch) * sin(current_yaw);
-                current_position.z += 0.1 * sin(current_pitch);
+                current_position.y -= movingScale * cos(current_pitch) * cos(current_yaw);
+                current_position.x += movingScale * cos(current_pitch) * sin(current_yaw);
+                current_position.z += movingScale * sin(current_pitch);
                 break;
             case 'j': // left arrow
-                current_position.x += 0.1 * cos(current_yaw);
-                current_position.y += 0.1 * sin(current_yaw);
+                current_position.x += movingScale * cos(current_yaw);
+                current_position.y += movingScale * sin(current_yaw);
                 break;
             case 'l': // right arrow
-                current_position.x -= 0.1 * cos(current_yaw);
-                current_position.y -= 0.1 * sin(current_yaw);
+                current_position.x -= movingScale * cos(current_yaw);
+                current_position.y -= movingScale * sin(current_yaw);
                 break;
         }
 

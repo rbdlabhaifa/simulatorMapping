@@ -21,12 +21,12 @@ int main()
        exit(-1);
     }
 
-    const cv::Point3f camera_position(data["cameraPosX"], data["cameraPosY"], data["cameraPosZ"]);
+    const cv::Point3f camera_position(data["startingCameraPosX"], data["startingCameraPosY"], data["startingCameraPosZ"]);
 
     // Between -180 to 180, yaw
-    double yaw_degree = data["leftToRightDegree"];
+    double yaw_degree = data["yawDegree"];
     // Between -180 to 180, pitch
-    double pitch_degree = data["bottomToUpDegree"];
+    double pitch_degree = data["pitchDegree"];
     // between -180 to 180, roll
     double roll_degree = data["rollDegree"];
 

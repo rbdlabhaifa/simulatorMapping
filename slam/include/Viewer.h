@@ -91,6 +91,7 @@ private:
     cv::Point3d mCurrentPosition;
     double mCurrentYaw, mCurrentPitch, mCurrentRoll;
     std::vector<cv::Point3d> mPointsSeen, mNewPointsSeen;
+    double mMovingScale, mRotateScale;
 };
 
 }

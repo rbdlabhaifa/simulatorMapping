@@ -34,14 +34,14 @@ int main()
     std::string vocPath = data["VocabularyPath"];
     
     // Extract the camera position
-    double x = data["cameraPosX"];
-    double y = data["cameraPosY"];
-    double z = data["cameraPosZ"];
+    double x = data["startingCameraPosX"];
+    double y = data["startingCameraPosY"];
+    double z = data["startingCameraPosZ"];
 
     cv::Point3d camera_position(x, y, z);
 
-    double yaw_rad = data["leftToRightDegree"];
-    double pitch_rad = data["bottomToUpDegree"];
+    double yaw_rad = data["yawDegree"];
+    double pitch_rad = data["pitchDegree"];
     double roll_rad = data["rollDegree"];
 
     double fx = fsSettings["Camera.fx"];
