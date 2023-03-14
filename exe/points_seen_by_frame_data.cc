@@ -45,7 +45,9 @@ int main()
 
     const std::string cloud_points = map_input_dir + "cloud1.csv";
 
-    std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points, camera_position, yaw, pitch, roll);
+    cv::Mat Twc;
+
+    std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points, camera_position, yaw, pitch, roll, Twc);
     
     for(cv::Point3d point: seen_points)
     {

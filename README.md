@@ -21,7 +21,7 @@ I) Change the result of the offline_orb_slam dir to the path and the name you wa
 
 II) Change in generalSettings.json: *mapInputDir* to where the result of the offline saved.
 
-III) Change *startingCameraPosX*, *startingCameraPosY*, *startingCameraPosZ*, *yawDegree*, *pitchDegree* and *rollDegree* to where you want the first position of the simulator to be.
+III) Change *startingCameraPosX*, *startingCameraPosY*, *startingCameraPosZ*, *yawRad*, *pitchRad* and *rollRad* to where you want the first position of the simulator to be.
 
 IV) Change *movingScale* to how much you want to move when press on moving button and *rotateScale* to how much you want to rotate in rotate buttons(in radians)
 

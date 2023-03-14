@@ -173,7 +173,7 @@ std::vector<cv::Point3f> Auxiliary::FilterPointsInView(std::vector<cv::Point3f> 
     return SeenPoints;
 }
 
-std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll)
+std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll, cv::Mat &Twc)
 {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -206,9 +206,9 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
     double maxY = height;
 
     Eigen::Matrix4d Tcw_eigen = Eigen::Matrix4d::Identity();
-    Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) * 
-                             Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-                             Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())).toRotationMatrix();
+    Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(-roll, Eigen::Vector3d::UnitZ()) * 
+                             Eigen::AngleAxisd(-yaw, Eigen::Vector3d::UnitY()) *
+                             Eigen::AngleAxisd(-pitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
     Tcw_eigen.block<3, 1>(0, 3) << camera_position.x, camera_position.y, camera_position.z;
 
     cv::Mat Tcw = cv::Mat::eye(4, 4, CV_64FC1);
@@ -222,6 +222,31 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
     cv::Mat Rwc = Rcw.t();
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat mOw = -Rcw.t()*tcw;
+
+    /* CHECK */
+    Eigen::Matrix4d tmp_Tcw_eigen = Eigen::Matrix4d::Identity();
+    tmp_Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ()) * 
+                             Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitY()) *
+                             Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
+    tmp_Tcw_eigen.block<3, 1>(0, 3) << camera_position.x, camera_position.y, camera_position.z;
+
+    cv::Mat tmpTcw = cv::Mat::eye(4, 4, CV_64FC1);
+    for(int i=0;i<4;i++){
+        for(int j=0;j<4;j++){
+            tmpTcw.at<double>(i,j) = tmp_Tcw_eigen(i,j);
+        }
+    }
+
+    cv::Mat tmpRcw = tmpTcw.rowRange(0,3).colRange(0,3);
+    cv::Mat tmpRwc = tmpRcw.t();
+    cv::Mat tmptcw = tmpTcw.rowRange(0,3).col(3);
+    cv::Mat tmpMOw = -tmpRcw.t()*tmptcw;
+
+    Twc = cv::Mat::eye(4,4,tmpTcw.type());
+    tmpRwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
+    tmpMOw.copyTo(Twc.rowRange(0,3).col(3));
+
+    /* END OF CHECK */
 
     std::vector<cv::Vec<double, 8>> points;
 

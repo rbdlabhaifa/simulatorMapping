@@ -52,7 +52,9 @@ int main()
         double pitch = stod(row[5]);
         double roll = stod(row[6]);
 
-        std::vector<cv::Point3d> new_points = Auxiliary::getPointsFromPos(cloud_points, camera_position, yaw, pitch, roll);
+        cv::Mat Twc;
+
+        std::vector<cv::Point3d> new_points = Auxiliary::getPointsFromPos(cloud_points, camera_position, yaw, pitch, roll, Twc);
 
         Auxiliary::add_unique_points(seen_points, new_points);
     }

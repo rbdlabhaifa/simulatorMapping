@@ -61,12 +61,15 @@ namespace ORB_SLAM2 {
         std::string map_input_dir = data["mapInputDir"];
         mCloudPoints = map_input_dir + "cloud1.csv";
 
-        mCurrentPosition = cv::Point3d(0, 0, 0);
-        mCurrentYaw = 0;
-        mCurrentPitch = 0;
-        mCurrentRoll = 0;
+        double startPointX = data["startingCameraPosX"];
+        double startPointY = data["startingCameraPosY"];
+        double startPointZ = data["startingCameraPosZ"];
+        mCurrentPosition = cv::Point3d(startPointX, startPointY, startPointZ);
+        mCurrentYaw = data["yawRad"];
+        mCurrentPitch = data["pitchRad"];
+        mCurrentRoll = data["rollRad"];
 
-        mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+        mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
         mPointsSeen = std::vector<cv::Point3d>();
 
         mMovingScale = data["movingScale"];
@@ -133,16 +136,37 @@ namespace ORB_SLAM2 {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             if (!menuOpenSimulator)
+            {
                 mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc);
+            }
+            else
+            {
+                Twc.m[0] = mTwc.at<double>(0, 0);
+                Twc.m[1] = mTwc.at<double>(0, 1);
+                Twc.m[2] = mTwc.at<double>(0, 2);
+                Twc.m[3] = mTwc.at<double>(0, 3);
+                Twc.m[4] = mTwc.at<double>(1, 0);
+                Twc.m[5] = mTwc.at<double>(1, 1);
+                Twc.m[6] = mTwc.at<double>(1, 2);
+                Twc.m[7] = mTwc.at<double>(1, 3);
+                Twc.m[8] = mTwc.at<double>(2, 0);
+                Twc.m[9] = mTwc.at<double>(2, 1);
+                Twc.m[10] = mTwc.at<double>(2, 2);
+                Twc.m[11] = mTwc.at<double>(2, 3);
+                Twc.m[12] = mTwc.at<double>(3, 0);
+                Twc.m[13] = mTwc.at<double>(3, 1);
+                Twc.m[14] = mTwc.at<double>(3, 2);
+                Twc.m[15] = mTwc.at<double>(3, 3);
+            }
 
-            if (!menuOpenSimulator && menuFollowCamera && bFollow) {
+            if (menuFollowCamera && bFollow) {
                 s_cam.Follow(Twc);
-            } else if (!menuOpenSimulator && menuFollowCamera && !bFollow) {
+            } else if (menuFollowCamera && !bFollow) {
                 s_cam.SetModelViewMatrix(
                         pangolin::ModelViewLookAt(mViewpointX, mViewpointY, mViewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
                 s_cam.Follow(Twc);
                 bFollow = true;
-            } else if (!menuOpenSimulator && !menuFollowCamera && bFollow) {
+            } else if (!menuFollowCamera && bFollow) {
                 bFollow = false;
             }
 
@@ -204,7 +228,7 @@ namespace ORB_SLAM2 {
                 mCurrentPosition.x += mMovingScale * cos(mCurrentYaw);
                 mCurrentPosition.y += mMovingScale * sin(mCurrentYaw);
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -227,7 +251,7 @@ namespace ORB_SLAM2 {
                 mCurrentPosition.x -= mMovingScale * cos(mCurrentYaw);
                 mCurrentPosition.y -= mMovingScale * sin(mCurrentYaw);
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -251,7 +275,7 @@ namespace ORB_SLAM2 {
                 mCurrentPosition.x += mMovingScale * cos(mCurrentPitch) * sin(mCurrentYaw);
                 mCurrentPosition.z += mMovingScale * sin(mCurrentPitch);
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -275,7 +299,7 @@ namespace ORB_SLAM2 {
                 mCurrentPosition.x -= mMovingScale * cos(mCurrentPitch) * sin(mCurrentYaw);
                 mCurrentPosition.z -= mMovingScale * sin(mCurrentPitch);
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -297,7 +321,7 @@ namespace ORB_SLAM2 {
 
                 mCurrentYaw -= mRotateScale;
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -319,7 +343,7 @@ namespace ORB_SLAM2 {
 
                 mCurrentYaw += mRotateScale;
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -341,7 +365,7 @@ namespace ORB_SLAM2 {
 
                 mCurrentPitch -= mRotateScale;
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -363,7 +387,7 @@ namespace ORB_SLAM2 {
 
                 mCurrentPitch += mRotateScale;
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
@@ -398,7 +422,7 @@ namespace ORB_SLAM2 {
                 mCurrentPitch = 0;
                 mCurrentRoll = 0;
 
-                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll);
+                mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
                 mPointsSeen = std::vector<cv::Point3d>();
             }
 

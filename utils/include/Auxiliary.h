@@ -38,7 +38,7 @@ public:
 
     static std::vector<cv::Point3f> FilterPointsInView(std::vector<cv::Point3f> points, cv::Point3f cam_pos, cv::Vec3f cam_angle, cv::Vec3f focal);
 
-    static std::vector<cv::Point3d> getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll);
+    static std::vector<cv::Point3d> getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll, cv::Mat &Twc);
 
     static std::vector<std::string> GetAllFrameDatas();
 

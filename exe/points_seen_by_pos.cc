@@ -40,9 +40,9 @@ int main()
 
     cv::Point3d camera_position(x, y, z);
 
-    double yaw_rad = data["yawDegree"];
-    double pitch_rad = data["pitchDegree"];
-    double roll_rad = data["rollDegree"];
+    double yaw_rad = data["yawRad"];
+    double pitch_rad = data["pitchRad"];
+    double roll_rad = data["rollRad"];
 
     double fx = fsSettings["Camera.fx"];
     double fy = fsSettings["Camera.fy"];
