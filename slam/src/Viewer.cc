@@ -141,22 +141,18 @@ namespace ORB_SLAM2 {
             }
             else
             {
-                Twc.m[0] = mTwc.at<double>(0, 0);
-                Twc.m[1] = mTwc.at<double>(0, 1);
-                Twc.m[2] = mTwc.at<double>(0, 2);
-                Twc.m[3] = mTwc.at<double>(0, 3);
-                Twc.m[4] = mTwc.at<double>(1, 0);
-                Twc.m[5] = mTwc.at<double>(1, 1);
-                Twc.m[6] = mTwc.at<double>(1, 2);
-                Twc.m[7] = mTwc.at<double>(1, 3);
-                Twc.m[8] = mTwc.at<double>(2, 0);
-                Twc.m[9] = mTwc.at<double>(2, 1);
-                Twc.m[10] = mTwc.at<double>(2, 2);
-                Twc.m[11] = mTwc.at<double>(2, 3);
-                Twc.m[12] = mTwc.at<double>(3, 0);
-                Twc.m[13] = mTwc.at<double>(3, 1);
-                Twc.m[14] = mTwc.at<double>(3, 2);
-                Twc.m[15] = mTwc.at<double>(3, 3);
+                Twc.m[0] = (float)mTwc.at<double>(0);
+                Twc.m[1] = (float)mTwc.at<double>(1);
+                Twc.m[2] = (float)mTwc.at<double>(2);
+                Twc.m[4] = (float)mTwc.at<double>(4);
+                Twc.m[5] = (float)mTwc.at<double>(5);
+                Twc.m[6] = (float)mTwc.at<double>(6);
+                Twc.m[8] = (float)mTwc.at<double>(8);
+                Twc.m[9] = (float)mTwc.at<double>(9);
+                Twc.m[10] = (float)mTwc.at<double>(10);
+                Twc.m[12] = (float)mTwc.at<double>(12);
+                Twc.m[13] = (float)mTwc.at<double>(13);
+                Twc.m[14] = (float)mTwc.at<double>(14);
             }
 
             if (menuFollowCamera && bFollow) {

@@ -223,7 +223,7 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat mOw = -Rcw.t()*tcw;
 
-    /* CHECK */
+    /* Create Matrix for s_cam */
     Eigen::Matrix4d tmp_Tcw_eigen = Eigen::Matrix4d::Identity();
     tmp_Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ()) * 
                              Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitY()) *
@@ -246,7 +246,7 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
     tmpRwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
     tmpMOw.copyTo(Twc.rowRange(0,3).col(3));
 
-    /* END OF CHECK */
+    /* End create Matrix for s_cam */
 
     std::vector<cv::Vec<double, 8>> points;
 
