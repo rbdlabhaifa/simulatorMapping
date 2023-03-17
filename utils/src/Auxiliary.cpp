@@ -209,7 +209,7 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
     Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(-roll, Eigen::Vector3d::UnitZ()) * 
                              Eigen::AngleAxisd(-yaw, Eigen::Vector3d::UnitY()) *
                              Eigen::AngleAxisd(-pitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
-    Tcw_eigen.block<3, 1>(0, 3) << camera_position.x, camera_position.y, camera_position.z;
+    Tcw_eigen.block<3, 1>(0, 3) << -camera_position.x, camera_position.y, -camera_position.z;
 
     cv::Mat Tcw = cv::Mat::eye(4, 4, CV_64FC1);
     for(int i=0;i<4;i++){
