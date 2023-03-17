@@ -244,7 +244,9 @@ std::vector<cv::Point3d> Auxiliary::getPointsFromPos(const std::string cloud_poi
 
     Twc = cv::Mat::eye(4,4,tmpTcw.type());
     tmpRwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
-    tmpMOw.copyTo(Twc.rowRange(0,3).col(3));
+    Twc.at<double>(12) = tmpMOw.at<double>(0);
+    Twc.at<double>(13) = tmpMOw.at<double>(1);
+    Twc.at<double>(14) = tmpMOw.at<double>(2);
 
     /* End create Matrix for s_cam */
 
