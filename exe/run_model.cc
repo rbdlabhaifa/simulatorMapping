@@ -12,10 +12,8 @@
 #include <pangolin/geometry/geometry_ply.h>
 #include <pangolin/geometry/glgeometry.h>
 
-#include <pangolin/utils/argagg.hpp>
-
 #include "include/run_model/TextureShader.h"
-#include "include/run_model/util.h"
+#include "include/Auxiliary.h"
 
 #include <Eigen/SVD>
 #include <Eigen/Geometry>
@@ -34,154 +32,7 @@
 #define ROLL_OFFSET 0.95
 #define SCALE_FACTOR 1
 
-std::vector<cv::Point3d>
-getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch,
-                 double roll, cv::Mat &Twc) {
-    double fx = 620;
-    double fy = 620;
-    double cx = 320;
-    double cy = 244;
-    int width = 640;
-    int height = 480;
-
-    double minX = 3.7;
-    double maxX = width;
-    double minY = 3.7;
-    double maxY = height;
-
-    Eigen::Matrix4d Tcw_eigen = Eigen::Matrix4d::Identity();
-    Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(-roll, Eigen::Vector3d::UnitZ()) *
-                                   Eigen::AngleAxisd(-yaw, Eigen::Vector3d::UnitY()) *
-                                   Eigen::AngleAxisd(-pitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
-    Tcw_eigen.block<3, 1>(0, 3) << -camera_position.x, camera_position.y, -camera_position.z;
-
-    cv::Mat Tcw = cv::Mat::eye(4, 4, CV_64FC1);
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            Tcw.at<double>(i, j) = Tcw_eigen(i, j);
-        }
-    }
-
-    cv::Mat Rcw = Tcw.rowRange(0, 3).colRange(0, 3);
-    cv::Mat Rwc = Rcw.t();
-    cv::Mat tcw = Tcw.rowRange(0, 3).col(3);
-    cv::Mat mOw = -Rcw.t() * tcw;
-
-    /* Create Matrix for s_cam */
-    Eigen::Matrix4d tmp_Tcw_eigen = Eigen::Matrix4d::Identity();
-    tmp_Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitZ()) *
-                                       Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitY()) *
-                                       Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
-    tmp_Tcw_eigen.block<3, 1>(0, 3) << camera_position.x, camera_position.y, camera_position.z;
-
-    cv::Mat tmpTcw = cv::Mat::eye(4, 4, CV_64FC1);
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            tmpTcw.at<double>(i, j) = tmp_Tcw_eigen(i, j);
-        }
-    }
-
-    cv::Mat tmpRcw = tmpTcw.rowRange(0, 3).colRange(0, 3);
-    cv::Mat tmpRwc = tmpRcw.t();
-    cv::Mat tmptcw = tmpTcw.rowRange(0, 3).col(3);
-    cv::Mat tmpMOw = -tmpRcw.t() * tmptcw;
-
-    Twc = cv::Mat::eye(4, 4, tmpTcw.type());
-    tmpRwc.copyTo(Twc.rowRange(0, 3).colRange(0, 3));
-    Twc.at<double>(12) = mOw.at<double>(0);
-    Twc.at<double>(13) = mOw.at<double>(1);
-    Twc.at<double>(14) = mOw.at<double>(2);
-
-    /* End create Matrix for s_cam */
-
-    std::vector<cv::Vec<double, 8>> points;
-
-    std::ifstream pointData;
-    std::vector<std::string> row;
-    std::string line, word, temp;
-
-    pointData.open(cloud_points, std::ios::in);
-
-    while (!pointData.eof()) {
-        row.clear();
-
-        std::getline(pointData, line);
-
-        std::stringstream words(line);
-
-        if (line == "") {
-            continue;
-        }
-
-        while (std::getline(words, word, ',')) {
-            try {
-                std::stod(word);
-            }
-            catch (std::out_of_range) {
-                word = "0";
-            }
-            row.push_back(word);
-        }
-        points.push_back(cv::Vec<double, 8>(std::stod(row[0]), std::stod(row[1]), std::stod(row[2]), std::stod(row[3]),
-                                            std::stod(row[4]), std::stod(row[5]), std::stod(row[6]),
-                                            std::stod(row[7])));
-    }
-    pointData.close();
-
-    std::vector<cv::Point3d> seen_points;
-
-    for (cv::Vec<double, 8> point: points) {
-        cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
-        worldPos.at<double>(0) = point[0];
-        worldPos.at<double>(1) = point[1];
-        worldPos.at<double>(2) = point[2];
-
-        const cv::Mat Pc = Rcw * worldPos + tcw;
-        const double &PcX = Pc.at<double>(0);
-        const double &PcY = Pc.at<double>(1);
-        const double &PcZ = Pc.at<double>(2);
-
-        // Check positive depth
-        if (PcZ < 0.0f)
-            continue;
-
-        // Project in image and check it is not outside
-        const double invz = 1.0f / PcZ;
-        const double u = fx * PcX * invz + cx;
-        const double v = fy * PcY * invz + cy;
-
-        if (u < minX || u > maxX)
-            continue;
-        if (v < minY || v > maxY)
-            continue;
-
-        // Check distance is in the scale invariance region of the MapPoint
-        const double minDistance = point[3];
-        const double maxDistance = point[4];
-        const cv::Mat PO = worldPos - mOw;
-        const double dist = cv::norm(PO);
-
-        if (dist < minDistance || dist > maxDistance)
-            continue;
-
-        // Check viewing angle
-        cv::Mat Pn = cv::Mat(3, 1, CV_64F);
-        Pn.at<double>(0) = point[5];
-        Pn.at<double>(1) = point[6];
-        Pn.at<double>(2) = point[7];
-
-        const double viewCos = PO.dot(Pn) / dist;
-
-        if (viewCos < 0.5)
-            continue;
-
-        seen_points.push_back(cv::Point3d(worldPos.at<double>(0), worldPos.at<double>(1), worldPos.at<double>(2)));
-    }
-
-    return seen_points;
-}
-
-void drawMapPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
+void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
     glPointSize(POINT_SIZE);
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
@@ -212,39 +63,19 @@ int main(int argc, char **argv) {
 
     using namespace pangolin;
 
-    argagg::parser argparser{{
-                                     {"help", {"-h", "--help"}, "Print usage information and exit.", 0},
-                                     {"model", {"-m", "--model", "--mesh"}, "3D Model to load (obj or ply)", 1},
-                                     {"matcap", {"--matcap"}, "Matcap (material capture) images to load for shading",
-                                      1},
-                                     {"envmap", {"--envmap", "-e"}, "Equirect environment map for skybox", 1},
-                                     {"mode", {"--mode"},
-                                      "Render mode to use {show_uv, show_texture, show_color, show_normal, show_matcap, show_vertex}",
-                                      1},
-                                     {"bounds", {"--aabb"}, "Show axis-aligned bounding-box", 0},
-                                     {"show_axis", {"--axis"}, "Show axis coordinates for Origin", 0},
-                                     {"show_x0", {"--x0"}, "Show X=0 Plane", 0},
-                                     {"show_y0", {"--y0"}, "Show Y=0 Plane", 0},
-                                     {"show_z0", {"--z0"}, "Show Z=0 Plane", 0},
-                                     {"cull_backfaces", {"--cull"}, "Enable backface culling", 0},
-                                     {"spin", {"--spin"},
-                                      "Spin models around an axis {none, negx, x, negy, y, negz, z}", 1},
-                             }};
-
-    argagg::parser_results args = argparser.parse(argc, argv);
-    if ((bool) args["help"] || !args.has_option("model")) {
-        std::cerr << "usage: ModelViewer [options]" << std::endl
-                  << argparser << std::endl;
-        return 0;
-    }
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
 
     // Options
-    bool show_bounds = args.has_option("bounds");
-    bool show_axis = args.has_option("show_axis");
-    bool show_x0 = args.has_option("show_x0");
-    bool show_y0 = args.has_option("show_y0");
-    bool show_z0 = args.has_option("show_z0");
-    bool cull_backfaces = args.has_option("cull_backfaces");
+    bool show_bounds = false;
+    bool show_axis = false;
+    bool show_x0 = false;
+    bool show_y0 = false;
+    bool show_z0 = false;
+    bool cull_backfaces = false;
     // Create Window for rendering
     pangolin::CreateWindowAndBind("Main", w, h);
     glEnable(GL_DEPTH_TEST);
@@ -262,7 +93,8 @@ int main(int argc, char **argv) {
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
-    const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(ExpandGlobOption(args["model"])[0]);
+    std::string model_path = data["model_path"];
+    const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
@@ -347,12 +179,13 @@ int main(int argc, char **argv) {
 
             glDisable(GL_CULL_FACE);
 
-//            std::vector<cv::Point3d> seen_points = getPointsFromPos(
-//                    "/home/liam/dev/rbd/slamMaps/example_mapping11/cloud1.csv",
-//                    cv::Point3d(cam_pos[0] * SCALE_FACTOR + X_OFFSET, cam_pos[1] * SCALE_FACTOR + Y_OFFSET,
-//                                cam_pos[2] * SCALE_FACTOR + Z_OFFSET), yaw + YAW_OFFSET, pitch + PITCH_OFFSET,
-//                    roll + ROLL_OFFSET, Twc);
-//            drawMapPoints(std::vector<cv::Point3d>(), seen_points);
+            std::string map_input_dir = data["mapInputDir"];
+            const std::string cloud_points = map_input_dir + "cloud1.csv";
+            std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points,
+                   cv::Point3d(cam_pos[0] * SCALE_FACTOR + X_OFFSET, cam_pos[1] * SCALE_FACTOR + Y_OFFSET,
+                               cam_pos[2] * SCALE_FACTOR + Z_OFFSET),
+                               yaw + YAW_OFFSET, pitch + PITCH_OFFSET, roll + ROLL_OFFSET, Twc);
+            drawPoints(std::vector<cv::Point3d>(), seen_points);
         }
 
         pangolin::FinishFrame();
