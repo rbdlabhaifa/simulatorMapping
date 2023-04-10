@@ -24,6 +24,14 @@
   "rollRad": 0,
   "movingScale": 0.2,
   "rotateScale": 0.2,
-  "model_path": "~/Downloads/aaa/untitled.obj"
+  "modelPath": "~/Downloads/aaa/untitled.obj",
+  "pointSize": 200,
+  "xOffset": 0.1885,
+  "yOffset": -0.03,
+  "zOffset": -0.135,
+  "yawOffset": -0.1,
+  "pitchOffset": 1.5,
+  "rollOffset": -0.1,
+  "scaleFactor": 0.0305
 }
 

@@ -22,39 +22,43 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 
-#define POINT_SIZE 2
-
-#define X_OFFSET -5.7
-#define Y_OFFSET -0.8
-#define Z_OFFSET -1.04
-#define YAW_OFFSET -2.56
-#define PITCH_OFFSET 1.12
-#define ROLL_OFFSET 0.95
-#define SCALE_FACTOR 1
 
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
-    glPointSize(POINT_SIZE);
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
+
+    const int point_size = data["pointSize"];
+    const float x_offset = data["xOffset"];
+    const float y_offset = data["yOffset"];
+    const float z_offset = data["zOffset"];
+    const float scale_factor = data["scaleFactor"];
+
+    glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
 
     for (auto point: seen_points) {
-        glVertex3f((float) point.x * SCALE_FACTOR + X_OFFSET, (float) point.y * SCALE_FACTOR + Y_OFFSET,
-                   (float) point.z * SCALE_FACTOR + Z_OFFSET);
+        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
+                   (float) ((point.z - z_offset) / scale_factor));
     }
     glEnd();
 
-    glPointSize(POINT_SIZE);
+    glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(1.0, 0.0, 0.0);
 
     for (auto point: new_points_seen) {
-        glVertex3f((float) point.x * SCALE_FACTOR + X_OFFSET, (float) point.y * SCALE_FACTOR + Y_OFFSET,
-                   (float) point.z * SCALE_FACTOR + Z_OFFSET);
-
+        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
+                   (float) ((point.z - z_offset) / scale_factor));
     }
+    std::cout << new_points_seen.size() << std::endl;
 
     glEnd();
 }
+
 
 int main(int argc, char **argv) {
     const float w = 640.0f;
@@ -76,6 +80,7 @@ int main(int argc, char **argv) {
     bool show_y0 = false;
     bool show_z0 = false;
     bool cull_backfaces = false;
+
     // Create Window for rendering
     pangolin::CreateWindowAndBind("Main", w, h);
     glEnable(GL_DEPTH_TEST);
@@ -93,7 +98,7 @@ int main(int argc, char **argv) {
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
-    std::string model_path = data["model_path"];
+    std::string model_path = data["modelPath"];
     const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
@@ -111,7 +116,6 @@ int main(int argc, char **argv) {
     s_cam.SetProjectionMatrix(proj);
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     // Render tree for holding object position
-    pangolin::AxisDirection spin_other = pangolin::AxisNone;
     pangolin::GlSlProgram default_prog;
     auto LoadProgram = [&]() {
         default_prog.ClearShaders();
@@ -131,7 +135,6 @@ int main(int argc, char **argv) {
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
     cv::Mat Twc;
-    default_prog.Bind();
 
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -151,10 +154,10 @@ int main(int argc, char **argv) {
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_BACK);
             }
+            default_prog.Bind();
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
-            pangolin::GlDraw( default_prog, geomToRender );
-            // std::cout << "Projection Matrix: " << s_cam.GetProjectionMatrix() << std::endl;
-            // std::cout << "Model View Matrix: " << s_cam.GetModelViewMatrix() << std::endl;
+            pangolin::GlDraw( default_prog, geomToRender);
+            default_prog.Unbind();
             Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();
 
             // Compute the camera position by inverting the model-view matrix and extracting the translation component
@@ -181,16 +184,23 @@ int main(int argc, char **argv) {
 
             std::string map_input_dir = data["mapInputDir"];
             const std::string cloud_points = map_input_dir + "cloud1.csv";
+            const float x_offset = data["xOffset"];
+            const float y_offset = data["yOffset"];
+            const float z_offset = data["zOffset"];
+            const float yaw_offset = data["yawOffset"];
+            const float pitch_offset = data["pitchOffset"];
+            const float roll_offset = data["rollOffset"];
+            const float scale_factor = data["scaleFactor"];
+
             std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points,
-                   cv::Point3d(cam_pos[0] * SCALE_FACTOR + X_OFFSET, cam_pos[1] * SCALE_FACTOR + Y_OFFSET,
-                               cam_pos[2] * SCALE_FACTOR + Z_OFFSET),
-                               yaw + YAW_OFFSET, pitch + PITCH_OFFSET, roll + ROLL_OFFSET, Twc);
+                   cv::Point3d(cam_pos[0] * scale_factor + x_offset, cam_pos[1] * scale_factor + y_offset,
+                               cam_pos[2] * scale_factor + z_offset),
+                               yaw + yaw_offset, pitch + pitch_offset, roll + roll_offset, Twc);
             drawPoints(std::vector<cv::Point3d>(), seen_points);
         }
 
         pangolin::FinishFrame();
     }
-    default_prog.Unbind();
 
     return 0;
 }
