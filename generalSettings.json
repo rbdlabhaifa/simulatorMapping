@@ -23,6 +23,7 @@
   "pitchRad": 0,
   "rollRad": 0,
   "movingScale": 0.2,
-  "rotateScale": 0.2
+  "rotateScale": 0.2,
+  "model_path": "~/Downloads/aaa/untitled.obj"
 }
 

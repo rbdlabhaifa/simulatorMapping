@@ -144,3 +144,6 @@ target_link_libraries(mapping ${PROJECT_NAME})
 
 add_executable(simulator exe/simulator.cc)
 target_link_libraries(simulator ${PROJECT_NAME})
+
+add_executable(run_model exe/run_model.cc)
+target_link_libraries(run_model ${PROJECT_NAME})

@@ -296,6 +296,7 @@ namespace ORB_SLAM2 {
                 mCurrentYaw -= mRotateScale;
 
                 mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
+                std::cout << "Current Pos: " << mCurrentPosition << ", yaw: " << mCurrentYaw << ", pitch: " << mCurrentPitch << ", roll: " << mCurrentRoll << std::endl;
                 std::vector<cv::Point3d>::iterator it;
                 for (it = mNewPointsSeen.begin(); it != mNewPointsSeen.end();)
                 {
