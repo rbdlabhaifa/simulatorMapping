@@ -63,7 +63,6 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
 int main(int argc, char **argv) {
     const float w = 640.0f;
     const float h = 480.0f;
-    const float f = 300.0f;
 
     using namespace pangolin;
 
@@ -72,6 +71,22 @@ int main(int argc, char **argv) {
     nlohmann::json data;
     programData >> data;
     programData.close();
+
+    std::string configPath = data["DroneYamlPathSlam"];
+    cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
+    
+    float fx = fSettings["Camera.fx"];
+    float fy = fSettings["Camera.fy"];
+    float cx = fSettings["Camera.cx"];
+    float cy = fSettings["Camera.cy"];
+    float viewpointX = fSettings["Viewer.ViewpointX"];
+    float viewpointY = fSettings["Viewer.ViewpointY"];
+    float viewpointZ = fSettings["Viewer.ViewpointZ"];
+
+    Eigen::Matrix3d K;
+    K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
+    Eigen::Vector2i viewport_size(640, 480);
+
 
     // Options
     bool show_bounds = false;
@@ -87,8 +102,8 @@ int main(int argc, char **argv) {
 
     // Define Projection and initial ModelView matrix
     pangolin::OpenGlRenderState s_cam(
-            pangolin::ProjectionMatrix(w, h, f, f, w / 2.0, h / 2.0, 0.1, 1000),
-            pangolin::ModelViewLookAt(1.0, 1.0, 1.0, 0.0, 0.0, 0.0, pangolin::AxisY)
+            pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000),
+            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, 0.0)
     );
 
     // Create Interactive View in window
@@ -103,15 +118,8 @@ int main(int argc, char **argv) {
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const Eigen::Vector3f center = total_aabb.center();
-    const Eigen::Vector3f view = center + Eigen::Vector3f(1.2, 0.8, 1.2) *
-                                          std::max((total_aabb.max() - center).norm(),
-                                                   (center - total_aabb.min()).norm());
-    const auto mvm = pangolin::ModelViewLookAt(view[0], view[1], view[2], center[0], center[1], center[2],
-                                               pangolin::AxisY);
-    const double far = 100.0 * (total_aabb.max() - total_aabb.min()).norm();
-    const double near = far / 1e6;
-    const auto proj = pangolin::ProjectionMatrix(w, h, f, f, w / 2.0, h / 2.0, near, far);
+    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, 0.0);
+    const auto proj = pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000);
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
