@@ -25,13 +25,13 @@
   "movingScale": 0.2,
   "rotateScale": 0.2,
   "modelPath": "~/Downloads/aaa/untitled.obj",
-  "pointSize": 200,
-  "xOffset": 0.1885,
-  "yOffset": -0.03,
-  "zOffset": -0.135,
-  "yawOffset": -0.1,
-  "pitchOffset": 1.5,
-  "rollOffset": -0.1,
+  "pointSize": 10,
+  "xOffset": 0.0696954,
+  "yOffset": 0.232057,
+  "zOffset": 2.83821,
+  "yawOffset": 0.004893,
+  "pitchOffset": -0.35643,
+  "rollOffset": -0.0139628,
   "scaleFactor": 0.0305
 }
 

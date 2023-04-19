@@ -126,4 +126,9 @@ Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500
 
+RunModel.ViewpointX: -0.3
+RunModel.ViewpointY: 0.5
+RunModel.ViewpointZ: -1.8
+RunModel.ViewpointF: 500
+
 

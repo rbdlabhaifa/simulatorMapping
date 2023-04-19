@@ -79,9 +79,9 @@ int main(int argc, char **argv) {
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
-    float viewpointX = fSettings["Viewer.ViewpointX"];
-    float viewpointY = fSettings["Viewer.ViewpointY"];
-    float viewpointZ = fSettings["Viewer.ViewpointZ"];
+    float viewpointX = fSettings["RunModel.ViewpointX"];
+    float viewpointY = fSettings["RunModel.ViewpointY"];
+    float viewpointZ = fSettings["RunModel.ViewpointZ"];
 
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     // Define Projection and initial ModelView matrix
     pangolin::OpenGlRenderState s_cam(
             pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000),
-            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, 0.0)
+            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY)
     );
 
     // Create Interactive View in window
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, 0.0);
+    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
     const auto proj = pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000);
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
