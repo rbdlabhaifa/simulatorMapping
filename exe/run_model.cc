@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
             }
             default_prog.Bind();
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
-            pangolin::GlDraw( default_prog, geomToRender);
+            pangolin::GlDraw( default_prog, geomToRender, nullptr);
             default_prog.Unbind();
             Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();
 
