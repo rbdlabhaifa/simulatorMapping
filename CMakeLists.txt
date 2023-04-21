@@ -150,3 +150,6 @@ target_link_libraries(run_model ${PROJECT_NAME})
 
 add_executable(get_pos_from_frame_orb_slam exe/get_pos_from_frame_orb_slam.cc)
 target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
+
+add_executable(check_matches exe/check_matches.cc)
+target_link_libraries(check_matches ${PROJECT_NAME})
