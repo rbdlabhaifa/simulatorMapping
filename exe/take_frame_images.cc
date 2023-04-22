@@ -22,65 +22,39 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 
-void writeMatrixToCsv(Eigen::Matrix4d mv_mat, nlohmann::json data)
+Eigen::Matrix4d read_matrix_from_csv(nlohmann::json data)
 {
+    Eigen::Matrix4d matrix;
+
     std::string frame_csv_name = std::string(data["framesOutput"]) + "frame_%.csv";
-    std::ofstream frame_csv(frame_csv_name, std::ios::trunc);
+    std::ifstream frame_csv(frame_csv_name);
 
     if (!frame_csv.is_open()) {
-        std::cerr << "Error: could not open file '" << frame_csv_name << "' for writing." << std::endl;
-        return;
+        std::cerr << "Error: could not open file '" << frame_csv_name << "' for reading." << std::endl;
+        return matrix;
     }
 
-    for (int i = 0; i < mv_mat.rows(); i++) {
-        for (int j = 0; j < mv_mat.cols(); j++) {
-            frame_csv << mv_mat(i, j) << ",";
+    // Read matrix elements from file
+    std::string line;
+    int row = 0;
+    while (std::getline(frame_csv, line) && row < 4) {
+        std::stringstream line_stream(line);
+        std::string cell;
+        int col = 0;
+        while (std::getline(line_stream, cell, ',') && col < 4) {
+            matrix(row, col) = std::stod(cell);
+            col++;
         }
-        frame_csv << std::endl;
+        row++;
     }
+
     frame_csv.close();
-}
 
-void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-    std::ifstream programData(settingPath);
-    nlohmann::json data;
-    programData >> data;
-    programData.close();
-
-    const int point_size = data["pointSize"];
-    const float x_offset = data["xOffset"];
-    const float y_offset = data["yOffset"];
-    const float z_offset = data["zOffset"];
-    const float scale_factor = data["scaleFactor"];
-
-    glPointSize(point_size);
-    glBegin(GL_POINTS);
-    glColor3f(0.0, 0.0, 0.0);
-
-    for (auto point: seen_points) {
-        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
-                   (float) ((point.z - z_offset) / scale_factor));
-    }
-    glEnd();
-
-    glPointSize(point_size);
-    glBegin(GL_POINTS);
-    glColor3f(1.0, 0.0, 0.0);
-
-    for (auto point: new_points_seen) {
-        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
-                   (float) ((point.z - z_offset) / scale_factor));
-    }
-    std::cout << new_points_seen.size() << std::endl;
-
-    glEnd();
+    return matrix;
 }
 
 
 int main(int argc, char **argv) {
-    const float w = 640.0f;
-    const float h = 480.0f;
 
     using namespace pangolin;
 
@@ -92,6 +66,8 @@ int main(int argc, char **argv) {
 
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
+
+    Eigen::Matrix4d mv_mat = read_matrix_from_csv(data);
     
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -103,7 +79,7 @@ int main(int argc, char **argv) {
 
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-    Eigen::Vector2i viewport_size(640, 480);
+    Eigen::Vector2f viewport_size(fSettings["Camera.width"], fSettings["Camera.height"]);
 
 
     // Options
@@ -115,7 +91,7 @@ int main(int argc, char **argv) {
     bool cull_backfaces = false;
 
     // Create Window for rendering
-    pangolin::CreateWindowAndBind("Main", w, h);
+    pangolin::CreateWindowAndBind("Main", viewport_size[0], viewport_size[1]);
     glEnable(GL_DEPTH_TEST);
 
     // Define Projection and initial ModelView matrix
@@ -127,7 +103,7 @@ int main(int argc, char **argv) {
     // Create Interactive View in window
     pangolin::Handler3D handler(s_cam);
     pangolin::View &d_cam = pangolin::CreateDisplay()
-            .SetBounds(0.0, 1.0, 0.0, 1.0, -w / h)
+            .SetBounds(0.0, 1.0, 0.0, 1.0, -viewport_size[0] / viewport_size[1])
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
@@ -136,9 +112,8 @@ int main(int argc, char **argv) {
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
     const auto proj = pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000);
-    s_cam.SetModelViewMatrix(mvm);
+    s_cam.SetModelViewMatrix(mv_mat);
     s_cam.SetProjectionMatrix(proj);
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     // Render tree for holding object position
@@ -160,7 +135,7 @@ int main(int argc, char **argv) {
 
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
-    cv::Mat Twc;
+    cv::Mat img;
 
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -184,58 +159,29 @@ int main(int argc, char **argv) {
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
             pangolin::GlDraw( default_prog, geomToRender, nullptr);
             default_prog.Unbind();
-            Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();
-
-            // Extract the translation part (the last column) of the matrix
-            Eigen::Vector4d translation = Eigen::Vector4d(mv_mat(12), mv_mat(13), mv_mat(14), mv_mat(15));
-
-            // Divide by the homogeneous coordinate to get the camera position in Euclidean space
-            Eigen::Vector3d camera_pos = translation.hnormalized().head<3>();
-
-            // Compute the camera position by inverting the model-view matrix and extracting the translation component
-            Eigen::Matrix4d inv_mv_mat = mv_mat.inverse();
-
-            // Compute the yaw, pitch, and roll angles from the rotation component of the model-view matrix
-            Eigen::Matrix3d R = mv_mat.block<3, 3>(0, 0);
-            // Compute the yaw, pitch, and roll angles
-            double yaw   = std::atan2(R(1,0), R(0,0));
-            double pitch = std::atan2(-R(2,0), std::sqrt(R(2,1)*R(2,1) + R(2,2)*R(2,2)));
-            double roll  = std::atan2(R(2,1), R(2,2));
-
-            std::cout << "Camera position: " << camera_pos << ", yaw: " << yaw << ", pitch: " << pitch << ", roll: "
-                      << roll << std::endl;
-
-            // Save the model viewer matrix
-            writeMatrixToCsv(mv_mat, data);
 
             s_cam.Apply();
-            if (show_x0) pangolin::glDraw_x0(10.0, 10);
-            if (show_y0) pangolin::glDraw_y0(10.0, 10);
-            if (show_z0) pangolin::glDraw_z0(10.0, 10);
-            if (show_axis) pangolin::glDrawAxis(10.0);
-            if (show_bounds) pangolin::glDrawAlignedBox(total_aabb);
 
             glDisable(GL_CULL_FACE);
 
-            std::string map_input_dir = data["mapInputDir"];
-            const std::string cloud_points = map_input_dir + "cloud1.csv";
-            const float x_offset = data["xOffset"];
-            const float y_offset = data["yOffset"];
-            const float z_offset = data["zOffset"];
-            const float yaw_offset = data["yawOffset"];
-            const float pitch_offset = data["pitchOffset"];
-            const float roll_offset = data["rollOffset"];
-            const float scale_factor = data["scaleFactor"];
+            pangolin::Image<unsigned char> buffer;
+            pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
+            buffer.Alloc(viewport_size[0], viewport_size[1], viewport_size[0] * fmt.bpp/8 );
+            glReadBuffer(GL_BACK);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            glReadPixels(0, 0, viewport_size[0], viewport_size[1], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr );
+ 
+            cv::Mat  imgBuffer = cv::Mat(viewport_size[1], viewport_size[0], CV_8UC4, buffer.ptr);
+            cv::cvtColor(imgBuffer, img,  cv::COLOR_RGBA2BGR);
+            cv::flip(img, img, 0);
 
-            std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points,
-                   cv::Point3d(camera_pos[0] * scale_factor + x_offset, camera_pos[1] * scale_factor + y_offset,
-                               camera_pos[2] * scale_factor + z_offset),
-                               yaw + yaw_offset, pitch + pitch_offset, roll + roll_offset, Twc);
-            drawPoints(std::vector<cv::Point3d>(), seen_points);
+            pangolin::FinishFrame();
+            break;
         }
-
-        pangolin::FinishFrame();
     }
+
+    std::string frame_location = std::string(data["framesOutput"]) + "frame_%.png";
+    cv::imwrite(frame_location, img);
 
     return 0;
 }
