@@ -154,8 +154,8 @@ target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
 add_executable(check_matches exe/check_matches.cc)
 target_link_libraries(check_matches ${PROJECT_NAME})
 
-add_executable(icp_model_orb_slam exe/save_3d_orbs.cc)
-target_link_libraries(icp_model_orb_slam ${PROJECT_NAME})
+add_executable(save_3d_orbs exe/save_3d_orbs.cc)
+target_link_libraries(save_3d_orbs ${PROJECT_NAME})
 
 add_executable(take_frame_images exe/take_frame_images.cc)
 target_link_libraries(take_frame_images ${PROJECT_NAME})

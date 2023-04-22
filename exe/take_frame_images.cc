@@ -22,22 +22,21 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 
-Eigen::Matrix4d read_matrix_from_csv(nlohmann::json data)
+Eigen::Matrix4d read_matrix_4d_from_csv(std::string filename)
 {
     Eigen::Matrix4d matrix;
 
-    std::string frame_csv_name = std::string(data["framesOutput"]) + "frame_%.csv";
-    std::ifstream frame_csv(frame_csv_name);
+    std::ifstream csv_file(filename);
 
-    if (!frame_csv.is_open()) {
-        std::cerr << "Error: could not open file '" << frame_csv_name << "' for reading." << std::endl;
+    if (!csv_file.is_open()) {
+        std::cerr << "Error: could not open file '" << filename << "' for reading." << std::endl;
         return matrix;
     }
 
     // Read matrix elements from file
     std::string line;
     int row = 0;
-    while (std::getline(frame_csv, line) && row < 4) {
+    while (std::getline(csv_file, line) && row < 4) {
         std::stringstream line_stream(line);
         std::string cell;
         int col = 0;
@@ -48,7 +47,7 @@ Eigen::Matrix4d read_matrix_from_csv(nlohmann::json data)
         row++;
     }
 
-    frame_csv.close();
+    csv_file.close();
 
     return matrix;
 }
@@ -67,7 +66,12 @@ int main(int argc, char **argv) {
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
 
-    Eigen::Matrix4d mv_mat = read_matrix_from_csv(data);
+    // Read matrices
+    int frame_to_check = data["frameNumber"];
+    std::string mv_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_mv.csv";
+    Eigen::Matrix4d mv_mat = read_matrix_4d_from_csv(mv_filename);
+    std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
+    Eigen::Matrix4d proj_mat = read_matrix_4d_from_csv(proj_filename);
     
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -112,9 +116,8 @@ int main(int argc, char **argv) {
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const auto proj = pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000);
     s_cam.SetModelViewMatrix(mv_mat);
-    s_cam.SetProjectionMatrix(proj);
+    s_cam.SetProjectionMatrix(proj_mat);
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     // Render tree for holding object position
     pangolin::GlSlProgram default_prog;
@@ -180,7 +183,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::string frame_location = std::string(data["framesOutput"]) + "frame_%.png";
+    std::string frame_location = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + ".png";
     cv::imwrite(frame_location, img);
 
     return 0;

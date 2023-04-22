@@ -22,23 +22,61 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 
-void writeMatrixToCsv(Eigen::Matrix4d mv_mat, nlohmann::json data)
+void writeMatrixToCsv(Eigen::Matrix4d mat, nlohmann::json filename)
 {
-    std::string frame_csv_name = std::string(data["framesOutput"]) + "frame_%.csv";
-    std::ofstream frame_csv(frame_csv_name, std::ios::trunc);
+    std::ofstream csv_file(filename, std::ios::trunc);
 
-    if (!frame_csv.is_open()) {
-        std::cerr << "Error: could not open file '" << frame_csv_name << "' for writing." << std::endl;
+    if (!csv_file.is_open()) {
+        std::cerr << "Error: could not open file '" << filename << "' for writing." << std::endl;
         return;
     }
 
-    for (int i = 0; i < mv_mat.rows(); i++) {
-        for (int j = 0; j < mv_mat.cols(); j++) {
-            frame_csv << mv_mat(i, j) << ",";
+    for (int i = 0; i < mat.rows(); i++) {
+        for (int j = 0; j < mat.cols(); j++) {
+            csv_file << mat(i, j) << ",";
         }
-        frame_csv << std::endl;
+        csv_file << std::endl;
     }
-    frame_csv.close();
+    csv_file.close();
+}
+
+std::vector<cv::Point3d> read_orb_points(std::string filename) {
+    std::vector<cv::Point3d> points;
+
+    std::ifstream pointData;
+    std::vector<std::string> row;
+    std::string line, word, temp;
+
+    pointData.open(filename, std::ios::in);
+
+    while (!pointData.eof()) {
+        row.clear();
+
+        std::getline(pointData, line);
+
+        std::stringstream words(line);
+
+        if (line == "") {
+            continue;
+        }
+
+        while (std::getline(words, word, ',')) {
+            try
+            {
+                std::stod(word);
+            }
+            catch(std::out_of_range)
+            {
+                word = "0";
+            }
+            row.push_back(word);
+        }
+        points.emplace_back(std::stod(row[0]), std::stod(row[1]), std::stod(row[2]));
+        std::cout << "X: " << std::stod(row[0]) << ", Y: " << std::stod(row[1]) << ", Z: " << std::stod(row[2]) << std::endl;
+    }
+    pointData.close();
+
+    return points;
 }
 
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
@@ -49,18 +87,13 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     programData.close();
 
     const int point_size = data["pointSize"];
-    const float x_offset = data["xOffset"];
-    const float y_offset = data["yOffset"];
-    const float z_offset = data["zOffset"];
-    const float scale_factor = data["scaleFactor"];
 
     glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
 
     for (auto point: seen_points) {
-        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
-                   (float) ((point.z - z_offset) / scale_factor));
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
     }
     glEnd();
 
@@ -69,8 +102,7 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glColor3f(1.0, 0.0, 0.0);
 
     for (auto point: new_points_seen) {
-        glVertex3f((float) ((point.x - x_offset) / scale_factor), (float) ((point.y - y_offset) / scale_factor),
-                   (float) ((point.z - z_offset) / scale_factor));
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
     }
     std::cout << new_points_seen.size() << std::endl;
 
@@ -162,6 +194,10 @@ int main(int argc, char **argv) {
     std::vector<Eigen::Vector3d> Picks_w;
     cv::Mat Twc;
 
+    int frame_to_check = data["frameNumber"];
+    std::string orbs_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
+    std::vector<cv::Point3d> orbs_points = read_orb_points(orbs_filename);
+
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
             Pick_w = handler.Selected_P_w();
@@ -185,6 +221,7 @@ int main(int argc, char **argv) {
             pangolin::GlDraw( default_prog, geomToRender, nullptr);
             default_prog.Unbind();
             Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();
+            Eigen::Matrix4d proj_mat = s_cam.GetProjectionMatrix();
 
             // Extract the translation part (the last column) of the matrix
             Eigen::Vector4d translation = Eigen::Vector4d(mv_mat(12), mv_mat(13), mv_mat(14), mv_mat(15));
@@ -205,8 +242,11 @@ int main(int argc, char **argv) {
             std::cout << "Camera position: " << camera_pos << ", yaw: " << yaw << ", pitch: " << pitch << ", roll: "
                       << roll << std::endl;
 
-            // Save the model viewer matrix
-            writeMatrixToCsv(mv_mat, data);
+            // Save the model viewer matrix and projection matrix
+            std::string mv_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_mv.csv";
+            writeMatrixToCsv(mv_mat, mv_filename);
+            std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
+            writeMatrixToCsv(proj_mat, proj_filename);
 
             s_cam.Apply();
             if (show_x0) pangolin::glDraw_x0(10.0, 10);
@@ -232,6 +272,8 @@ int main(int argc, char **argv) {
                                camera_pos[2] * scale_factor + z_offset),
                                yaw + yaw_offset, pitch + pitch_offset, roll + roll_offset, Twc);
             drawPoints(std::vector<cv::Point3d>(), seen_points);
+
+            drawPoints(std::vector<cv::Point3d>(), orbs_points);
         }
 
         pangolin::FinishFrame();
