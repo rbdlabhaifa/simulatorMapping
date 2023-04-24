@@ -159,3 +159,6 @@ target_link_libraries(save_3d_orbs ${PROJECT_NAME})
 
 add_executable(take_frame_images exe/take_frame_images.cc)
 target_link_libraries(take_frame_images ${PROJECT_NAME})
+
+add_executable(run_orb_slam_matching exe/run_orb_slam_matching.cc)
+target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
