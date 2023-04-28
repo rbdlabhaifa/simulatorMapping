@@ -162,3 +162,6 @@ target_link_libraries(take_frame_images ${PROJECT_NAME})
 
 add_executable(run_orb_slam_matching exe/run_orb_slam_matching.cc)
 target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
+
+add_executable(check_matches_opencv exe/check_matches_opencv.cc)
+target_link_libraries(check_matches_opencv ${PROJECT_NAME})

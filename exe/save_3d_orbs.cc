@@ -3,9 +3,9 @@
 
 #include "include/Auxiliary.h"
 
-Eigen::Matrix4d read_matrix_4d_from_csv(std::string filename)
+cv::Mat read_matrix_4d_from_csv(std::string filename)
 {
-    Eigen::Matrix4d matrix;
+    cv::Mat matrix = cv::Mat(4, 4, CV_64F);
 
     std::ifstream csv_file(filename);
 
@@ -22,7 +22,7 @@ Eigen::Matrix4d read_matrix_4d_from_csv(std::string filename)
         std::string cell;
         int col = 0;
         while (std::getline(line_stream, cell, ',') && col < 4) {
-            matrix(row, col) = std::stod(cell);
+            matrix.row(row).col(col) = std::stod(cell);
             col++;
         }
         row++;
@@ -34,32 +34,57 @@ Eigen::Matrix4d read_matrix_4d_from_csv(std::string filename)
     return matrix;
 }
 
-Eigen::Vector3d GetPointFromPixel(Eigen::Matrix4d mv_mat, Eigen::Matrix4d proj_mat, cv::Point2f keypoint, double width, double height) {
+cv::Point3d GetPointFromPixel(cv::Mat mv_mat, cv::Mat proj_mat, cv::Point2f keypoint, double width, double height) {
     // Compute the inverse of the modelview and projection matrices
-    Eigen::Matrix4d mvp = proj_mat * mv_mat;
-    Eigen::Matrix4d mvp_inv = mvp.inverse();
+    cv::Mat mvp_inv = (proj_mat * mv_mat).inv();
 
     // Compute the normalized device coordinates of the point
-    Eigen::Vector4d ndc;
+    cv::Vec4d ndc;
     ndc << (2.0 * (double)(keypoint.x)) / width - 1.0,
             1.0 - (2.0 * (double)(keypoint.y)) / height,
             0.0,
             1.0;
 
     // Unproject the point to world coordinates
-    Eigen::Vector4d world = mvp_inv * ndc;
-    Eigen::Vector3d point = world.head<3>() / world[3];
+    cv::Mat world = mvp_inv * ndc;
+    cv::Mat point = world.row(0).colRange(0, 3) / world.row(0).col(3);
 
     // Convert the point to camera coordinates
-    Eigen::Matrix4d modelview_inv = mv_mat.inverse();
-    Eigen::Vector4d camera_coord = modelview_inv * Eigen::Vector4d(point[0], point[1], point[2], 1.0);
+    cv::Mat modelview_inv = mv_mat.inv();
+    cv::Mat camera_coord = modelview_inv * cv::Mat(point.row(0), 1.0);
 
     // Extract the x, y, and z coordinates of the point in camera coordinates
-    double x = camera_coord[0] / camera_coord[3];
-    double y = camera_coord[1] / camera_coord[3];
-    double z = camera_coord[2] / camera_coord[3];
+    cv::Point3d point3d(camera_coord.at<double>(0, 0) / camera_coord.at<double>(3, 0),
+                        camera_coord.at<double>(1, 0) / camera_coord.at<double>(3, 0),
+                        camera_coord.at<double>(2, 0) / camera_coord.at<double>(3, 0));
 
-    return Eigen::Vector3d(x, y, z);
+    return point3d;
+}
+
+cv::Point3d ThreeDReconstruction(cv::Mat mv_mat, cv::Mat proj_mat, cv::Point2f keypoint, double width, double height, cv::Point2d orb) {
+    cv::Mat invProjMat = proj_mat.inv();
+    cv::Mat invModelViewMat = mv_mat.inv();
+
+    // Convert 2D orb point to NDC
+    cv::Point3d ndcPt(orb.x / width * 2.0f - 1.0f, 1.0f - orb.y / height * 2.0f, 0.0f);
+    cv::Mat ndcMat = (cv::Mat_<float>(4, 1) << ndcPt.x, ndcPt.y, ndcPt.z, 1.0f);
+
+    // Convert NDC to view coordinates
+    cv::Mat viewMat = invProjMat * ndcMat;
+    viewMat /= viewMat.at<float>(3);
+    viewMat = invModelViewMat * viewMat;
+    cv::Point3d viewPt(viewMat.at<float>(0), viewMat.at<float>(1), viewMat.at<float>(2));
+
+    // Cast ray from camera position through view coordinate and find intersection point with model
+    cv::Point3d camPos(0.0f, 0.0f, 0.0f);
+    cv::Point3d dirVec(viewPt.x - camPos.x, viewPt.y - camPos.y, viewPt.z - camPos.z);
+    float maxDist = std::numeric_limits<float>::max(); // Maximum distance to check for intersection
+    float minDist = std::numeric_limits<float>::epsilon(); // Minimum distance to check for intersection
+
+    // Check intersection
+    cv::Point3d end_point = camPos + dirVec * maxDist;
+    cv::Point3d ray = end_point - camPos;
+
 }
 
 int main()
@@ -80,9 +105,9 @@ int main()
 
     // Read matrices
     std::string mv_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_mv.csv";
-    Eigen::Matrix4d mv_mat = read_matrix_4d_from_csv(mv_filename);
+    cv::Mat mv_mat = read_matrix_4d_from_csv(mv_filename);
     std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
-    Eigen::Matrix4d proj_mat = read_matrix_4d_from_csv(proj_filename);
+    cv::Mat proj_mat = read_matrix_4d_from_csv(proj_filename);
 
     // Create an ORB detector
     cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
@@ -100,18 +125,18 @@ int main()
     cv::waitKey(0);
 
     // Save the x and y values of the keypoints to a vector
-    std::vector<cv::Point2f> keypoint_positions;
+    std::vector<cv::Point2d> keypoint_positions;
     for (const auto& keypoint : keypoints)
     {
-        cv::Point2f position = keypoint.pt;
+        cv::Point2d position = cv::Point2d((double)keypoint.pt.x, (double)keypoint.pt.y);
         keypoint_positions.push_back(position);
     }
 
     // Convert keypoints pixels to keypoints 3d points
-    std::vector<Eigen::Vector3d> keypoint_points;
+    std::vector<cv::Point3d> keypoint_points;
     for (const auto& keypoint : keypoint_positions)
     {
-        Eigen::Vector3d point = GetPointFromPixel(mv_mat, proj_mat, keypoint, fSettings["Camera.width"], fSettings["Camera.height"]);
+        cv::Point3d point = ThreeDReconstruction(mv_mat, proj_mat, keypoint, fSettings["Camera.width"], fSettings["Camera.height"], keypoint);
         keypoint_points.push_back(point);
     }
 
@@ -119,8 +144,8 @@ int main()
     std::ofstream csv_orbs_file(csv_orbs_filename);
 
     for (const auto& point : keypoint_points) {
-        csv_orbs_file << point.x() << "," << point.y() << "," << point.z() << std::endl;
-        std::cout << point.x() << "," << point.y() << "," << point.z() << std::endl;
+        csv_orbs_file << point.x << "," << point.y << "," << point.z << std::endl;
+        std::cout << point.x << "," << point.y << "," << point.z << std::endl;
     }
 
     csv_orbs_file.close();

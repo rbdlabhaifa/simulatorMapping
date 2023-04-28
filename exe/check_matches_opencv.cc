@@ -1,21 +1,15 @@
-#include <memory>
-#include <string>
-#include <thread>
 #include <iostream>
-#include <unistd.h>
-#include <unordered_set>
-#include <nlohmann/json.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
-
+#include <vector>
+#include <string>
+#include <filesystem>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/opencv.hpp>
 #include "System.h"
-#include "Converter.h"
-#include "include/Point.h"
-#include "include/Auxiliary.h"
+#include "ORBmatcher.h"
 
-/************* SIGNAL *************/
-std::unique_ptr<ORB_SLAM2::System> SLAM;
-std::string simulatorOutputDir;
+#include "include/Auxiliary.h"
 
 struct MatCompare {
     bool operator()(const cv::Mat& a, const cv::Mat& b) const {
@@ -33,18 +27,8 @@ struct MatCompare {
     }
 };
 
-void stopProgramHandler(int s) {
-    SLAM->Shutdown();
-    cvDestroyAllWindows();
-    std::cout << "stoped program" << std::endl;
-    exit(1);
-}
-
-int main() {
-    signal(SIGINT, stopProgramHandler);
-    signal(SIGTERM, stopProgramHandler);
-    signal(SIGABRT, stopProgramHandler);
-    signal(SIGSEGV, stopProgramHandler);
+int main(int argc, char **argv)
+{
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -53,67 +37,39 @@ int main() {
 
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
-    std::string videoPath = data["offlineVideoTestPath"];
-    std::string loadMapPath = data["loadMapPath"];
-    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false,
-                                               loadMapPath,
-                                               true);
-    std::set<cv::Mat, MatCompare> descriptorsSet;
-    int amountOfAttepmpts = 0;
-    while (amountOfAttepmpts++ < 1) {
-        cv::VideoCapture capture(videoPath);
-        if (!capture.isOpened()) {
-            std::cout << "Error opening video stream or file" << std::endl;
-            return 0;
-        } else {
-            std::cout << "Success opening video stream or file" << std::endl;
-        }
+    std::string map_input_dir = data["mapInputDir"];
+    std::string frames_folder = data["framesFolder"];
 
-        cv::Mat frame;
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        for (int i = 0; i < 170; ++i) {
-            capture >> frame;
-        }
-        int amount_of_frames = 1;
-
-        for (;;) {
-            SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC));
-
-            capture >> frame;
-
-            if (frame.empty()) {
-                break;
-            }
-
-            ORB_SLAM2::Frame& currentFrame = SLAM->GetTracker()->mCurrentFrame;
-            cv::Mat descriptorsFrame = currentFrame.mDescriptors;
-            descriptorsSet.insert(descriptorsFrame);
-        }
-        std::cout << amount_of_frames << std::endl;
-        capture.release();
-    }
-
-    SLAM->Shutdown();
-    cvDestroyAllWindows();
-
-    // Concatenate all the descriptors in descriptors_map
-
-    cv::Mat descriptorsOrbSlam;
-    std::vector<cv::Mat> descriptorsVec;
-    for (auto desc : descriptorsSet)
-        descriptorsVec.emplace_back(desc);
-    cv::vconcat(descriptorsVec, descriptorsOrbSlam);
-
-    // Set up ORB feature detector and matcher
+    std::set<cv::Mat, MatCompare> orbFramesDescriptorsSet;
     cv::Ptr<cv::ORB> orb = cv::ORB::create(1000, 1.2, 8);
     cv::BFMatcher matcher(cv::NORM_HAMMING, false);
 
     // Process images in the input folder and find the one that matches the most
-    std::string frames_folder = data["framesFolder"];
     std::string input_folder_path = frames_folder;
     std::vector<std::string> image_paths;
     std::vector<cv::Mat> descriptors_images;
     std::vector<int> scores;
+    for (const auto& orb_frame_entry : std::filesystem::directory_iterator(map_input_dir)) {
+        const std::string filename = orb_frame_entry.path().filename().string();
+        const int n = std::sscanf(filename.c_str(), "frame_%d.png", &n);
+        if (n == 0)
+        {
+            continue;
+        }
+        // Load image
+        cv::Mat orb_frame_img = cv::imread(orb_frame_entry.path().string(), cv::IMREAD_GRAYSCALE);
+
+        // Extract ORB keypoints and descriptors from the image
+        std::vector<cv::KeyPoint> orb_frame_keypoints;
+        cv::Mat orb_frame_descriptors;
+        orb->detectAndCompute(orb_frame_img, cv::Mat(), orb_frame_keypoints, orb_frame_descriptors);
+        orbFramesDescriptorsSet.insert(orb_frame_descriptors);
+    }
+    cv::Mat descriptorsFrames;
+    std::vector<cv::Mat> descriptorsVec;
+    for (auto desc : orbFramesDescriptorsSet)
+        descriptorsVec.emplace_back(desc);
+    cv::vconcat(descriptorsVec, descriptorsFrames);
     for (const auto& entry : std::filesystem::directory_iterator(input_folder_path)) {
         // Load image
         cv::Mat img = cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE);
@@ -122,10 +78,9 @@ int main() {
         std::vector<cv::KeyPoint> keypoints;
         cv::Mat descriptors;
         orb->detectAndCompute(img, cv::Mat(), keypoints, descriptors);
-
         // Match descriptors with the map
         std::vector<std::vector<cv::DMatch>> matches;
-        matcher.knnMatch(descriptors, descriptorsOrbSlam, matches, 2);
+        matcher.knnMatch(descriptors, descriptorsFrames, matches, 2);
 
         // Find good matches
         std::vector<cv::DMatch> good_matches;

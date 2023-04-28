@@ -5,9 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/features2d.hpp>
-#include <opencv2/opencv.hpp>
 #include "System.h"
-#include "ORBmatcher.h"
 
 #include "include/Auxiliary.h"
 
@@ -37,7 +35,7 @@ int main(int argc, char **argv)
   cv::vconcat(orb_slam_map_descriptors_vector, descriptors_map);
 
   // Set up ORB feature detector and matcher
-  cv::Ptr<cv::ORB> orb = cv::ORB::create();
+  cv::Ptr<cv::ORB> orb = cv::ORB::create(1000, 1.2, 8);
   cv::BFMatcher matcher(cv::NORM_HAMMING, false);
 
   // Process images in the input folder and find the one that matches the most
