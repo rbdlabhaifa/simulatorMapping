@@ -109,17 +109,69 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
-void save_depth_buffer(const std::string& filename, const float* depthBuffer, int width, int height) {
-    std::ofstream outFile(filename, std::ios::binary);
-    if (!outFile) {
-        std::cerr << "Error: Unable to create depth buffer file." << std::endl;
-        return;
-    }
-
-    outFile.write(reinterpret_cast<const char*>(depthBuffer), width * height * sizeof(float));
-    outFile.close();
+void saveCameraParameters(const std::string& filename, const cv::Mat& K, const cv::Mat& R, const cv::Mat& t) {
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+    fs << "K" << K;
+    fs << "R" << R;
+    fs << "t" << t;
+    fs.release();
 }
 
+void saveDepthBuffer(const std::string& filename, std::string filename_visual, int width, int height) {
+    cv::Mat depth(height, width, CV_32FC1);
+    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
+    cv::flip(depth, depth, 0); // Flip the image vertically
+    cv::imwrite(filename, depth * 1e6); // Save depth in 16-bit format (scaled)
+
+    // Normalize the depth buffer to a range of 0 to 255
+    double minVal, maxVal;
+    cv::minMaxIdx(depth, &minVal, &maxVal);
+    cv::Mat depth_normalized;
+    depth.convertTo(depth_normalized, CV_8UC1, 255 / (maxVal - minVal), -minVal * 255 / (maxVal - minVal));
+
+    // Apply a colormap to the depth image for visualization
+    cv::Mat depth_colored;
+    cv::applyColorMap(depth_normalized, depth_colored, cv::COLORMAP_JET);
+
+    // Save the depth buffer as a colored image
+    cv::imwrite(filename_visual, depth_colored);
+
+}
+
+// cv::Mat to Eigen::Matrix4d conversion function
+cv::Mat eigenToCVMat(const Eigen::Matrix4d& mat) {
+    // Create a 4x4 matrix
+    cv::Mat mat_cv = cv::Mat::zeros(4, 4, CV_64F);
+
+    // Check if the input matrix is of size 4x4 and has the correct type
+    CV_Assert(mat.rows() == 4 && mat.cols() == 4);
+
+    // Copy the values from cv::Mat to Eigen::Matrix4d
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            mat_cv.at<double>(i, j) = mat(i, j);
+        }
+    }
+
+    return mat_cv;
+}
+
+cv::Mat eigenToCVMat(const Eigen::Matrix3d& mat) {
+    // Create a 3x3 matrix
+    cv::Mat mat_cv = cv::Mat::zeros(3, 3, CV_64F);;
+
+    // Check if the input matrix is of size 3x3 and has the correct type
+    CV_Assert(mat.rows() == 3 && mat.cols() == 3);
+
+    // Copy the values from cv::Mat to Eigen::Matrix4d
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            mat_cv.at<double>(i, j) = mat(i, j);
+        }
+    }
+
+    return mat_cv;
+}
 
 int main(int argc, char **argv) {
     const float w = 640.0f;
@@ -253,22 +305,20 @@ int main(int argc, char **argv) {
             std::cout << "Camera position: " << camera_pos << ", yaw: " << yaw << ", pitch: " << pitch << ", roll: "
                       << roll << std::endl;
 
+            // Save camera parameters and depth buffer.
+            cv::Mat Rot = eigenToCVMat(mv_mat).t(); // Get the rotation matrix
+            cv::Mat trans = -Rot * eigenToCVMat(mv_mat).col(3); // Get the translation vector
+            std::string camera_params_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_camera_params.yml";
+            saveCameraParameters(camera_params_file, eigenToCVMat(K), Rot, trans);
+            std::string depth_buffer_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth_buffer.png";
+            std::string depth_buffer_visual_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth_buffer_visual.png";
+            saveDepthBuffer(depth_buffer_file, depth_buffer_visual_file, (int)w, (int)h);
+
             // Save the model viewer matrix and projection matrix
             std::string mv_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_mv.csv";
             writeMatrixToCsv(mv_mat, mv_filename);
             std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
             writeMatrixToCsv(proj_mat, proj_filename);
-
-            // Create buffer to store depth values
-            std::vector<float> depth_buffer((int)w * (int)h);
-
-            // Read depth buffer
-            glReadPixels(0, 0, (int)w, (int)h, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buffer.data());
-
-            // Save depth buffer to file
-            std::string depth_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth.bin";
-
-            save_depth_buffer(depth_filename, depth_buffer.data(), (int)w, (int)h);
 
             s_cam.Apply();
             if (show_x0) pangolin::glDraw_x0(10.0, 10);
