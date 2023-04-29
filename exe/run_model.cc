@@ -109,6 +109,17 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
+void save_depth_buffer(const std::string& filename, const float* depthBuffer, int width, int height) {
+    std::ofstream outFile(filename, std::ios::binary);
+    if (!outFile) {
+        std::cerr << "Error: Unable to create depth buffer file." << std::endl;
+        return;
+    }
+
+    outFile.write(reinterpret_cast<const char*>(depthBuffer), width * height * sizeof(float));
+    outFile.close();
+}
+
 
 int main(int argc, char **argv) {
     const float w = 640.0f;
@@ -247,6 +258,17 @@ int main(int argc, char **argv) {
             writeMatrixToCsv(mv_mat, mv_filename);
             std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
             writeMatrixToCsv(proj_mat, proj_filename);
+
+            // Create buffer to store depth values
+            std::vector<float> depth_buffer((int)w * (int)h);
+
+            // Read depth buffer
+            glReadPixels(0, 0, (int)w, (int)h, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buffer.data());
+
+            // Save depth buffer to file
+            std::string depth_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth.bin";
+
+            save_depth_buffer(depth_filename, depth_buffer.data(), (int)w, (int)h);
 
             s_cam.Apply();
             if (show_x0) pangolin::glDraw_x0(10.0, 10);

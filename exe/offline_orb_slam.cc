@@ -18,7 +18,7 @@ std::unique_ptr<ORB_SLAM2::System> SLAM;
 std::string simulatorOutputDir;
 
 
-void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId) {
+void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_points) {
     if (img.empty()) 
     {
         std::cout << "Image is empty!!!" << std::endl;
@@ -27,6 +27,12 @@ void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId) {
     std::ofstream frameData;
     frameData.open(simulatorOutputDir + "frameData" +
                    std::to_string(currentFrameId) + ".csv");
+
+    std::ofstream framePointsCount;
+    framePointsCount.open(simulatorOutputDir + "framePointsCount" +
+                   std::to_string(currentFrameId) + ".txt");
+    framePointsCount << number_of_points;
+    framePointsCount.close();
 
     // Extract position from pose matrix
     double x = pose.at<float>(0,3);
@@ -76,7 +82,7 @@ void saveMap(int mapNumber) {
                     pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
                     if (seen_frames.count(currentFrame->mnId) <= 0)
                     {
-                        saveFrame(currentFrame->image, currentFrame->GetPose(), currentFrame->mnId);
+                        saveFrame(currentFrame->image, currentFrame->GetPose(), currentFrame->mnId, currentFrame->GetMapPoints().size());
                         seen_frames.insert(currentFrame->mnId);
                     }
                     // cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(currentFrame->mnId) + ".png");

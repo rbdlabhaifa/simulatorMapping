@@ -61,30 +61,68 @@ cv::Point3d GetPointFromPixel(cv::Mat mv_mat, cv::Mat proj_mat, cv::Point2f keyp
     return point3d;
 }
 
-cv::Point3d ThreeDReconstruction(cv::Mat mv_mat, cv::Mat proj_mat, cv::Point2f keypoint, double width, double height, cv::Point2d orb) {
-    cv::Mat invProjMat = proj_mat.inv();
-    cv::Mat invModelViewMat = mv_mat.inv();
+// cv::Mat to Eigen::Matrix4d conversion function
+Eigen::Matrix4d cvMatToEigen(const cv::Mat& mat) {
+  // Create a 4x4 matrix
+  Eigen::Matrix4d mat_eigen;
 
-    // Convert 2D orb point to NDC
-    cv::Point3d ndcPt(orb.x / width * 2.0f - 1.0f, 1.0f - orb.y / height * 2.0f, 0.0f);
-    cv::Mat ndcMat = (cv::Mat_<float>(4, 1) << ndcPt.x, ndcPt.y, ndcPt.z, 1.0f);
+  // Check if the input matrix is of size 4x4 and has the correct type
+  CV_Assert(mat.rows == 4 && mat.cols == 4 && mat.type() == CV_64FC1);
 
-    // Convert NDC to view coordinates
-    cv::Mat viewMat = invProjMat * ndcMat;
-    viewMat /= viewMat.at<float>(3);
-    viewMat = invModelViewMat * viewMat;
-    cv::Point3d viewPt(viewMat.at<float>(0), viewMat.at<float>(1), viewMat.at<float>(2));
+  // Copy the values from cv::Mat to Eigen::Matrix4d
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      mat_eigen(i, j) = mat.at<double>(i, j);
+    }
+  }
 
-    // Cast ray from camera position through view coordinate and find intersection point with model
-    cv::Point3d camPos(0.0f, 0.0f, 0.0f);
-    cv::Point3d dirVec(viewPt.x - camPos.x, viewPt.y - camPos.y, viewPt.z - camPos.z);
-    float maxDist = std::numeric_limits<float>::max(); // Maximum distance to check for intersection
-    float minDist = std::numeric_limits<float>::epsilon(); // Minimum distance to check for intersection
+  return mat_eigen;
+}
 
-    // Check intersection
-    cv::Point3d end_point = camPos + dirVec * maxDist;
-    cv::Point3d ray = end_point - camPos;
+std::vector<float> read_depth_buffer(const std::string& filename, int width, int height) {
+    std::vector<float> depthBuffer(width * height);
 
+    std::ifstream inFile(filename, std::ios::binary);
+    if (!inFile) {
+        std::cerr << "Error: Unable to open depth buffer file." << std::endl;
+        return depthBuffer;
+    }
+
+    inFile.read(reinterpret_cast<char*>(depthBuffer.data()), width * height * sizeof(float));
+    inFile.close();
+
+    return depthBuffer;
+}
+
+cv::Point3d ThreeDReconstruction(cv::Mat mv_mat, cv::Mat proj_mat, cv::Point2d keypoint, double width, double height, std::vector<float> depth_buffer) {
+    // Create a point to store the 3D coordinates of the detected orb
+    Eigen::Vector3d orb_3d;
+
+    // Convert to eigen
+    Eigen::Matrix4d eigen_proj_mat = cvMatToEigen(proj_mat);
+    Eigen::Matrix4d eigen_mv_mat = cvMatToEigen(mv_mat);
+
+    int x = static_cast<int>(std::round(keypoint.x));
+    int y = static_cast<int>(std::round(keypoint.y));
+
+    // Get the depth value (z-buffer value) associated with the orb's 2D image coordinates
+    const double depth_value = depth_buffer[y * (int)width + x];
+
+    // Compute the ModelViewProjection matrix
+    Eigen::Matrix4d modelViewProjectionMatrix = eigen_proj_mat * eigen_mv_mat;
+
+    // Compute the inverse ModelViewProjection matrix
+    Eigen::Matrix4d inverseModelViewProjectionMatrix = modelViewProjectionMatrix.inverse();
+
+    // Unproject the ORB feature to world coordinates
+    Eigen::Vector4d homogenousPixel(x, y, depth_value, 1.0f);
+    Eigen::Vector4d worldCoords = inverseModelViewProjectionMatrix * homogenousPixel;
+
+    // Convert to Euclidean coordinates and add to the list of 3D points
+    cv::Point3d point3D(worldCoords[0] / worldCoords[3], worldCoords[1] / worldCoords[3], worldCoords[2] / worldCoords[3]);
+
+    // Add the 3D coordinates of the orb to the list of 3D points representing the detected orbs in the scene
+    return point3D;
 }
 
 int main()
@@ -132,11 +170,15 @@ int main()
         keypoint_positions.push_back(position);
     }
 
+    // Get Zbuffer
+    std::string ZBufferStr = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth.bin";
+    std::vector<float> depth_buffer = read_depth_buffer(ZBufferStr, (int)fSettings["Camera.width"], (int)fSettings["Camera.height"]);
+
     // Convert keypoints pixels to keypoints 3d points
     std::vector<cv::Point3d> keypoint_points;
     for (const auto& keypoint : keypoint_positions)
     {
-        cv::Point3d point = ThreeDReconstruction(mv_mat, proj_mat, keypoint, fSettings["Camera.width"], fSettings["Camera.height"], keypoint);
+        cv::Point3d point = ThreeDReconstruction(mv_mat, proj_mat, keypoint, fSettings["Camera.width"], fSettings["Camera.height"], depth_buffer);
         keypoint_points.push_back(point);
     }
 

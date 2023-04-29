@@ -262,7 +262,7 @@ uint get_time_diff(std::chrono::steady_clock::time_point start, std::chrono::ste
 void Frame::ExtractORB(int flag, const cv::Mat &im)
 {
     //line auto start ... line auto end .. printing get_time_diff should be logged accordingly 
-    this->orb = cv::ORB::create(1000, 1.2, 8);
+    this->orb = cv::ORB::create(2000, 1.2, 8);
     // auto start = get_time();
     if(flag==0)
         (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);

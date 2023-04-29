@@ -6,6 +6,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/features2d.hpp>
 #include "System.h"
+#include "ORBextractor.h"
+#include "ORBmatcher.h"
 
 #include "include/Auxiliary.h"
 
@@ -24,18 +26,25 @@ int main(int argc, char **argv)
 
   // Load ORB_SLAM2 map and extract its descriptors
   ORB_SLAM2::System system(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, map_input_dir + "simulatorMap.bin", true, false);
-
   std::vector<cv::Mat> orb_slam_map_descriptors_vector;
   cv::Mat descriptors_map;
   for (auto& mp : system.GetMap()->GetAllMapPoints()) {
       orb_slam_map_descriptors_vector.push_back(mp->GetDescriptor());
   }
-
   // Concatenate all the descriptors in descriptors_map
   cv::vconcat(orb_slam_map_descriptors_vector, descriptors_map);
 
+  cv::FileStorage fSettings(droneYamlPathSlam, cv::FileStorage::READ);
+  int nFeatures = fSettings["ORBextractor.nFeatures"];
+  float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+  int nLevels = fSettings["ORBextractor.nLevels"];
+  int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+  int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+
+  ORB_SLAM2::ORBextractor* mpORBextractorLeft = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+
   // Set up ORB feature detector and matcher
-  cv::Ptr<cv::ORB> orb = cv::ORB::create(1000, 1.2, 8);
+  // cv::Ptr<cv::ORB> orb = cv::ORB::create(1000, 1.2, 8);
   cv::BFMatcher matcher(cv::NORM_HAMMING, false);
 
   // Process images in the input folder and find the one that matches the most
@@ -50,7 +59,8 @@ int main(int argc, char **argv)
     // Extract ORB keypoints and descriptors from the image
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    orb->detectAndCompute(img, cv::Mat(), keypoints, descriptors);
+    (*mpORBextractorLeft)(img,cv::Mat(),keypoints, descriptors);
+    // orb->detectAndCompute(img, cv::Mat(), keypoints, descriptors);
 
     // Match descriptors with the map
     std::vector<std::vector<cv::DMatch>> matches;
