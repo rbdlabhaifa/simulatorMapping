@@ -53,18 +53,27 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
-cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, float near_plane, float far_plane) {
-    cv::Point3f point3D;
+cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, const pangolin::OpenGlRenderState& cam_state) {
+    GLint viewport[4];
+    GLdouble modelview[16];
+    GLdouble projection[16];
 
-    float depth_normalized = depth.at<float>(static_cast<int>(keypoint.y), static_cast<int>(keypoint.x));
-    if (depth_normalized > 0) {
-        float z = 2.0 * near_plane * far_plane / (far_plane + near_plane - (far_plane - near_plane) * (2.0 * depth_normalized - 1.0));
-        float x = ((keypoint.x - K.at<float>(0, 2)) * z / K.at<float>(0, 0));
-        float y = ((keypoint.y - K.at<float>(1, 2)) * z / K.at<float>(1, 1));
-        point3D = cv::Point3d(x, y, z);
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    for (int i = 0; i < 16; ++i) {
+        modelview[i] = cam_state.GetModelViewMatrix().m[i];
+        projection[i] = cam_state.GetProjectionMatrix().m[i];
     }
 
-    return point3D;
+    GLdouble x, y, z;
+    GLdouble worldX, worldY, worldZ;
+
+    x = keypoint.x;
+    y = viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
+    z = depth.at<float>(static_cast<int>(keypoint.y), static_cast<int>(keypoint.x)); // Get depth value at the keypoint position
+
+    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+
+    return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
 }
 
 int main(int argc, char **argv) {
@@ -211,23 +220,26 @@ int main(int argc, char **argv) {
 
             cv::Mat depth(viewport_size[3], viewport_size[2], CV_32FC1);
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
-            cv::flip(depth, depth, 0);
+            // cv::flip(depth, depth, 0);
 
             // Normalize depth values to range 0-1
-            cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
+            // cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
 
             // Convert depth to CV_8UC1 for better visualization
-            cv::Mat depth_visualization;
-            depth.convertTo(depth_visualization, CV_8UC1, 255.0);
+            // cv::Mat depth_visualization;
+            // depth.convertTo(depth_visualization, CV_8UC1, 255.0);
 
-            cv::imshow("Depth", depth_visualization);
-            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
+            // cv::imshow("Depth", depth_visualization);
+            // cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
+
+            //depth = NEAR_PLANE * FAR_PLANE / (FAR_PLANE - (FAR_PLANE - NEAR_PLANE) * depth);
+            depth = (2.0 * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - (FAR_PLANE - NEAR_PLANE) * (2.0 * depth - 1.0));
 
             // Convert keypoints pixels to keypoints 3d points
             std::vector<cv::Point3d> keypoint_points;
             for (const auto& keypoint : keypoint_positions)
             {
-                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, NEAR_PLANE, FAR_PLANE);
+                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, s_cam);
                 cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
                 keypoint_points.push_back(point);
             }
