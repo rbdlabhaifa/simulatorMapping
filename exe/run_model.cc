@@ -8,8 +8,6 @@
 #include <pangolin/gl/glvbo.h>
 
 #include <pangolin/utils/file_utils.h>
-
-#include <pangolin/geometry/geometry_ply.h>
 #include <pangolin/geometry/glgeometry.h>
 
 #include "include/run_model/TextureShader.h"
@@ -22,62 +20,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 
-void writeMatrixToCsv(Eigen::Matrix4d mat, nlohmann::json filename)
-{
-    std::ofstream csv_file(filename, std::ios::trunc);
-
-    if (!csv_file.is_open()) {
-        std::cerr << "Error: could not open file '" << filename << "' for writing." << std::endl;
-        return;
-    }
-
-    for (int i = 0; i < mat.rows(); i++) {
-        for (int j = 0; j < mat.cols(); j++) {
-            csv_file << mat(i, j) << ",";
-        }
-        csv_file << std::endl;
-    }
-    csv_file.close();
-}
-
-std::vector<cv::Point3d> read_orb_points(std::string filename) {
-    std::vector<cv::Point3d> points;
-
-    std::ifstream pointData;
-    std::vector<std::string> row;
-    std::string line, word, temp;
-
-    pointData.open(filename, std::ios::in);
-
-    while (!pointData.eof()) {
-        row.clear();
-
-        std::getline(pointData, line);
-
-        std::stringstream words(line);
-
-        if (line == "") {
-            continue;
-        }
-
-        while (std::getline(words, word, ',')) {
-            try
-            {
-                std::stod(word);
-            }
-            catch(std::out_of_range)
-            {
-                word = "0";
-            }
-            row.push_back(word);
-        }
-        points.emplace_back(std::stod(row[0]), std::stod(row[1]), std::stod(row[2]));
-        std::cout << "X: " << std::stod(row[0]) << ", Y: " << std::stod(row[1]) << ", Z: " << std::stod(row[2]) << std::endl;
-    }
-    pointData.close();
-
-    return points;
-}
+#define NEAR_PLANE 0.1
+#define FAR_PLANE 20
 
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -109,76 +53,21 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
-void saveCameraParameters(const std::string& filename, const cv::Mat& K, const cv::Mat& R, const cv::Mat& t) {
-    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
-    fs << "K" << K;
-    fs << "R" << R;
-    fs << "t" << t;
-    fs.release();
-}
+cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, float near_plane, float far_plane) {
+    cv::Point3f point3D;
 
-void saveDepthBuffer(const std::string& filename, std::string filename_visual, int width, int height) {
-    cv::Mat depth(height, width, CV_32FC1);
-    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
-    cv::flip(depth, depth, 0); // Flip the image vertically
-    cv::imwrite(filename, depth * 1e6); // Save depth in 16-bit format (scaled)
-
-    // Normalize the depth buffer to a range of 0 to 255
-    double minVal, maxVal;
-    cv::minMaxIdx(depth, &minVal, &maxVal);
-    cv::Mat depth_normalized;
-    depth.convertTo(depth_normalized, CV_8UC1, 255 / (maxVal - minVal), -minVal * 255 / (maxVal - minVal));
-
-    // Apply a colormap to the depth image for visualization
-    cv::Mat depth_colored;
-    cv::applyColorMap(depth_normalized, depth_colored, cv::COLORMAP_JET);
-
-    // Save the depth buffer as a colored image
-    cv::imwrite(filename_visual, depth_colored);
-
-}
-
-// cv::Mat to Eigen::Matrix4d conversion function
-cv::Mat eigenToCVMat(const Eigen::Matrix4d& mat) {
-    // Create a 4x4 matrix
-    cv::Mat mat_cv = cv::Mat::zeros(4, 4, CV_64F);
-
-    // Check if the input matrix is of size 4x4 and has the correct type
-    CV_Assert(mat.rows() == 4 && mat.cols() == 4);
-
-    // Copy the values from cv::Mat to Eigen::Matrix4d
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            mat_cv.at<double>(i, j) = mat(i, j);
-        }
+    float depth_normalized = depth.at<float>(static_cast<int>(keypoint.y), static_cast<int>(keypoint.x));
+    if (depth_normalized > 0) {
+        float z = 2.0 * near_plane * far_plane / (far_plane + near_plane - (far_plane - near_plane) * (2.0 * depth_normalized - 1.0));
+        float x = ((keypoint.x - K.at<float>(0, 2)) * z / K.at<float>(0, 0));
+        float y = ((keypoint.y - K.at<float>(1, 2)) * z / K.at<float>(1, 1));
+        point3D = cv::Point3d(x, y, z);
     }
 
-    return mat_cv;
-}
-
-cv::Mat eigenToCVMat(const Eigen::Matrix3d& mat) {
-    // Create a 3x3 matrix
-    cv::Mat mat_cv = cv::Mat::zeros(3, 3, CV_64F);;
-
-    // Check if the input matrix is of size 3x3 and has the correct type
-    CV_Assert(mat.rows() == 3 && mat.cols() == 3);
-
-    // Copy the values from cv::Mat to Eigen::Matrix4d
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            mat_cv.at<double>(i, j) = mat(i, j);
-        }
-    }
-
-    return mat_cv;
+    return point3D;
 }
 
 int main(int argc, char **argv) {
-    const float w = 640.0f;
-    const float h = 480.0f;
-
-    using namespace pangolin;
-
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -187,7 +76,7 @@ int main(int argc, char **argv) {
 
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
-    
+
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
@@ -198,8 +87,10 @@ int main(int argc, char **argv) {
 
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-    Eigen::Vector2i viewport_size(640, 480);
+    cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
+    Eigen::Vector2i viewport_desired_size(640, 480);
 
+    cv::Mat img;
 
     // Options
     bool show_bounds = false;
@@ -210,19 +101,19 @@ int main(int argc, char **argv) {
     bool cull_backfaces = false;
 
     // Create Window for rendering
-    pangolin::CreateWindowAndBind("Main", w, h);
+    pangolin::CreateWindowAndBind("Main", viewport_desired_size[0], viewport_desired_size[1]);
     glEnable(GL_DEPTH_TEST);
 
     // Define Projection and initial ModelView matrix
     pangolin::OpenGlRenderState s_cam(
-            pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000),
+            pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE),
             pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY)
     );
 
     // Create Interactive View in window
     pangolin::Handler3D handler(s_cam);
     pangolin::View &d_cam = pangolin::CreateDisplay()
-            .SetBounds(0.0, 1.0, 0.0, 1.0, -w / h)
+            .SetBounds(0.0, 1.0, 0.0, 1.0, ((float)-viewport_desired_size[0] / (float)viewport_desired_size[1]))
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
@@ -232,7 +123,7 @@ int main(int argc, char **argv) {
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
     const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
-    const auto proj = pangolin::ProjectionMatrix(viewport_size(0), viewport_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), 0.1, 10000);
+    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
@@ -240,7 +131,7 @@ int main(int argc, char **argv) {
     pangolin::GlSlProgram default_prog;
     auto LoadProgram = [&]() {
         default_prog.ClearShaders();
-        default_prog.AddShader(pangolin::GlSlAnnotatedShader, shader);
+        default_prog.AddShader(pangolin::GlSlAnnotatedShader, pangolin::shader);
         default_prog.Link();
     };
     LoadProgram();
@@ -255,11 +146,6 @@ int main(int argc, char **argv) {
 
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
-    cv::Mat Twc;
-
-    int frame_to_check = data["frameNumber"];
-    std::string orbs_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
-    std::vector<cv::Point3d> orbs_points = read_orb_points(orbs_filename);
 
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -283,69 +169,74 @@ int main(int argc, char **argv) {
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
             pangolin::GlDraw( default_prog, geomToRender, nullptr);
             default_prog.Unbind();
-            Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();
-            Eigen::Matrix4d proj_mat = s_cam.GetProjectionMatrix();
 
-            // Extract the translation part (the last column) of the matrix
-            Eigen::Vector4d translation = Eigen::Vector4d(mv_mat(12), mv_mat(13), mv_mat(14), mv_mat(15));
+            int viewport_size[4];
+            glGetIntegerv(GL_VIEWPORT, viewport_size);
 
-            // Divide by the homogeneous coordinate to get the camera position in Euclidean space
-            Eigen::Vector3d camera_pos = translation.hnormalized().head<3>();
+            pangolin::Image<unsigned char> buffer;
+            pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
+            buffer.Alloc(viewport_size[2], viewport_size[3], viewport_size[2] * fmt.bpp/8 );
+            glReadBuffer(GL_BACK);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
 
-            // Compute the camera position by inverting the model-view matrix and extracting the translation component
-            Eigen::Matrix4d inv_mv_mat = mv_mat.inverse();
+            cv::Mat  imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
+            cv::cvtColor(imgBuffer, img,  cv::COLOR_RGBA2BGR);
+            cv::flip(img, img, 0);
 
-            // Compute the yaw, pitch, and roll angles from the rotation component of the model-view matrix
-            Eigen::Matrix3d R = mv_mat.block<3, 3>(0, 0);
-            // Compute the yaw, pitch, and roll angles
-            double yaw   = std::atan2(R(1,0), R(0,0));
-            double pitch = std::atan2(-R(2,0), std::sqrt(R(2,1)*R(2,1) + R(2,2)*R(2,2)));
-            double roll  = std::atan2(R(2,1), R(2,2));
+            cv::imshow("image", img);
+            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
 
-            std::cout << "Camera position: " << camera_pos << ", yaw: " << yaw << ", pitch: " << pitch << ", roll: "
-                      << roll << std::endl;
+            // Create an ORB detector
+            cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
 
-            // Save camera parameters and depth buffer.
-            cv::Mat Rot = eigenToCVMat(mv_mat).t(); // Get the rotation matrix
-            cv::Mat trans = -Rot * eigenToCVMat(mv_mat).col(3); // Get the translation vector
-            std::string camera_params_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_camera_params.yml";
-            saveCameraParameters(camera_params_file, eigenToCVMat(K), Rot, trans);
-            std::string depth_buffer_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth_buffer.png";
-            std::string depth_buffer_visual_file = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_depth_buffer_visual.png";
-            saveDepthBuffer(depth_buffer_file, depth_buffer_visual_file, (int)w, (int)h);
+            // Detect keypoints
+            std::vector<cv::KeyPoint> keypoints;
+            detector->detect(img, keypoints);
 
-            // Save the model viewer matrix and projection matrix
-            std::string mv_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_mv.csv";
-            writeMatrixToCsv(mv_mat, mv_filename);
-            std::string proj_filename = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_proj.csv";
-            writeMatrixToCsv(proj_mat, proj_filename);
+            // Draw keypoints on the image
+            cv::Mat image_keypoints;
+            cv::drawKeypoints(img, keypoints, image_keypoints);
+
+            cv::imshow("image_keypoints", image_keypoints);
+            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
+
+            // Save the x and y values of the keypoints to a vector
+            std::vector<cv::Point2f> keypoint_positions;
+            for (const auto& keypoint : keypoints)
+            {
+                cv::Point2f position = cv::Point2f((float)keypoint.pt.x, (float)(keypoint.pt.y));
+                keypoint_positions.push_back(position);
+            }
+
+            cv::Mat depth(viewport_size[3], viewport_size[2], CV_32FC1);
+            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
+            cv::flip(depth, depth, 0);
+
+            // Normalize depth values to range 0-1
+            cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
+
+            // Convert depth to CV_8UC1 for better visualization
+            cv::Mat depth_visualization;
+            depth.convertTo(depth_visualization, CV_8UC1, 255.0);
+
+            cv::imshow("Depth", depth_visualization);
+            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
+
+            // Convert keypoints pixels to keypoints 3d points
+            std::vector<cv::Point3d> keypoint_points;
+            for (const auto& keypoint : keypoint_positions)
+            {
+                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, NEAR_PLANE, FAR_PLANE);
+                cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
+                keypoint_points.push_back(point);
+            }
 
             s_cam.Apply();
-            if (show_x0) pangolin::glDraw_x0(10.0, 10);
-            if (show_y0) pangolin::glDraw_y0(10.0, 10);
-            if (show_z0) pangolin::glDraw_z0(10.0, 10);
-            if (show_axis) pangolin::glDrawAxis(10.0);
-            if (show_bounds) pangolin::glDrawAlignedBox(total_aabb);
 
             glDisable(GL_CULL_FACE);
 
-            std::string map_input_dir = data["mapInputDir"];
-            const std::string cloud_points = map_input_dir + "cloud1.csv";
-            const float x_offset = data["xOffset"];
-            const float y_offset = data["yOffset"];
-            const float z_offset = data["zOffset"];
-            const float yaw_offset = data["yawOffset"];
-            const float pitch_offset = data["pitchOffset"];
-            const float roll_offset = data["rollOffset"];
-            const float scale_factor = data["scaleFactor"];
-
-            std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points,
-                   cv::Point3d(camera_pos[0] * scale_factor + x_offset, camera_pos[1] * scale_factor + y_offset,
-                               camera_pos[2] * scale_factor + z_offset),
-                               yaw + yaw_offset, pitch + pitch_offset, roll + roll_offset, Twc);
-            drawPoints(std::vector<cv::Point3d>(), seen_points);
-
-            drawPoints(std::vector<cv::Point3d>(), orbs_points);
+            drawPoints(std::vector<cv::Point3d>(), keypoint_points);
         }
 
         pangolin::FinishFrame();
