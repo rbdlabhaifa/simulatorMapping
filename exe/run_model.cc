@@ -220,21 +220,13 @@ int main(int argc, char **argv) {
 
             cv::Mat depth(viewport_size[3], viewport_size[2], CV_32FC1);
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
-            // cv::flip(depth, depth, 0);
 
             // Normalize depth values to range 0-1
-            // cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
-
-            // Convert depth to CV_8UC1 for better visualization
-            // cv::Mat depth_visualization;
-            // depth.convertTo(depth_visualization, CV_8UC1, 255.0);
-
-            // cv::imshow("Depth", depth_visualization);
-            // cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
+            cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
 
             //depth = NEAR_PLANE * FAR_PLANE / (FAR_PLANE - (FAR_PLANE - NEAR_PLANE) * depth);
-            depth = (2.0 * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - (FAR_PLANE - NEAR_PLANE) * (2.0 * depth - 1.0));
-
+            depth = NEAR_PLANE * FAR_PLANE / (FAR_PLANE - (FAR_PLANE - NEAR_PLANE) * depth);
+            
             // Convert keypoints pixels to keypoints 3d points
             std::vector<cv::Point3d> keypoint_points;
             for (const auto& keypoint : keypoint_positions)
