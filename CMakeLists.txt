@@ -45,6 +45,7 @@ find_package(Pangolin REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
+find_package(PCL 1.8 REQUIRED)
 
 include_directories(
 
@@ -58,7 +59,11 @@ include_directories(
         ${Pangolin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
 )
+
+# Add definitions
+add_definitions(${PCL_DEFINITIONS})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -98,6 +103,7 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
         ${Boost_LIBRARIES}
+        ${PCL_LIBRARIES}
         )
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
@@ -154,8 +160,8 @@ target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
 add_executable(check_matches exe/check_matches.cc)
 target_link_libraries(check_matches ${PROJECT_NAME})
 
-add_executable(save_3d_orbs exe/save_3d_orbs.cc)
-target_link_libraries(save_3d_orbs ${PROJECT_NAME})
+add_executable(icp_model_orbs_slam exe/icp_model_orbs_slam.cc)
+target_link_libraries(icp_model_orbs_slam ${PROJECT_NAME})
 
 add_executable(take_frame_images exe/take_frame_images.cc)
 target_link_libraries(take_frame_images ${PROJECT_NAME})

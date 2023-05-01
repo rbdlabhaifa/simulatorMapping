@@ -76,6 +76,16 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
 }
 
+void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {
+    std::ofstream csv_file(filename);
+
+    for (const auto& keypoint : keypoints) {
+        csv_file << keypoint.x << "," << keypoint.y << "," << keypoint.z << std::endl;
+    }
+
+    csv_file.close();
+}
+
 int main(int argc, char **argv) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -235,6 +245,12 @@ int main(int argc, char **argv) {
                 cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
                 keypoint_points.push_back(point);
             }
+
+            int frame_to_check = data["frameNumber"];
+
+            std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
+
+            saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
 
             s_cam.Apply();
 
