@@ -247,7 +247,6 @@ int main(int argc, char **argv) {
             }
 
             int frame_to_check = data["frameNumber"];
-
             std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
 
             saveKeypointsToCSV(keypoint_points, keypoints_csv_path);

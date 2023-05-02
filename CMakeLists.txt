@@ -171,3 +171,9 @@ target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
 
 add_executable(check_matches_opencv exe/check_matches_opencv.cc)
 target_link_libraries(check_matches_opencv ${PROJECT_NAME})
+
+add_executable(check_matches_one_by_one exe/check_matches_one_by_one.cc)
+target_link_libraries(check_matches_one_by_one ${PROJECT_NAME})
+
+add_executable(run_model_with_printed_orbs exe/run_model_with_printed_orbs.cc)
+target_link_libraries(run_model_with_printed_orbs ${PROJECT_NAME})
