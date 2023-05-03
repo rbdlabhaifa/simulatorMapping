@@ -68,8 +68,8 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     GLdouble worldX, worldY, worldZ;
 
     x = keypoint.x;
-    y = viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
-    z = depth.at<float>(static_cast<int>(keypoint.y), static_cast<int>(keypoint.x)); // Get depth value at the keypoint position
+    y = (float)viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
+    z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
     gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
 
@@ -230,12 +230,6 @@ int main(int argc, char **argv) {
 
             cv::Mat depth(viewport_size[3], viewport_size[2], CV_32FC1);
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
-
-            // Normalize depth values to range 0-1
-            cv::normalize(depth, depth, 0.0, 1.0, cv::NORM_MINMAX);
-
-            //depth = NEAR_PLANE * FAR_PLANE / (FAR_PLANE - (FAR_PLANE - NEAR_PLANE) * depth);
-            depth = NEAR_PLANE * FAR_PLANE / (FAR_PLANE - (FAR_PLANE - NEAR_PLANE) * depth);
             
             // Convert keypoints pixels to keypoints 3d points
             std::vector<cv::Point3d> keypoint_points;
