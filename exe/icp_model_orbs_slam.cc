@@ -43,6 +43,25 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr toPointCloud(const std::vector<cv::Point3d>&
     return cloud;
 }
 
+void saveMatrixToFile(const Eigen::Matrix4f &matrix, const std::string &filename) {
+    std::ofstream outfile(filename);
+
+    if (outfile.is_open()) {
+        for (int row = 0; row < matrix.rows(); ++row) {
+            for (int col = 0; col < matrix.cols(); ++col) {
+                outfile << matrix(row, col);
+                if (col != matrix.cols() - 1) {
+                    outfile << ",";
+                }
+            }
+            outfile << "\n";
+        }
+        outfile.close();
+    } else {
+        std::cerr << "Cannot open file: " << filename << std::endl;
+    }
+}
+
 int main()
 {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -100,6 +119,8 @@ int main()
         // Apply the updated transformation to the input cloud
         pcl::PointCloud<pcl::PointXYZ> transformed_cloud;
         pcl::transformPointCloud(*cloud1, transformed_cloud, transformation);
+        std::string transformation_matrix_csv_path = std::string(data["framesOutput"]) + "frames_transformation_matrix.csv";
+        saveMatrixToFile(transformation, transformation_matrix_csv_path);
     } else {
         std::cout << "ICP did not converge." << std::endl;
     }

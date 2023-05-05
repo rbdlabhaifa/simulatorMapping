@@ -177,3 +177,6 @@ target_link_libraries(check_matches_one_by_one ${PROJECT_NAME})
 
 add_executable(run_model_with_printed_orbs exe/run_model_with_printed_orbs.cc)
 target_link_libraries(run_model_with_printed_orbs ${PROJECT_NAME})
+
+add_executable(run_model_with_icp exe/run_model_with_icp.cc)
+target_link_libraries(run_model_with_icp ${PROJECT_NAME})
