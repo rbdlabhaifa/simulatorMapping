@@ -13,6 +13,8 @@
 #include "include/run_model/TextureShader.h"
 #include "include/Auxiliary.h"
 
+#include "ORBextractor.h"
+
 #include <Eigen/SVD>
 #include <Eigen/Geometry>
 
@@ -111,6 +113,14 @@ int main(int argc, char **argv) {
 
     cv::Mat img;
 
+    int nFeatures = fSettings["ORBextractor.nFeatures"];
+    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+    int nLevels = fSettings["ORBextractor.nLevels"];
+    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+
+    ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+
     // Options
     bool show_bounds = false;
     bool show_axis = false;
@@ -200,18 +210,17 @@ int main(int argc, char **argv) {
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
 
             cv::Mat  imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
-            cv::cvtColor(imgBuffer, img,  cv::COLOR_RGBA2BGR);
+            cv::cvtColor(imgBuffer, img,  cv::COLOR_RGBA2GRAY);
+            img.convertTo(img, CV_8UC1);
             cv::flip(img, img, 0);
 
             cv::imshow("image", img);
             cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
 
-            // Create an ORB detector
-            cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
-
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
-            detector->detect(img, keypoints);
+            cv::Mat descriptors;
+            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
 
             // Draw keypoints on the image
             cv::Mat image_keypoints;
