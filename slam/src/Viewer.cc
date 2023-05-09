@@ -52,28 +52,28 @@ namespace ORB_SLAM2 {
         mbReuse = bReuse;
         this->isPangolinExists = isPangolinExists;
 
-        std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-        std::ifstream programData(settingPath);
-        nlohmann::json data;
-        programData >> data;
-        programData.close();
+        // std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+        // std::ifstream programData(settingPath);
+        // nlohmann::json data;
+        // programData >> data;
+        // programData.close();
 
-        std::string map_input_dir = data["mapInputDir"];
-        mCloudPoints = map_input_dir + "cloud1.csv";
+        // std::string map_input_dir = data["mapInputDir"];
+        // mCloudPoints = map_input_dir + "cloud1.csv";
 
-        double startPointX = data["startingCameraPosX"];
-        double startPointY = data["startingCameraPosY"];
-        double startPointZ = data["startingCameraPosZ"];
-        mCurrentPosition = cv::Point3d(startPointX, startPointY, startPointZ);
-        mCurrentYaw = data["yawRad"];
-        mCurrentPitch = data["pitchRad"];
-        mCurrentRoll = data["rollRad"];
+        // double startPointX = data["startingCameraPosX"];
+        // double startPointY = data["startingCameraPosY"];
+        // double startPointZ = data["startingCameraPosZ"];
+        // mCurrentPosition = cv::Point3d(startPointX, startPointY, startPointZ);
+        // mCurrentYaw = data["yawRad"];
+        // mCurrentPitch = data["pitchRad"];
+        // mCurrentRoll = data["rollRad"];
 
-        mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
-        mPointsSeen = std::vector<cv::Point3d>();
+        // mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
+        // mPointsSeen = std::vector<cv::Point3d>();
 
-        mMovingScale = data["movingScale"];
-        mRotateScale = data["rotateScale"];
+        // mMovingScale = data["movingScale"];
+        // mRotateScale = data["rotateScale"];
     }
 
     void Viewer::Run() {
