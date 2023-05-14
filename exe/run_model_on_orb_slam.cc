@@ -51,8 +51,6 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     for (auto point: new_points_seen) {
         glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
     }
-    std::cout << new_points_seen.size() << std::endl;
-
     glEnd();
 }
 
@@ -170,6 +168,7 @@ int main(int argc, char **argv) {
     // Load Geometry asynchronously
     std::string model_path = data["modelPath"];
     const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
+
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
@@ -177,7 +176,10 @@ int main(int argc, char **argv) {
     const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
-    const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
+    pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
+    for (auto &buffer: geomToRender.buffers) {
+        buffer.second.attributes.erase("normal");
+    }
     // Render tree for holding object position
     pangolin::GlSlProgram default_prog;
     auto LoadProgram = [&]() {
@@ -241,22 +243,11 @@ int main(int argc, char **argv) {
             auto value = now_ms.time_since_epoch();
             double timestamp = value.count() / 1000.0;
 
-            //SLAM->TrackMonocular(img, timestamp);
-
-            cv::imshow("image", img);
-            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
-
+            SLAM.TrackMonocular(img, timestamp);
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
             cv::Mat descriptors;
             (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
-
-            // Draw keypoints on the image
-            cv::Mat image_keypoints;
-            cv::drawKeypoints(img, keypoints, image_keypoints);
-
-            cv::imshow("image_keypoints", image_keypoints);
-            cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
 
             // Save the x and y values of the keypoints to a vector
             std::vector<cv::Point2f> keypoint_positions;
