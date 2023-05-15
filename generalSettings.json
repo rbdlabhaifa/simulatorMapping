@@ -35,6 +35,7 @@
   "scaleFactor": 0.0305,
   "framesFolder": "/home/liam/Documents/textures/",
   "framesOutput": "/home/liam/Downloads/frames/",
-  "frameNumber": 99
+  "frameNumber": 99,
+  "useLabICP": true
 }
 

@@ -7,9 +7,9 @@ ENDIF ()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -lncurses")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -lncurses")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization  -lboost_system -lncurses")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -lboost_system  -march=native")
 
 # Check C++17 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -97,12 +97,14 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
         ${EIGEN3_LIBS}
-        ${Boost_LIBRARIES}
         ${Pangolin_LIBRARIES}
         ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-        ${PCL_LIBRARIES}
         -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
+        ${Boost_LIBRARIES}
+        ${PCL_LIBRARIES}
+        -lboost_serialization
+        -lboost_system
         )
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
@@ -182,3 +184,9 @@ target_link_libraries(run_model_with_icp ${PROJECT_NAME})
 
 add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
 target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
+
+add_executable(see_keypoints exe/see_keypoints.cc)
+target_link_libraries(see_keypoints ${PROJECT_NAME})
+
+add_executable(save_map exe/save_map.cc)
+target_link_libraries(save_map ${PROJECT_NAME})

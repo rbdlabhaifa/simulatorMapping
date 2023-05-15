@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
             auto value = now_ms.time_since_epoch();
             double timestamp = value.count() / 1000.0;
 
-            //SLAM->TrackMonocular(img, timestamp);
+            SLAM.TrackMonocular(img, timestamp);
 
             cv::imshow("image", img);
             cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
@@ -293,11 +293,11 @@ int main(int argc, char **argv) {
         pangolin::FinishFrame();
     }
 
-//    if (isSavingMap) {
-//        SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
-//    }
-//
-//    SLAM->Shutdown();
+    if (isSavingMap) {
+        SLAM.SaveMap(simulatorOutputDir + "simulatorMap.bin");
+    }
+
+    SLAM.Shutdown();
 
     return 0;
 }
