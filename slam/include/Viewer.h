@@ -55,7 +55,8 @@ public:
     bool isStopped();
 
     void Release();
-
+    float GetImageWidth(){ return mImageWidth;};
+    float GetImageHeight(){return mImageHeight;}
 private:
 
     bool Stop();
