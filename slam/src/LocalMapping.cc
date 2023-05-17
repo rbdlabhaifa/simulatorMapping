@@ -96,7 +96,7 @@ void LocalMapping::Run()
                 if(mpMap->KeyFramesInMap()>2)
                     Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
                 auto end = get_time2();
-                std::cout << "Bundle Adjustment time: " << get_time_diff2(start, end) << std::endl;
+                //std::cout << "Bundle Adjustment time: " << get_time_diff2(start, end) << std::endl;
                 
                 
                 // Check redundant local Keyframes

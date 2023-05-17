@@ -565,8 +565,8 @@ namespace ORB_SLAM2 {
                 fill(mvIniMatches.begin(), mvIniMatches.end(), -1);
 
                 return;
-            } else
-                cout << __FUNCTION__ << "The Key Frame-s points are less: " << mCurrentFrame.mvKeys.size() << endl;
+            } //else
+                //cout << __FUNCTION__ << "The Key Frame-s points are less: " << mCurrentFrame.mvKeys.size() << endl;
         } else {
             // Try to initialize
             if ((int) mCurrentFrame.mvKeys.size() <= 100) {
