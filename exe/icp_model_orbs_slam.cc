@@ -62,6 +62,20 @@ void saveMatrixToFile(const Eigen::Matrix4f &matrix, const std::string &filename
     }
 }
 
+void savePointsToCSV(const std::string& filePath, const pcl::PointCloud<pcl::PointXYZ>& cloud) {
+    std::ofstream file(filePath);
+    if (!file.is_open()) {
+        std::cerr << "Cannot open file: " << filePath << std::endl;
+        return;
+    }
+
+    for (const auto& point : cloud) {
+        file << point.x << " " << point.y << " " << point.z << "\n";
+    }
+
+    file.close();
+}
+
 int main()
 {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -80,8 +94,11 @@ int main()
     // Read points from multiple CSV files in the directory
     for (const auto& entry : std::filesystem::directory_iterator(orbs_csv_dir)) {
         if (entry.path().extension() == ".csv") {
-            std::vector<cv::Point3d> points = readPointsFromCSV(entry.path());
-            cloudPoints1.insert(cloudPoints1.end(), points.begin(), points.end());
+            std::string filename = entry.path().filename().string();
+            if (filename.find("frame_") != std::string::npos && filename.find("_orbs.csv") != std::string::npos) {
+                std::vector<cv::Point3d> points = readPointsFromCSV(entry.path());
+                cloudPoints1.insert(cloudPoints1.end(), points.begin(), points.end());
+            }
         }
     }
 
@@ -119,8 +136,14 @@ int main()
         // Apply the updated transformation to the input cloud
         pcl::PointCloud<pcl::PointXYZ> transformed_cloud;
         pcl::transformPointCloud(*cloud1, transformed_cloud, transformation);
+
         std::string transformation_matrix_csv_path = std::string(data["framesOutput"]) + "frames_transformation_matrix.csv";
         saveMatrixToFile(transformation, transformation_matrix_csv_path);
+
+        std::string transformed_points_csv_path = std::string(data["framesOutput"]) + "transformed_points.xyz";
+        savePointsToCSV(transformed_points_csv_path, transformed_cloud);
+
+
     } else {
         std::cout << "ICP did not converge." << std::endl;
     }

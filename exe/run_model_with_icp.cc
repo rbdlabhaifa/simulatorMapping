@@ -180,6 +180,7 @@ int main(int argc, char **argv) {
     pangolin::RegisterKeyPressCallback('z', [&]() { show_z0 = !show_z0; });
 
     cv::Mat Twc;
+    bool use_lab_icp = data["useLabICP"];
 
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
@@ -208,7 +209,11 @@ int main(int argc, char **argv) {
             default_prog.Unbind();
 
             // Add code here
-            std::string transformation_matrix_csv_path = std::string(data["framesOutput"]) + "frames_transformation_matrix.csv";
+            std::string transformation_matrix_csv_path;
+            if (use_lab_icp)
+                std::string transformation_matrix_csv_path = std::string(data["framesOutput"]) + "frames_lab_transformation_matrix.csv";
+            else
+                std::string transformation_matrix_csv_path = std::string(data["framesOutput"]) + "frames_transformation_matrix.csv";
             Eigen::Matrix4f transformation = loadMatrixFromFile(transformation_matrix_csv_path);
 
             pangolin::OpenGlMatrix mv_mat = s_cam.GetModelViewMatrix();
