@@ -22,6 +22,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
+#include <unordered_set>
 
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
@@ -54,7 +55,8 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
-cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, const pangolin::OpenGlRenderState& cam_state) {
+cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat &K, const cv::Mat &depth,
+                          const pangolin::OpenGlRenderState &cam_state) {
     GLint viewport[4];
     GLdouble modelview[16];
     GLdouble projection[16];
@@ -69,26 +71,68 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     GLdouble worldX, worldY, worldZ;
 
     x = keypoint.x;
-    y = (float)viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
+    y = (float) viewport[3] -
+        keypoint.y;                           // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
     z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
     gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
 
-    return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
+    return cv::Point3f((float) worldX, (float) worldY, (float) worldZ);
 }
 
-void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {
+void saveMap(int mapNumber, std::string &simulatorOutputDir, ORB_SLAM2::System *SLAM) {
+    std::ofstream pointData;
+    std::unordered_set<int> seen_frames;
+
+    pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
+    for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
+        if (p != nullptr && !p->isBad()) {
+            auto point = p->GetWorldPos();
+            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(point);
+            cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
+            worldPos.at<double>(0) = vector.x();
+            worldPos.at<double>(1) = vector.y();
+            worldPos.at<double>(2) = vector.z();
+            p->UpdateNormalAndDepth();
+            cv::Mat Pn = p->GetNormal();
+            Pn.convertTo(Pn, CV_64F);
+            pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
+            pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << ","
+                      << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
+            std::map<ORB_SLAM2::KeyFrame *, size_t> observations = p->GetObservations();
+            for (auto obs: observations) {
+                ORB_SLAM2::KeyFrame *currentFrame = obs.first;
+                if (!currentFrame->image.empty()) {
+                    size_t pointIndex = obs.second;
+                    cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
+                    cv::Point2f featurePoint = keyPoint.pt;
+                    pointData << "," << currentFrame->mnId << "," << featurePoint.x << "," << featurePoint.y;
+                    // cv::Mat image = cv::imread(simulatorOutputDir + "frame_" + std::to_string(currentFrame->mnId) + ".png");
+                    // cv::arrowedLine(image, featurePoint, cv::Point2f(featurePoint.x, featurePoint.y - 100), cv::Scalar(0, 0, 255), 2, 8, 0, 0.1);
+                    // cv::imshow("image", image);
+                    // cv::waitKey(0);
+                }
+            }
+            pointData << std::endl;
+        }
+    }
+    pointData.close();
+    std::cout << "saved map" << std::endl;
+
+}
+
+void saveKeypointsToCSV(const std::vector<cv::Point3d> &keypoints, const std::string &filename) {
     std::ofstream csv_file(filename);
 
-    for (const auto& keypoint : keypoints) {
+    for (const auto &keypoint: keypoints) {
         csv_file << keypoint.x << "," << keypoint.y << "," << keypoint.z << std::endl;
     }
 
     csv_file.close();
 }
 
-int main(int argc, char **argv) {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_ptr<pangolin::OpenGlRenderState> &s_cam,
+                        bool *ready) {
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
@@ -118,7 +162,8 @@ int main(int argc, char **argv) {
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+    ORB_SLAM2::ORBextractor *orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST,
+                                                                        fMinThFAST);
 
     // Options
     bool show_bounds = false;
@@ -154,15 +199,15 @@ int main(int argc, char **argv) {
     glEnable(GL_DEPTH_TEST);
 
     // Define Projection and initial ModelView matrix
-    pangolin::OpenGlRenderState s_cam(
-            pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE),
-            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY)
-    );
+    s_cam = std::make_shared<pangolin::OpenGlRenderState>(
+            pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2),
+                                       K(1, 2), NEAR_PLANE, FAR_PLANE),
+            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY));
 
     // Create Interactive View in window
-    pangolin::Handler3D handler(s_cam);
+    pangolin::Handler3D handler(*s_cam);
     pangolin::View &d_cam = pangolin::CreateDisplay()
-            .SetBounds(0.0, 1.0, 0.0, 1.0, ((float)-viewport_desired_size[0] / (float)viewport_desired_size[1]))
+            .SetBounds(0.0, 1.0, 0.0, 1.0, ((float) -viewport_desired_size[0] / (float) viewport_desired_size[1]))
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
@@ -173,9 +218,10 @@ int main(int argc, char **argv) {
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
     const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
-    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
-    s_cam.SetModelViewMatrix(mvm);
-    s_cam.SetProjectionMatrix(proj);
+    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1),
+                                                 K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
+    s_cam->SetModelViewMatrix(mvm);
+    s_cam->SetProjectionMatrix(proj);
     pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
@@ -200,7 +246,8 @@ int main(int argc, char **argv) {
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
 
-    while (!pangolin::ShouldQuit()) {
+    while (!pangolin::ShouldQuit() && !*stopFlag) {
+        *ready = true;
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
             Pick_w = handler.Selected_P_w();
             Picks_w.push_back(Pick_w);
@@ -219,8 +266,8 @@ int main(int argc, char **argv) {
                 glCullFace(GL_BACK);
             }
             default_prog.Bind();
-            default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
-            pangolin::GlDraw( default_prog, geomToRender, nullptr);
+            default_prog.SetUniform("KT_cw", s_cam->GetProjectionMatrix() * s_cam->GetModelViewMatrix());
+            pangolin::GlDraw(default_prog, geomToRender, nullptr);
             default_prog.Unbind();
 
             int viewport_size[4];
@@ -228,13 +275,13 @@ int main(int argc, char **argv) {
 
             pangolin::Image<unsigned char> buffer;
             pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
-            buffer.Alloc(viewport_size[2], viewport_size[3], viewport_size[2] * fmt.bpp/8 );
+            buffer.Alloc(viewport_size[2], viewport_size[3], viewport_size[2] * fmt.bpp / 8);
             glReadBuffer(GL_BACK);
             glPixelStorei(GL_PACK_ALIGNMENT, 1);
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
 
-            cv::Mat  imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
-            cv::cvtColor(imgBuffer, img,  cv::COLOR_RGBA2GRAY);
+            cv::Mat imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
+            cv::cvtColor(imgBuffer, img, cv::COLOR_RGBA2GRAY);
             img.convertTo(img, CV_8UC1);
             cv::flip(img, img, 0);
 
@@ -244,10 +291,6 @@ int main(int argc, char **argv) {
             double timestamp = value.count() / 1000.0;
 
             SLAM.TrackMonocular(img, timestamp);
-
-            // cv::imshow("image", img);
-            // cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
-
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
             cv::Mat descriptors;
@@ -255,9 +298,8 @@ int main(int argc, char **argv) {
 
             // Save the x and y values of the keypoints to a vector
             std::vector<cv::Point2f> keypoint_positions;
-            for (const auto& keypoint : keypoints)
-            {
-                cv::Point2f position = cv::Point2f((float)keypoint.pt.x, (float)(keypoint.pt.y));
+            for (const auto &keypoint: keypoints) {
+                cv::Point2f position = cv::Point2f((float) keypoint.pt.x, (float) (keypoint.pt.y));
                 keypoint_positions.push_back(position);
             }
 
@@ -266,19 +308,19 @@ int main(int argc, char **argv) {
 
             // Convert keypoints pixels to keypoints 3d points
             std::vector<cv::Point3d> keypoint_points;
-            for (const auto& keypoint : keypoint_positions)
-            {
-                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, s_cam);
+            for (const auto &keypoint: keypoint_positions) {
+                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, *s_cam);
                 cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
                 keypoint_points.push_back(point);
             }
 
             int frame_to_check = data["frameNumber"];
-            std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
+            std::string keypoints_csv_path =
+                    std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
 
             saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
 
-            s_cam.Apply();
+            s_cam->Apply();
 
             glDisable(GL_CULL_FACE);
 
@@ -287,12 +329,157 @@ int main(int argc, char **argv) {
 
         pangolin::FinishFrame();
     }
+    saveMap(0, simulatorOutputDir, &SLAM);
+    SLAM.SaveMap(simulatorOutputDir + "/simulatorCloudPoint.bin");
+    SLAM.Shutdown();
+}
 
-    if (isSavingMap) {
-        SLAM.SaveMap(simulatorOutputDir + "simulatorMap.bin");
+void applyForwardToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+    camMatrix(0, 3) += value;
+    camMatrix(2, 3) += value;
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void applyUpModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+    camMatrix(1, 3) += value;
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    double rand = double(value) * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << 1, 0, 0,
+            0, c, -s,
+            0, s, c;
+    Eigen::Matrix<double, 3, 3> pangolinR;
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            pangolinR(i, j) = camMatrix(i, j);
+        }
+    }
+    pangolinR = pangolinR * R;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            camMatrix(i, j) = pangolinR(i, j);
+        }
+    }
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void applyYawRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    double rand = double(value) * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << c, 0, s,
+            0, 1, 0,
+            -s, 0, c;
+    Eigen::Matrix<double, 3, 3> pangolinR;
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            pangolinR(i, j) = camMatrix(i, j);
+        }
+    }
+    pangolinR = pangolinR * R;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            camMatrix(i, j) = pangolinR(i, j);
+        }
+    }
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void intervalOverCommand(const std::function<void(std::shared_ptr<pangolin::OpenGlRenderState> &, double &)> &func,
+                         std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value, int intervalUsleep,
+                         double fps,
+                         int totalCommandTimeInSeconds) {
+    double intervalValue = value / fps * totalCommandTimeInSeconds;
+    int intervalIndex = 0;
+    while (intervalIndex <= fps * totalCommandTimeInSeconds) {
+        usleep(intervalUsleep);
+        func(s_cam, intervalValue);
+        intervalIndex += 1;
+    }
+}
+
+void
+applyCommand(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, std::string &command, double value,
+             int intervalUsleep,
+             double fps,
+             int totalCommandTimeInSeconds) {
+
+    if (command == "cw") {
+        intervalOverCommand(&applyYawRotationToModelCam, s_cam, value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "ccw") {
+        intervalOverCommand(&applyYawRotationToModelCam, s_cam, -1 * value, intervalUsleep, fps,
+                            totalCommandTimeInSeconds);
+    } else if (command == "forward") {
+        intervalOverCommand(&applyForwardToModelCam, s_cam, value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "back") {
+        intervalOverCommand(&applyForwardToModelCam, s_cam, -1 * value, intervalUsleep, fps, totalCommandTimeInSeconds);
     }
 
-    SLAM.Shutdown();
+}
+
+int main(int argc, char **argv) {
+    std::unordered_map<std::string, bool> commandMap = {
+            {"cw",      true},
+            {"ccw",     true},
+            {"forward", true},
+            {"right",   true},
+            {"up",      true},
+            {"down",    true},
+            {"left",    true},
+            {"flip",    false},
+            {"rc",      false}};
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    bool stopFlag = false;
+    bool ready = false;
+    std::shared_ptr<pangolin::OpenGlRenderState> s_cam = std::make_shared<pangolin::OpenGlRenderState>();
+    std::thread t(runModelAndOrbSlam, std::ref(settingPath), &stopFlag, std::ref(s_cam), &ready);
+    int startSleepTime = 3;
+    std::cout << "wating " << startSleepTime << " to init commands " << std::endl;
+    while (!ready) {
+        usleep(500);
+    }
+    applyPitchRotationToModelCam(s_cam, 25);
+    applyUpModelCam(s_cam, -1);
+    sleep(startSleepTime);
+    int intervalUsleep = 50000;
+    std::vector<std::string> commnads = {"cw 25", "forward 30", "back 30", "cw 30"};
+    int currentYaw = 0;
+    int angle = 10;
+    for (int i = 0; i < std::ceil(360 / angle); i++) {
+        std::string c = "forward";
+        double value = 0.50;
+        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+        usleep(500000);
+        c = "back";
+        value = 0.50;
+        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+        usleep(500000);
+        c = "cw";
+        value = angle;
+        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+        sleep(1);
+
+    }
+    stopFlag = true;
+    t.join();
+
+    //    if (isSavingMap) {
+    //        SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
+    //    }
+    //
+    //    SLAM->Shutdown();
 
     return 0;
 }

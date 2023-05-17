@@ -1,7 +1,7 @@
 #!/bin/bash
 cwd=$(pwd)
 echo "Configuring and building Thirdparty/DBoW2 ..."
-#sudo apt install libeigen3-dev
+sudo apt install libeigen3-dev
 cd Thirdparty/DBoW2
 mkdir build
 cd build
@@ -28,11 +28,11 @@ sudo apt-get install libboost-all-dev libopenblas-dev
 sudo apt-get install libbluetooth-dev
 sudo apt install libpcl-dev
 
-cd ../../Pangolin
-mkdir build
-cd build
-cmake -DCPP11_NO_BOOST=1 ..
-sudo make -j$(nproc) install
+#cd ../../Pangolin
+#mkdir build
+#cd build
+#cmake -DCPP11_NO_BOOST=1 ..
+#sudo make -j$(nproc) install
 
 cd ~
 git clone https://github.com/nlohmann/json.git
