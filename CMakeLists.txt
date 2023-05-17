@@ -190,3 +190,6 @@ target_link_libraries(see_keypoints ${PROJECT_NAME})
 
 add_executable(save_map exe/save_map.cc)
 target_link_libraries(save_map ${PROJECT_NAME})
+
+add_executable(remove_outliers exe/remove_outliers.cc)
+target_link_libraries(remove_outliers ${PROJECT_NAME})
