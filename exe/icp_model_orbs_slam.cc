@@ -3,7 +3,7 @@
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
-#include <pcl/registration/icp.h>
+#include <pcl/registration/gicp.h>
 #include <pcl/common/transforms.h>
 
 #include "include/Auxiliary.h"
@@ -26,6 +26,32 @@ std::vector<cv::Point3d> readPointsFromCSV(const std::string& filePath) {
         y = std::stod(cell);
 
         std::getline(lineStream, cell, ',');
+        z = std::stod(cell);
+
+        points.emplace_back(x, y, z);
+    }
+
+    return points;
+}
+
+// Function to read XYZ file into a vector of cv::Point3d
+std::vector<cv::Point3d> readPointsFromXYZ(const std::string& filePath) {
+    std::vector<cv::Point3d> points;
+    std::ifstream file(filePath);
+    std::string line;
+    double x, y, z;
+
+    while (std::getline(file, line)) {
+        std::stringstream lineStream(line);
+        std::string cell;
+
+        std::getline(lineStream, cell, ' ');
+        x = std::stod(cell);
+
+        std::getline(lineStream, cell, ' ');
+        y = std::stod(cell);
+
+        std::getline(lineStream, cell, ' ');
         z = std::stod(cell);
 
         points.emplace_back(x, y, z);
@@ -76,6 +102,35 @@ void savePointsToCSV(const std::string& filePath, const pcl::PointCloud<pcl::Poi
     file.close();
 }
 
+// Compute scale using centroids and standard deviations
+float compute_scale (const pcl::PointCloud<pcl::PointXYZ>::Ptr src, const pcl::PointCloud<pcl::PointXYZ>::Ptr tgt)
+{
+    Eigen::Vector4f src_centroid, tgt_centroid;
+    pcl::compute3DCentroid(*src, src_centroid);
+    pcl::compute3DCentroid(*tgt, tgt_centroid);
+
+    float src_avg_dist = 0.0, tgt_avg_dist = 0.0;
+    for (const auto& point : *src)
+    {
+        src_avg_dist += sqrt(pow(point.x - src_centroid[0], 2) +
+                             pow(point.y - src_centroid[1], 2) +
+                             pow(point.z - src_centroid[2], 2));
+    }
+    src_avg_dist /= src->size();
+
+    for (const auto& point : *tgt)
+    {
+        tgt_avg_dist += sqrt(pow(point.x - tgt_centroid[0], 2) +
+                             pow(point.y - tgt_centroid[1], 2) +
+                             pow(point.z - tgt_centroid[2], 2));
+    }
+    tgt_avg_dist /= tgt->size();
+
+    float scale = tgt_avg_dist / src_avg_dist;
+
+    return scale;
+}
+
 int main()
 {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -86,51 +141,48 @@ int main()
 
     // Load the image
     std::string orbs_csv_dir = data["framesOutput"];
-    std::string cloud_point_filename = std::string(data["mapInputDir"]) + "cloud1.csv";
 
     std::vector<cv::Point3d> cloudPoints1;
     std::vector<cv::Point3d> cloudPoints2;
 
-    // Read points from multiple CSV files in the directory
-    for (const auto& entry : std::filesystem::directory_iterator(orbs_csv_dir)) {
-        if (entry.path().extension() == ".csv") {
-            std::string filename = entry.path().filename().string();
-            if (filename.find("frame_") != std::string::npos && filename.find("_orbs.csv") != std::string::npos) {
-                std::vector<cv::Point3d> points = readPointsFromCSV(entry.path());
-                cloudPoints1.insert(cloudPoints1.end(), points.begin(), points.end());
-            }
-        }
-    }
+    std::string cloud_points_combined_frames_filename = orbs_csv_dir + "b1_combined_frames_points_without_outliers.xyz";
+    std::string cloud_points_orb_slam_filename = orbs_csv_dir + "b2_orb_slam_map_points_without_outliers.xyz";
 
-    // Read points from the single CSV file
-    cloudPoints2 = readPointsFromCSV(cloud_point_filename);
+    // Read points from the single XYZ file
+    cloudPoints1 = readPointsFromXYZ(cloud_points_combined_frames_filename);
+    cloudPoints2 = readPointsFromXYZ(cloud_points_orb_slam_filename);
 
     // Convert std::vector<cv::Point3d> to pcl::PointCloud<pcl::PointXYZ>
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 = toPointCloud(cloudPoints1);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 = toPointCloud(cloudPoints2);
 
-    // Create ICP instance
-    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-    icp.setInputSource(cloud1);
-    icp.setInputTarget(cloud2);
+    // Compute scale
+    float scale = compute_scale(cloud1, cloud2);
 
-    // Perform ICP
+    // Scale the source point cloud
+    for (size_t i = 0; i < cloud1->points.size(); ++i)
+    {
+        cloud1->points[i].x *= scale;
+        cloud1->points[i].y *= scale;
+        cloud1->points[i].z *= scale;
+    }
+
+    // Create GICP instance
+    pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> gicp;
+    gicp.setInputSource(cloud1);
+    gicp.setInputTarget(cloud2);
+
+    // Perform GICP
     pcl::PointCloud<pcl::PointXYZ> Final;
-    icp.align(Final);
+    gicp.align(Final);
 
     // Check convergence and obtain transformation matrix
-    if (icp.hasConverged()) {
-        std::cout << "ICP has converged with score: " << icp.getFitnessScore() << std::endl;
+    if (gicp.hasConverged()) {
+        std::cout << "ICP has converged with score: " << gicp.getFitnessScore() << std::endl;
 
-        // Estimate scale factors using eigenvalues of rotation matrix
-        Eigen::Matrix4f transformation = icp.getFinalTransformation();
-        Eigen::JacobiSVD<Eigen::Matrix3f> svd(transformation.block<3, 3>(0, 0), Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::Vector3f scale_factors = svd.singularValues();
+        Eigen::Matrix4f transformation = gicp.getFinalTransformation();
 
-        // Apply scale factors to transformation matrix
-        transformation.block<3, 3>(0, 0) = transformation.block<3, 3>(0, 0) * scale_factors.asDiagonal();
-
-        std::cout << "Estimated scale factors: " << scale_factors.transpose() << std::endl;
+        std::cout << "Estimated scale factor: " << scale << std::endl;
         std::cout << "ICP Transformation Matrix with scale:\n" << transformation << std::endl;
 
         // Apply the updated transformation to the input cloud

@@ -182,3 +182,12 @@ target_link_libraries(run_model_with_icp ${PROJECT_NAME})
 
 add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
 target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
+
+add_executable(see_keypoints exe/see_keypoints.cc)
+target_link_libraries(see_keypoints ${PROJECT_NAME})
+
+add_executable(save_map exe/save_map.cc)
+target_link_libraries(save_map ${PROJECT_NAME})
+
+add_executable(remove_outliers exe/remove_outliers.cc)
+target_link_libraries(remove_outliers ${PROJECT_NAME})
