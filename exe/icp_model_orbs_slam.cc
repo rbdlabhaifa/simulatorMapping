@@ -88,7 +88,7 @@ void saveMatrixToFile(const Eigen::Matrix4f &matrix, const std::string &filename
     }
 }
 
-void savePointsToCSV(const std::string& filePath, const pcl::PointCloud<pcl::PointXYZ>& cloud) {
+void savePointsToXYZ(const std::string& filePath, const pcl::PointCloud<pcl::PointXYZ>& cloud) {
     std::ofstream file(filePath);
     if (!file.is_open()) {
         std::cerr << "Cannot open file: " << filePath << std::endl;
@@ -167,6 +167,9 @@ int main()
         cloud1->points[i].z *= scale;
     }
 
+    savePointsToXYZ(orbs_csv_dir + "c1_combined_frames_points_without_outliers.xyz", *cloud1);
+    savePointsToXYZ(orbs_csv_dir + "c2_orb_slam_map_points_without_outliers.xyz", *cloud2);
+
     // Create GICP instance
     pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> gicp;
     gicp.setInputSource(cloud1);
@@ -193,7 +196,7 @@ int main()
         saveMatrixToFile(transformation, transformation_matrix_csv_path);
 
         std::string transformed_points_csv_path = std::string(data["framesOutput"]) + "transformed_points.xyz";
-        savePointsToCSV(transformed_points_csv_path, transformed_cloud);
+        savePointsToXYZ(transformed_points_csv_path, transformed_cloud);
 
 
     } else {

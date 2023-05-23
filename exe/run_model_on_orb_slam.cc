@@ -381,7 +381,7 @@ void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, 
     double rand = double(value) * (M_PI / 180);
     double c = std::cos(rand);
     double s = std::sin(rand);
-
+    
     Eigen::Matrix3d R;
     R << c, 0, s,
             0, 1, 0,

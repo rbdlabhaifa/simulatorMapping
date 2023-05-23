@@ -103,6 +103,8 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         ${PCL_LIBRARIES}
         -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
+	    -lboost_serialization
+	    -lboost_system
         )
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
