@@ -27,7 +27,15 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
 
-void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
+void applyForwardToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
+
+void applyRightToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
+
+void applyYawRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
+
+void applyUpModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
+
+void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> &new_points_seen) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -40,7 +48,7 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
 
-    for (auto point: seen_points) {
+    for (auto &point: seen_points) {
         glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
     }
     glEnd();
@@ -49,13 +57,13 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glBegin(GL_POINTS);
     glColor3f(1.0, 0.0, 0.0);
 
-    for (auto point: new_points_seen) {
+    for (auto &point: new_points_seen) {
         glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
     }
     glEnd();
 }
 
-cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat &K, const cv::Mat &depth,
+cv::Point3f convert2Dto3D(cv::Point2f &keypoint, const cv::Mat &K, const cv::Mat &depth,
                           const pangolin::OpenGlRenderState &cam_state) {
     GLint viewport[4];
     GLdouble modelview[16];
@@ -131,6 +139,11 @@ void saveKeypointsToCSV(const std::vector<cv::Point3d> &keypoints, const std::st
     csv_file.close();
 }
 
+void HandleKeyboardInput(unsigned char key, int x, int y) {
+    // Handle WASD key events
+    // Update camera position based on key inputs
+}
+
 void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_ptr<pangolin::OpenGlRenderState> &s_cam,
                         bool *ready) {
     std::ifstream programData(settingPath);
@@ -185,6 +198,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
     std::string videoPath = data["offlineVideoTestPath"];
     bool loadMap = data["loadMap"];
+    double movementFactor = data["movementFactor"];
     bool isSavingMap = data["saveMap"];
     std::string loadMapPath = data["loadMapPath"];
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
@@ -239,13 +253,23 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
     // Show axis and axis planes
     pangolin::RegisterKeyPressCallback('a', [&]() { show_axis = !show_axis; });
+    pangolin::RegisterKeyPressCallback('k', [&]() { *stopFlag = !*stopFlag; });
     pangolin::RegisterKeyPressCallback('x', [&]() { show_x0 = !show_x0; });
     pangolin::RegisterKeyPressCallback('y', [&]() { show_y0 = !show_y0; });
     pangolin::RegisterKeyPressCallback('z', [&]() { show_z0 = !show_z0; });
-
+    pangolin::RegisterKeyPressCallback('w', [&]() { applyForwardToModelCam(s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('a', [&]() { applyRightToModelCam(s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('s', [&]() { applyForwardToModelCam(s_cam, -movementFactor); });
+    pangolin::RegisterKeyPressCallback('d', [&]() { applyRightToModelCam(s_cam, -movementFactor); });
+    pangolin::RegisterKeyPressCallback('e', [&]() { applyYawRotationToModelCam(s_cam, 1); });
+    pangolin::RegisterKeyPressCallback('q', [&]() { applyYawRotationToModelCam(s_cam, -1); });
+    pangolin::RegisterKeyPressCallback('r', [&]() {
+        applyUpModelCam(s_cam, -movementFactor);
+    });// ORBSLAM y axis is reversed
+    pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(s_cam, movementFactor); });
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
-
+    std::vector<cv::Point3d> seenPoints{};
     while (!pangolin::ShouldQuit() && !*stopFlag) {
         *ready = true;
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -308,7 +332,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
             // Convert keypoints pixels to keypoints 3d points
             std::vector<cv::Point3d> keypoint_points;
-            for (const auto &keypoint: keypoint_positions) {
+            for (auto &keypoint: keypoint_positions) {
                 cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, *s_cam);
                 cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
                 keypoint_points.push_back(point);
@@ -324,7 +348,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
             glDisable(GL_CULL_FACE);
 
-            drawPoints(std::vector<cv::Point3d>(), keypoint_points);
+            drawPoints(seenPoints, keypoint_points);
         }
 
         pangolin::FinishFrame();
@@ -334,16 +358,47 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     SLAM.Shutdown();
 }
 
-void applyForwardToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+
+void applyUpModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-    camMatrix(0, 3) += value;
+    camMatrix(1, 3) += value;
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void applyForwardToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
     camMatrix(2, 3) += value;
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
-void applyUpModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+void applyRightToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-    camMatrix(1, 3) += value;
+    camMatrix(0, 3) += value;
+    s_cam->SetModelViewMatrix(camMatrix);
+}
+
+void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+    double rand = double(value) * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << c, 0, s,
+            0, 1, 0,
+            -s, 0, c;
+    Eigen::Matrix<double, 3, 3> pangolinR;
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            pangolinR(i, j) = camMatrix(i, j);
+        }
+    }
+    pangolinR = pangolinR * R;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            camMatrix(i, j) = pangolinR(i, j);
+        }
+    }
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
@@ -372,30 +427,6 @@ void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
-void applyYawRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
-    double rand = double(value) * (M_PI / 180);
-    double c = std::cos(rand);
-    double s = std::sin(rand);
-
-    Eigen::Matrix3d R;
-    R << c, 0, s,
-            0, 1, 0,
-            -s, 0, c;
-    Eigen::Matrix<double, 3, 3> pangolinR;
-    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            pangolinR(i, j) = camMatrix(i, j);
-        }
-    }
-    pangolinR = pangolinR * R;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            camMatrix(i, j) = pangolinR(i, j);
-        }
-    }
-    s_cam->SetModelViewMatrix(camMatrix);
-}
 
 void intervalOverCommand(const std::function<void(std::shared_ptr<pangolin::OpenGlRenderState> &, double &)> &func,
                          std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value, int intervalUsleep,
@@ -425,6 +456,14 @@ applyCommand(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, std::string &c
         intervalOverCommand(&applyForwardToModelCam, s_cam, value, intervalUsleep, fps, totalCommandTimeInSeconds);
     } else if (command == "back") {
         intervalOverCommand(&applyForwardToModelCam, s_cam, -1 * value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "right") {
+        intervalOverCommand(&applyRightToModelCam, s_cam, -1 * value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "left") {
+        intervalOverCommand(&applyRightToModelCam, s_cam, value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "up") {
+        intervalOverCommand(&applyUpModelCam, s_cam, -1 * value, intervalUsleep, fps, totalCommandTimeInSeconds);
+    } else if (command == "down") {
+        intervalOverCommand(&applyUpModelCam, s_cam, value, intervalUsleep, fps, totalCommandTimeInSeconds);
     }
 
 }
@@ -445,34 +484,34 @@ int main(int argc, char **argv) {
     bool ready = false;
     std::shared_ptr<pangolin::OpenGlRenderState> s_cam = std::make_shared<pangolin::OpenGlRenderState>();
     std::thread t(runModelAndOrbSlam, std::ref(settingPath), &stopFlag, std::ref(s_cam), &ready);
-    int startSleepTime = 3;
-    std::cout << "wating " << startSleepTime << " to init commands " << std::endl;
-    while (!ready) {
-        usleep(500);
-    }
+//    int startSleepTime = 3;
+//    std::cout << "wating " << startSleepTime << " to init commands " << std::endl;
+//    while (!ready) {
+//        usleep(500);
+//    }
     applyPitchRotationToModelCam(s_cam, 25);
     applyUpModelCam(s_cam, -1);
-    sleep(startSleepTime);
-    int intervalUsleep = 50000;
-    std::vector<std::string> commnads = {"cw 25", "forward 30", "back 30", "cw 30"};
-    int currentYaw = 0;
-    int angle = 10;
-    for (int i = 0; i < std::ceil(360 / angle); i++) {
-        std::string c = "forward";
-        double value = 0.50;
-        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
-        usleep(500000);
-        c = "back";
-        value = 0.50;
-        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
-        usleep(500000);
-        c = "cw";
-        value = angle;
-        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
-        sleep(1);
-
-    }
-    stopFlag = true;
+//    sleep(startSleepTime);
+//    int intervalUsleep = 50000;
+//    std::vector<std::string> commnads = {"cw 25", "forward 30", "back 30", "cw 30"};
+//    int currentYaw = 0;
+//    int angle = 10;
+//    for (int i = 0; i < std::ceil(360 / angle); i++) {
+//        std::string c = "forward";
+//        double value = 0.50;
+//        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+//        usleep(500000);
+//        c = "back";
+//        value = 0.50;
+//        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+//        usleep(500000);
+//        c = "cw";
+//        value = angle;
+//        applyCommand(s_cam, c, value, intervalUsleep, 30.0, 1);
+//        sleep(1);
+//
+//    }
+//    stopFlag = true;
     t.join();
 
     //    if (isSavingMap) {
