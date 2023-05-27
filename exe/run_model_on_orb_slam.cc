@@ -383,22 +383,26 @@ void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, 
     
     Eigen::Matrix3d R;
     R << c, 0, s,
-            0, 1, 0,
-            -s, 0, c;
-    Eigen::Matrix<double, 3, 3> pangolinR;
+         0, 1, 0,
+         -s, 0, c;
+
+    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
+    pangolinR.block<3, 3>(0, 0) = R;
+
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            pangolinR(i, j) = camMatrix(i, j);
+
+    // Left-multiply the rotation
+    camMatrix = pangolinR * camMatrix;
+
+    // Convert back to pangolin matrix and set
+    pangolin::OpenGlMatrix newModelView;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            newModelView.m[j*4+i] = camMatrix(i, j);
         }
     }
-    pangolinR = pangolinR * R;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            camMatrix(i, j) = pangolinR(i, j);
-        }
-    }
-    s_cam->SetModelViewMatrix(camMatrix);
+
+    s_cam->SetModelViewMatrix(newModelView);
 }
 
 void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
@@ -408,22 +412,26 @@ void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &
 
     Eigen::Matrix3d R;
     R << 1, 0, 0,
-            0, c, -s,
-            0, s, c;
-    Eigen::Matrix<double, 3, 3> pangolinR;
+         0, c, -s,
+         0, s, c;
+
+    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();;
+    pangolinR.block<3, 3>(0, 0) = R;
+
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            pangolinR(i, j) = camMatrix(i, j);
+
+    // Left-multiply the rotation
+    camMatrix = pangolinR * camMatrix;
+
+    // Convert back to pangolin matrix and set
+    pangolin::OpenGlMatrix newModelView;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            newModelView.m[j*4+i] = camMatrix(i, j);
         }
     }
-    pangolinR = pangolinR * R;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            camMatrix(i, j) = pangolinR(i, j);
-        }
-    }
-    s_cam->SetModelViewMatrix(camMatrix);
+
+    s_cam->SetModelViewMatrix(newModelView);
 }
 
 
