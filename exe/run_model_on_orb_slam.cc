@@ -198,6 +198,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     std::string currentTime(time_buf);
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
+    std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
     std::string videoPath = data["offlineVideoTestPath"];
     bool loadMap = data["loadMap"];
     double movementFactor = data["movementFactor"];
@@ -229,25 +230,44 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     // Load Geometry asynchronously
     std::string model_path = data["modelPath"];
     const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
-
-    auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
-    Eigen::Vector3f xAxis(1, 0, 0);
-    Eigen::Vector3f zAxis(0, 0, 1);
-    Eigen::Vector3f boxSize = aabb.sizes();
-    Eigen::Vector3f xVector = boxSize[0] * xAxis;  // Width of the box along the x-axis
-    Eigen::Vector3f zVector = boxSize[2] * zAxis;  // Depth of the box along the z-axis
-    Eigen::Vector3f crossProduct = xVector.cross(zVector);  // Cross product
-    crossProduct = crossProduct.normalized();
-    Eigen::Vector3f boxNormalized = boxSize.normalized();
-    //Eigen::AlignedBox3f total_aabb;
-    //total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(crossProduct.x(), boxNormalized.y(), crossProduct.z(), 0, 0, 0, 0.0, -1.0,
+    std::vector<Eigen::Vector3<unsigned int>> floorIndices;
+    for (auto &o: geom_to_load.objects) {
+        if (o.first == modelTextureNameToAlignTo) {
+            const auto &it_vert = o.second.attributes.find("vertex_indices");
+            if (it_vert != o.second.attributes.end()) {
+                const auto &vs = std::get<pangolin::Image<unsigned int>>(it_vert->second);
+                for (size_t i = 0; i < vs.h; ++i) {
+                    const Eigen::Map<const Eigen::Vector3<unsigned int>> v(vs.RowPtr(i));
+                    floorIndices.emplace_back(v);
+                }
+            }
+        }
+    }
+    Eigen::MatrixXf floor(floorIndices.size() * 3, 3);
+    int currentIndex = 0;
+    for (const auto &b: geom_to_load.buffers) {
+        const auto &it_vert = b.second.attributes.find("vertex");
+        if (it_vert != b.second.attributes.end()) {
+            const auto &vs = std::get<pangolin::Image<float>>(it_vert->second);
+            for (auto &row: floorIndices) {
+                for (auto &i: row) {
+                    const Eigen::Map<const Eigen::Vector3f> v(vs.RowPtr(i));
+                    floor.row(currentIndex++) = v;
+                }
+            }
+        }
+    }
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(floor, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    svd.computeV();
+    Eigen::Vector3f v = svd.matrixV().col(2);
+    const auto mvm = pangolin::ModelViewLookAt(v.x(), v.y(), v.z(), 0, 0, 0, 0.0,
+                                               -1.0,
                                                pangolin::AxisY);
     const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1),
                                                  K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
     s_cam->SetModelViewMatrix(mvm);
     s_cam->SetProjectionMatrix(proj);
-    applyPitchRotationToModelCam(s_cam,-90);
+    applyPitchRotationToModelCam(s_cam, -90);
     pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
