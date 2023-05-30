@@ -35,6 +35,8 @@ void applyYawRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_
 
 void applyUpModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
 
+void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
+
 void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> &new_points_seen) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -229,13 +231,23 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
 
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
-    Eigen::AlignedBox3f total_aabb;
-    total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
+    Eigen::Vector3f xAxis(1, 0, 0);
+    Eigen::Vector3f zAxis(0, 0, 1);
+    Eigen::Vector3f boxSize = aabb.sizes();
+    Eigen::Vector3f xVector = boxSize[0] * xAxis;  // Width of the box along the x-axis
+    Eigen::Vector3f zVector = boxSize[2] * zAxis;  // Depth of the box along the z-axis
+    Eigen::Vector3f crossProduct = xVector.cross(zVector);  // Cross product
+    crossProduct = crossProduct.normalized();
+    Eigen::Vector3f boxNormalized = boxSize.normalized();
+    //Eigen::AlignedBox3f total_aabb;
+    //total_aabb.extend(aabb);
+    const auto mvm = pangolin::ModelViewLookAt(crossProduct.x(), boxNormalized.y(), crossProduct.z(), 0, 0, 0, 0.0, -1.0,
+                                               pangolin::AxisY);
     const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1),
                                                  K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
     s_cam->SetModelViewMatrix(mvm);
     s_cam->SetProjectionMatrix(proj);
+    applyPitchRotationToModelCam(s_cam,-90);
     pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
@@ -380,11 +392,11 @@ void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, 
     double rand = double(value) * (M_PI / 180);
     double c = std::cos(rand);
     double s = std::sin(rand);
-    
+
     Eigen::Matrix3d R;
     R << c, 0, s,
-         0, 1, 0,
-         -s, 0, c;
+            0, 1, 0,
+            -s, 0, c;
 
     Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
     pangolinR.block<3, 3>(0, 0) = R;
@@ -398,22 +410,22 @@ void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, 
     pangolin::OpenGlMatrix newModelView;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            newModelView.m[j*4+i] = camMatrix(i, j);
+            newModelView.m[j * 4 + i] = camMatrix(i, j);
         }
     }
 
     s_cam->SetModelViewMatrix(newModelView);
 }
 
-void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
+void applyPitchRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     double rand = double(value) * (M_PI / 180);
     double c = std::cos(rand);
     double s = std::sin(rand);
 
     Eigen::Matrix3d R;
     R << 1, 0, 0,
-         0, c, -s,
-         0, s, c;
+            0, c, -s,
+            0, s, c;
 
     Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();;
     pangolinR.block<3, 3>(0, 0) = R;
@@ -427,7 +439,7 @@ void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &
     pangolin::OpenGlMatrix newModelView;
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            newModelView.m[j*4+i] = camMatrix(i, j);
+            newModelView.m[j * 4 + i] = camMatrix(i, j);
         }
     }
 
@@ -493,11 +505,11 @@ int main(int argc, char **argv) {
     std::thread t(runModelAndOrbSlam, std::ref(settingPath), &stopFlag, std::ref(s_cam), &ready);
 //    int startSleepTime = 3;
 //    std::cout << "wating " << startSleepTime << " to init commands " << std::endl;
-//    while (!ready) {
-//        usleep(500);
-//    }
-    applyPitchRotationToModelCam(s_cam, 25);
-    applyUpModelCam(s_cam, -1);
+    while (!ready) {
+        usleep(500);
+    }
+//    applyPitchRotationToModelCam(s_cam, -20);
+//    applyUpModelCam(s_cam, -0.5);
 //    sleep(startSleepTime);
 //    int intervalUsleep = 50000;
 //    std::vector<std::string> commnads = {"cw 25", "forward 30", "back 30", "cw 30"};
