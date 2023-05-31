@@ -193,3 +193,6 @@ target_link_libraries(save_map ${PROJECT_NAME})
 
 add_executable(remove_outliers exe/remove_outliers.cc)
 target_link_libraries(remove_outliers ${PROJECT_NAME})
+
+add_executable(run_model_with_orb_slam_points exe/run_model_with_orb_slam_points.cc)
+target_link_libraries(run_model_with_orb_slam_points ${PROJECT_NAME})

@@ -78,28 +78,56 @@ Eigen::Matrix4f loadMatrixFromFile(const std::string &filename) {
     return matrix;
 }
 
-Eigen::Matrix4f openGlMatrixToEigen(const pangolin::OpenGlMatrix &m) {
-    Eigen::Matrix4f eigen_matrix;
-    for (int row = 0; row < 4; ++row) {
-        for (int col = 0; col < 4; ++col) {
-            eigen_matrix(row, col) = m(row, col);
+cv::Point3d transformPoint(const cv::Point3d &point, const Eigen::Matrix4f &transformation) {
+    Eigen::Vector4f eigenPoint = Eigen::Vector4f((float)point.x, (float)point.y, (float)point.z, 1.0f);
+    Eigen::Vector4f transformedPoint = transformation * eigenPoint;
+    return cv::Point3d((double)transformedPoint(0), (double)transformedPoint(1), (double)transformedPoint(2));
+}
+
+std::vector<cv::Point3d> loadPoints() {
+    std::ifstream pointData;
+    std::vector<std::string> row;
+    std::string line, word, temp;
+
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
+
+    std::string cloud_points = std::string(data["mapInputDir"]) + "cloud1.csv";
+
+    std::vector<cv::Point3d> points;
+
+    pointData.open(cloud_points, std::ios::in);
+
+    while (!pointData.eof()) {
+        row.clear();
+
+        std::getline(pointData, line);
+
+        std::stringstream words(line);
+
+        if (line == "") {
+            continue;
         }
-    }
-    return eigen_matrix;
-}
 
-Eigen::Vector4f inverseTransformPoint(const Eigen::Vector4f &point, const Eigen::Matrix4f &transformation) {
-    Eigen::Matrix4f inverse_transformation = transformation.inverse();
-    return inverse_transformation * point;
-}
-
-std::vector<cv::Point3d> convert_points(std::vector<cv::Point3d>& points, Eigen::Matrix4f& transformation_mat) {
-    std::vector<cv::Point3d> transformed_points;
-    for (auto& point : points) {
-        Eigen::Vector4f transformed_point = transformation_mat * Eigen::Vector4f((float)point.x, (float)point.y, (float)point.z, 1.0f);
-        transformed_points.emplace_back(cv::Point3d((double)transformed_point[0], (double)transformed_point[1], (double)transformed_point[2]));
+        while (std::getline(words, word, ',')) {
+            try
+            {
+                std::stod(word);
+            }
+            catch(std::out_of_range)
+            {
+                word = "0";
+            }
+            row.push_back(word);
+        }
+        points.push_back(cv::Point3d(std::stod(row[0]), std::stod(row[1]), std::stod(row[2])));
     }
-    return transformed_points;
+    pointData.close();
+
+    return points;
 }
 
 int main(int argc, char **argv) {
@@ -195,6 +223,13 @@ int main(int argc, char **argv) {
     Eigen::Matrix4f transformation = loadMatrixFromFile(transformation_matrix_csv_path);
     std::cout << transformation << std::endl;
 
+    std::vector<cv::Point3d> points_to_draw;
+    std::vector<cv::Point3d> points = loadPoints();
+
+    for (auto point : points) {
+        points_to_draw.push_back(transformPoint(point, transformation));
+    }
+
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
 
@@ -220,61 +255,6 @@ int main(int argc, char **argv) {
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
             pangolin::GlDraw( default_prog, geomToRender, nullptr);
             default_prog.Unbind();
-
-            std::cout << "Transformation Matrix " << transformation_matrix_csv_path << ": " << transformation << std::endl;
-
-            pangolin::OpenGlMatrix mv_mat = s_cam.GetModelViewMatrix();
-            std::cout << "Original Point: " << mv_mat(0, 3) << ", " <<  mv_mat(1, 3) << ", " <<  mv_mat(2, 3) << std::endl;
-
-            Eigen::Matrix4f mv_mat_eigen = openGlMatrixToEigen(mv_mat);
-            Eigen::Vector4f pos_before_transform = Eigen::Vector4f(mv_mat_eigen(0, 3), mv_mat_eigen(1, 3), mv_mat_eigen(2, 3), 1.0);
-            Eigen::Vector4f transformed_point = inverseTransformPoint(pos_before_transform, transformation);
-            Eigen::Vector3f pos_after_transform = Eigen::Vector3f(pos_before_transform(0)- 0.6691778, pos_before_transform(1)+1.22925615, pos_before_transform[2]+2.24406284);
-            Eigen::Matrix3f rot_mat;
-            rot_mat << 0.97972727, -0.03784983, -0.19672792, -0.069904, -0.98485774, -0.15864633, -0.18774428,  0.1691822, -0.96753784;
-            pos_after_transform = rot_mat.inverse() * pos_after_transform;
-            pos_after_transform *= (1/6.2854950175989694);
-            Eigen::Vector3f position(transformed_point(0), transformed_point(1), transformed_point(2));
-
-            std::cout << "Transformed Point1: " << position(0) << ", " << position(1) << ", " << position(2) << std::endl;
-            std::cout << "Transformed Point2: " << pos_after_transform << std::endl;
-
-            // Extract rotation part of the transformed matrix
-            Eigen::Matrix3f rotation_matrix = mv_mat_eigen.block<3, 3>(0, 0);
-
-            // Convert the rotation matrix to Euler angles (yaw, pitch, roll)
-            Eigen::Vector3f euler_angles = rotation_matrix.eulerAngles(2, 1, 0); // yaw, pitch, roll
-
-            // Extract transformed yaw, pitch, and roll
-            float yaw = euler_angles(0);
-            float pitch = euler_angles(1);
-            float roll = euler_angles(2);
-
-            // Construct the original rotation matrix from the yaw, pitch, and roll angles
-            Eigen::AngleAxisf yaw_rotation(yaw, Eigen::Vector3f::UnitZ());
-            Eigen::AngleAxisf pitch_rotation(pitch, Eigen::Vector3f::UnitY());
-            Eigen::AngleAxisf roll_rotation(roll, Eigen::Vector3f::UnitX());
-            Eigen::Matrix3f original_rotation_matrix = (yaw_rotation * pitch_rotation * roll_rotation).toRotationMatrix();
-
-            // Convert the original rotation matrix to Matrix4f for multiplication
-            Eigen::Matrix4f original_rotation_matrix_4f = Eigen::Matrix4f::Identity();
-            original_rotation_matrix_4f.block<3, 3>(0, 0) = original_rotation_matrix;
-
-            // Apply the transformation matrix to obtain the resulting rotation matrix
-            Eigen::Matrix4f transformed_rotation_matrix = transformation.inverse() * original_rotation_matrix_4f;
-
-            // Extract the yaw, pitch, and roll angles from the resulting rotation matrix
-            Eigen::Matrix3f transformed_rotation_matrix_3f = transformed_rotation_matrix.block<3, 3>(0, 0);
-            Eigen::Vector3f transformed_euler_angles = transformed_rotation_matrix_3f.eulerAngles(2, 1, 0);
-            float transformed_yaw = transformed_euler_angles(0);
-            float transformed_pitch = transformed_euler_angles(1);
-            float transformed_roll = transformed_euler_angles(2);
-
-            // Run GetPointsFromPos
-            std::string map_input_dir = data["mapInputDir"];
-            const std::string cloud_points = map_input_dir + "cloud1.csv";
-            std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points, cv::Point3d(position[0], position[1], position[2]), transformed_yaw, transformed_pitch, transformed_roll, Twc);
-            std::vector<cv::Point3d> points_to_draw = convert_points(seen_points, transformation);
 
             s_cam.Apply();
 
