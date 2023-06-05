@@ -160,9 +160,6 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
-    float viewpointX = fSettings["RunModel.ViewpointX"];
-    float viewpointY = fSettings["RunModel.ViewpointY"];
-    float viewpointZ = fSettings["RunModel.ViewpointZ"];
 
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
@@ -219,7 +216,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     s_cam = std::make_shared<pangolin::OpenGlRenderState>(
             pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2),
                                        K(1, 2), NEAR_PLANE, FAR_PLANE),
-            pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY));
+            pangolin::ModelViewLookAt(0.1, -0.1, 0.3, 0, 0, 0, 0.0, -1.0, pangolin::AxisY)); // the first 3 value are meaningless because we change them later
 
     // Create Interactive View in window
     pangolin::Handler3D handler(*s_cam);
@@ -508,16 +505,7 @@ applyCommand(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, std::string &c
 }
 
 int main(int argc, char **argv) {
-    std::unordered_map<std::string, bool> commandMap = {
-            {"cw",      true},
-            {"ccw",     true},
-            {"forward", true},
-            {"right",   true},
-            {"up",      true},
-            {"down",    true},
-            {"left",    true},
-            {"flip",    false},
-            {"rc",      false}};
+
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     bool stopFlag = false;
     bool ready = false;
