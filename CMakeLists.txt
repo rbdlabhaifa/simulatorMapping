@@ -201,3 +201,6 @@ target_link_libraries(remove_outliers ${PROJECT_NAME})
 
 add_executable(run_model_with_orb_slam_points exe/run_model_with_orb_slam_points.cc)
 target_link_libraries(run_model_with_orb_slam_points ${PROJECT_NAME})
+
+add_executable(pcd_to_xyz exe/pcd_to_xyz.cc)
+target_link_libraries(pcd_to_xyz ${PROJECT_NAME})

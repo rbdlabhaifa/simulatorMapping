@@ -5,6 +5,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/registration/gicp.h>
 #include <pcl/common/transforms.h>
+#include <pcl/io/pcd_io.h>
 
 #include "include/Auxiliary.h"
 
@@ -149,15 +150,24 @@ int main()
     std::string cloud_points_orb_slam_filename = orbs_csv_dir + "b2_orb_slam_map_points_without_outliers.xyz";
 
     // Read points from the single XYZ file
-    cloudPoints1 = readPointsFromXYZ(cloud_points_combined_frames_filename);
-    cloudPoints2 = readPointsFromXYZ(cloud_points_orb_slam_filename);
+    cloudPoints1 = readPointsFromXYZ(cloud_points_orb_slam_filename);
+    cloudPoints2 = readPointsFromXYZ(cloud_points_combined_frames_filename);
 
     // Convert std::vector<cv::Point3d> to pcl::PointCloud<pcl::PointXYZ>
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 = toPointCloud(cloudPoints1);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 = toPointCloud(cloudPoints2);
 
     // Compute scale
-    float scale = compute_scale(cloud1, cloud2);
+    bool is_predefined_scale = (bool)data["usePredefinedScale"];
+    float scale = 0;
+    if (is_predefined_scale) {
+        scale = (float)data["predefinedScale"];
+        std::cout << "Using predefined scale: " << scale << std::endl;
+    }
+    else {
+        scale = compute_scale(cloud1, cloud2);
+        std::cout << "Computed scale: " << scale << std::endl;
+    }
 
     // Scale the source point cloud
     for (size_t i = 0; i < cloud1->points.size(); ++i)
@@ -167,8 +177,11 @@ int main()
         cloud1->points[i].z *= scale;
     }
 
-    savePointsToXYZ(orbs_csv_dir + "c1_combined_frames_points_without_outliers.xyz", *cloud1);
-    savePointsToXYZ(orbs_csv_dir + "c2_orb_slam_map_points_without_outliers.xyz", *cloud2);
+    savePointsToXYZ(orbs_csv_dir + "c2_orb_slam_map_points_without_outliers.xyz", *cloud1);
+    savePointsToXYZ(orbs_csv_dir + "c1_combined_frames_points_without_outliers.xyz", *cloud2);
+
+    pcl::PCDWriter().write(orbs_csv_dir + "d2_orb_slam_map_points_without_outliers.pcd", *cloud1);
+    pcl::PCDWriter().write(orbs_csv_dir + "d1_combined_frames_points_without_outliers.pcd", *cloud2);
 
     // Create GICP instance
     pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> gicp;

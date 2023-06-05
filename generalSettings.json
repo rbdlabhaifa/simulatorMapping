@@ -38,6 +38,8 @@
   "framesOutput": "/home/liam/Downloads/frames/",
   "frameNumber": 99,
   "useLabICP": true,
-  "modelTextureNameToAlignTo": "floor"
+  "modelTextureNameToAlignTo": "floor",
+  "usePredefinedScale": true,
+  "predefinedScale": 6.28 
 }
 
