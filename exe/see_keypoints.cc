@@ -29,7 +29,7 @@ int main(void)
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    cv::Mat img = cv::imread("/home/liam/dev/rbd/slamMaps/example_mapping11/frame_45.png");
+    cv::Mat img = cv::imread("/home/liam/Documents/slamMaps/example_mapping11/frame_45.png");
     cv::cvtColor(img, img,  cv::COLOR_RGBA2GRAY);
     img.convertTo(img, CV_8UC1);
     ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);

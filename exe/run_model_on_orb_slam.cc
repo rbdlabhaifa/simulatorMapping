@@ -298,6 +298,10 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(s_cam, movementFactor); });
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
+
+    cv::VideoWriter writer;
+    writer.open(simulatorOutputDir + "/scan.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30.0, cv::Size(viewport_desired_size[0], viewport_desired_size[1]), true);
+
     std::vector<cv::Point3d> seenPoints{};
     while (!pangolin::ShouldQuit() && !*stopFlag) {
         *ready = true;
@@ -327,16 +331,19 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
             glGetIntegerv(GL_VIEWPORT, viewport_size);
 
             pangolin::Image<unsigned char> buffer;
-            pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
+            pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGB24");
             buffer.Alloc(viewport_size[2], viewport_size[3], viewport_size[2] * fmt.bpp / 8);
             glReadBuffer(GL_BACK);
             glPixelStorei(GL_PACK_ALIGNMENT, 1);
-            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
+            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGB, GL_UNSIGNED_BYTE, buffer.ptr);
 
-            cv::Mat imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
-            cv::cvtColor(imgBuffer, img, cv::COLOR_RGBA2GRAY);
+            cv::Mat imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC3, buffer.ptr);
+            cv::cvtColor(imgBuffer, img, cv::COLOR_RGB2GRAY);
             img.convertTo(img, CV_8UC1);
             cv::flip(img, img, 0);
+            cv::flip(imgBuffer, imgBuffer, 0);
+
+            writer.write(imgBuffer);
 
             auto now = std::chrono::system_clock::now();
             auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
@@ -381,6 +388,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
         pangolin::FinishFrame();
     }
+    writer.release();
     saveMap(0, simulatorOutputDir, &SLAM);
     SLAM.SaveMap(simulatorOutputDir + "/simulatorCloudPoint.bin");
     SLAM.Shutdown();

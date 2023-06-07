@@ -18,7 +18,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 # Loop through all CSV files and plot the points
-x, y, z = load_data("/home/liam/dev/rbd/slamMaps/example_mapping11/cloud1.csv")
+x, y, z = load_data("/home/liam/Documents/slamMaps/example_mapping11/cloud1.csv")
 ax.scatter(x, y, z, s=1)
 
 # Set the axis labels and limits
