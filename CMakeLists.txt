@@ -199,3 +199,6 @@ target_link_libraries(run_model_with_orb_slam_points ${PROJECT_NAME})
 
 add_executable(pcd_to_xyz exe/pcd_to_xyz.cc)
 target_link_libraries(pcd_to_xyz ${PROJECT_NAME})
+
+add_executable(csv_to_xyz exe/csv_to_xyz.cc)
+target_link_libraries(csv_to_xyz ${PROJECT_NAME})
