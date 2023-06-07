@@ -59,6 +59,7 @@ include_directories(
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/tools
 )
 
 # Add definitions
@@ -106,6 +107,10 @@ target_link_libraries(${PROJECT_NAME}
 	    -lboost_serialization
 	    -lboost_system
         )
+add_library(simulator tools/simulator.cpp)
+target_link_libraries(simulator ${PROJECT_NAME})
+add_executable(runSimulator exe/runSimulator.cpp)
+target_link_libraries(runSimulator simulator)
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
@@ -149,8 +154,8 @@ target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
 add_executable(mapping exe/mapping.cc)
 target_link_libraries(mapping ${PROJECT_NAME})
 
-add_executable(simulator exe/simulator.cc)
-target_link_libraries(simulator ${PROJECT_NAME})
+#add_executable(simulator exe/simulator.cc)
+#target_link_libraries(simulator ${PROJECT_NAME})
 
 add_executable(run_model exe/run_model.cc)
 target_link_libraries(run_model ${PROJECT_NAME})
