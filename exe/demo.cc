@@ -22,6 +22,75 @@
 
 #include "include/Auxiliary.h"
 
+void applyRightToModelCam(pangolin::OpenGlMatrix &Tcw, double value) {
+    // Values are opposite
+    Tcw.m[3 * 4 + 0] -= value;
+}
+
+void applyUpToModelCam(pangolin::OpenGlMatrix &Tcw, double value) {
+    // Values are opposite
+    Tcw.m[3 * 4 + 1] -= value;
+}
+
+void applyForwardToModelCam(pangolin::OpenGlMatrix &Tcw, double value) {
+    // Values are opposite
+    Tcw.m[3 * 4 + 2] -= value;
+}
+
+void applyYawRotationToModelCam(pangolin::OpenGlMatrix &Tcw, double value) {
+    Eigen::Matrix4d Tcw_eigen = pangolin::ToEigen<double>(Tcw);
+
+    // Values are opposite
+    double rand = -value * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << c, 0, s,
+        0, 1, 0,
+        -s, 0, c;
+
+    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
+    pangolinR.block<3, 3>(0, 0) = R;
+
+    // Left-multiply the rotation
+    Tcw_eigen = pangolinR * Tcw_eigen;
+
+    // Convert back to pangolin matrix and set
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            Tcw.m[j * 4 + i] = Tcw_eigen(i, j);
+        }
+    }
+}
+
+void applyPitchRotationToModelCam(pangolin::OpenGlMatrix &Tcw, double value) {
+    Eigen::Matrix4d Tcw_eigen = pangolin::ToEigen<double>(Tcw);
+
+    // Values are opposite
+    double rand = -value * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << 1, 0, 0,
+        0, c, -s,
+        0, s, c;
+
+    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
+    pangolinR.block<3, 3>(0, 0) = R;
+
+    // Left-multiply the rotation
+    Tcw_eigen = pangolinR * Tcw_eigen;
+
+    // Convert back to pangolin matrix and set
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            Tcw.m[j * 4 + i] = Tcw_eigen(i, j);
+        }
+    }
+}
+
 void drawMapPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen, float pointSize)
 {
     glPointSize(pointSize);
@@ -46,6 +115,21 @@ void drawMapPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d
     glEnd();
 }
 
+void saveOnlyNewPoints(std::vector<cv::Point3d> &pointsSeen, std::vector<cv::Point3d> &newPointsSeen) {
+    std::vector<cv::Point3d>::iterator it;
+    for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
+    {
+        if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
+        {
+            it = newPointsSeen.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -60,8 +144,6 @@ int main(int argc, char **argv) {
     float viewpointY = fSettings["Viewer.ViewpointY"];
     float viewpointZ = fSettings["Viewer.ViewpointZ"];
     float viewpointF = fSettings["Viewer.ViewpointF"];
-    // ToDo
-    bool isPangolinExists = false;
 
     std::string map_input_dir = data["mapInputDir"];
     std::string cloudPointPath = map_input_dir + "cloud1.csv";
@@ -77,22 +159,26 @@ int main(int argc, char **argv) {
 
     float pointSize = fSettings["Viewer.PointSize"];;
 
-    pangolin::OpenGlMatrix Twc_opengl;
-    Twc_opengl.SetIdentity();
+    // Build the starting Tcw matrix from the initializers
+    pangolin::OpenGlMatrix Tcw, Twc;
+    Twc.SetIdentity();
+    
+    Tcw.SetIdentity();
+    Tcw.m[3 * 4 + 0] = currentPosition.x;
+    // Opengl has inversed Y axis
+    Tcw.m[3 * 4 + 1] = -currentPosition.y;
+    Tcw.m[3 * 4 + 2] = currentPosition.z;
+    Tcw.RotateX(currentPitch);
+    Tcw.RotateY(currentYaw);
+    Tcw.RotateZ(currentRoll);
 
-    cv::Mat Twc;
-    std::vector<cv::Point3d> newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
+    std::vector<cv::Point3d> newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
     std::vector<cv::Point3d> pointsSeen = std::vector<cv::Point3d>();
 
     float movingScale = data["movingScale"];
     float rotateScale = data["rotateScale"];
 
-    // ToDo
-    if (isPangolinExists) {
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
-    } else {
-        pangolin::CreateWindowAndBind("Simulator Viewer", 1024, 768);
-    }
+    pangolin::CreateWindowAndBind("Simulator Viewer", 1024, 768);
 
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
@@ -100,11 +186,9 @@ int main(int argc, char **argv) {
     // Issue specific OpenGl we might need
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (isPangolinExists) {
-        pangolin::Panel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
-    } else {
-        pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
-    }
+
+    pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
+
     pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
     pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
     pangolin::Var<bool> menuReset("menu.Reset", false, false);
@@ -112,11 +196,13 @@ int main(int argc, char **argv) {
     pangolin::Var<bool> menuMoveRight("menu.Move Right", false, false);
     pangolin::Var<bool> menuMoveDown("menu.Move Down", false, false);
     pangolin::Var<bool> menuMoveUp("menu.Move Up", false, false);
+    pangolin::Var<bool> menuMoveBackward("menu.Move Backward", false, false);
+    pangolin::Var<bool> menuMoveForward("menu.Move Forward", false, false);
     pangolin::Var<bool> menuRotateLeft("menu.Rotate Left", false, false);
     pangolin::Var<bool> menuRotateRight("menu.Rotate Right", false, false);
     pangolin::Var<bool> menuRotateDown("menu.Rotate Down", false, false);
     pangolin::Var<bool> menuRotateUp("menu.Rotate Up", false, false);
-    pangolin::Var<bool> menuShutDown("menu.ShutDown", false, false);
+    pangolin::Var<bool> menuFinishScan("menu.Finish Scan", false, false);
 
     // Define Camera Render Object (for view / scene browsing)
     pangolin::OpenGlRenderState s_cam(
@@ -131,29 +217,15 @@ int main(int argc, char **argv) {
 
     bool follow = true;
 
-    while (!menuShutDown) {
+    while (!menuFinishScan) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // ToDo
-        Twc_opengl.m[0] = (float)Twc.at<double>(0);
-        Twc_opengl.m[1] = (float)Twc.at<double>(1);
-        Twc_opengl.m[2] = (float)Twc.at<double>(2);
-        Twc_opengl.m[4] = (float)Twc.at<double>(4);
-        Twc_opengl.m[5] = (float)Twc.at<double>(5);
-        Twc_opengl.m[6] = (float)Twc.at<double>(6);
-        Twc_opengl.m[8] = (float)Twc.at<double>(8);
-        Twc_opengl.m[9] = (float)Twc.at<double>(9);
-        Twc_opengl.m[10] = (float)Twc.at<double>(10);
-        Twc_opengl.m[12] = (float)Twc.at<double>(12);
-        Twc_opengl.m[13] = (float)Twc.at<double>(13);
-        Twc_opengl.m[14] = (float)Twc.at<double>(14);
-
         if (menuFollowCamera && follow) {
-            s_cam.Follow(Twc_opengl);
+            s_cam.Follow(Twc);
         } else if (menuFollowCamera && !follow) {
             s_cam.SetModelViewMatrix(
                     pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
-            s_cam.Follow(Twc_opengl);
+            s_cam.Follow(Twc);
             follow = true;
         } else if (!menuFollowCamera && follow) {
             follow = false;
@@ -172,21 +244,11 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPosition.x -= movingScale;
+            applyRightToModelCam(Tcw, -movingScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuMoveLeft = false;
         }
 
@@ -194,21 +256,11 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPosition.x += movingScale;
+            applyRightToModelCam(Tcw, movingScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuMoveRight = false;
         }
 
@@ -216,21 +268,12 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPosition.y -= movingScale;
+            // Opengl has inversed Y axis so we pass -value
+            applyUpToModelCam(Tcw, movingScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuMoveDown = false;
         }
 
@@ -238,44 +281,48 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPosition.y += movingScale;
+            // Opengl has inversed Y axis so we pass -value
+            applyUpToModelCam(Tcw, -movingScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuMoveUp = false;
+        }
+
+        if (menuMoveBackward)
+        {
+            pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
+
+            applyForwardToModelCam(Tcw, -movingScale);
+
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
+            menuMoveBackward = false;
+        }
+
+        if (menuMoveForward)
+        {
+            pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
+
+            applyForwardToModelCam(Tcw, movingScale);
+
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
+            menuMoveForward = false;
         }
 
         if (menuRotateLeft)
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentYaw -= rotateScale;
+            applyYawRotationToModelCam(Tcw, -rotateScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::cout << "Current Pos: " << currentPosition << ", yaw: " << currentYaw << ", pitch: " << currentPitch << ", roll: " << currentRoll << std::endl;
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuRotateLeft = false;
         }
 
@@ -283,21 +330,11 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentYaw += rotateScale;
+            applyYawRotationToModelCam(Tcw, rotateScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuRotateRight = false;
         }
 
@@ -305,21 +342,11 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPitch -= rotateScale;
+            applyPitchRotationToModelCam(Tcw, -rotateScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuRotateDown = false;
         }
 
@@ -327,21 +354,11 @@ int main(int argc, char **argv) {
         {
             pointsSeen.insert(pointsSeen.end(), newPointsSeen.begin(), newPointsSeen.end());
 
-            currentPitch += rotateScale;
+            applyPitchRotationToModelCam(Tcw, rotateScale);
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
-            std::vector<cv::Point3d>::iterator it;
-            for (it = newPointsSeen.begin(); it != newPointsSeen.end();)
-            {
-                if (std::find(pointsSeen.begin(), pointsSeen.end(), *it) != pointsSeen.end())
-                {
-                    it = newPointsSeen.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
+            saveOnlyNewPoints(pointsSeen, newPointsSeen);
+
             menuRotateUp = false;
         }
 
@@ -356,10 +373,20 @@ int main(int argc, char **argv) {
             currentPitch = data["pitchRad"];
             currentRoll = data["rollRad"];
 
-            newPointsSeen = Auxiliary::getPointsFromPos(cloudPointPath, currentPosition, currentYaw, currentPitch, currentRoll, Twc);
+            Tcw.m[3 * 4 + 0] = currentPosition.x;
+            // Opengl has inversed Y axis
+            Tcw.m[3 * 4 + 1] = -currentPosition.y;
+            Tcw.m[3 * 4 + 2] = currentPosition.z;
+            Tcw.RotateX(currentPitch);
+            Tcw.RotateY(currentYaw);
+            Tcw.RotateZ(currentRoll);
+
+            newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
             pointsSeen = std::vector<cv::Point3d>();
         }
     }
+
+    std:: cout << pointsSeen.size()+newPointsSeen.size() << std::endl;
 
     return 0;
 }
