@@ -210,3 +210,6 @@ target_link_libraries(csv_to_xyz ${PROJECT_NAME})
 
 add_executable(run_model_with_orbs_and_orb_slam_map exe/run_model_with_orbs_and_orb_slam_map.cc)
 target_link_libraries(run_model_with_orbs_and_orb_slam_map ${PROJECT_NAME})
+
+add_executable(demo exe/demo.cc)
+target_link_libraries(demo ${PROJECT_NAME})
