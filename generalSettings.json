@@ -36,6 +36,7 @@
   "movementFactor": 0.04,
   "framesFolder": "/home/liam/Documents/textures/",
   "framesOutput": "/home/liam/Documents/frames/",
+  "orbFrames": "/home/liam/Documents/orbFrames/",
   "frameNumber": 99,
   "useLabICP": true,
   "modelTextureNameToAlignTo": "floor",
