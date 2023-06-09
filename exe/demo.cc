@@ -164,22 +164,22 @@ int main(int argc, char **argv) {
     Twc.SetIdentity();
     
     Tcw.SetIdentity();
-    Tcw.m[3 * 4 + 0] = currentPosition.x;
-    // Opengl has inversed Y axis
-    Tcw.m[3 * 4 + 1] = -currentPosition.y;
-    Tcw.m[3 * 4 + 2] = currentPosition.z;
 
-    // TODO: Find better way
-    // Assign yaw, pitch, and roll rotations
-    Tcw.m[0] = cos(currentYaw) * cos(currentPitch);
-    Tcw.m[1] = -sin(currentRoll) * sin(currentPitch) * cos(currentYaw) + cos(currentRoll) * sin(currentYaw);
-    Tcw.m[2] = sin(currentRoll) * sin(currentYaw) + cos(currentRoll) * sin(currentRoll) * cos(currentYaw);
-    Tcw.m[4] = cos(currentYaw) * sin(currentPitch);
-    Tcw.m[5] = cos(currentRoll) * cos(currentYaw) + sin(currentRoll) * sin(currentPitch) * sin(currentYaw);
-    Tcw.m[6] = -sin(currentRoll) * cos(currentYaw) + cos(currentRoll) * sin(currentPitch) * sin(currentYaw);
-    Tcw.m[8] = -sin(currentPitch);
-    Tcw.m[9] = sin(currentRoll) * cos(currentPitch);
-    Tcw.m[10] = cos(currentRoll) * cos(currentPitch);
+    // Opengl has inversed Y axis
+    // Assign yaw, pitch and roll rotations and translation
+    Eigen::Matrix4d Tcw_eigen = Eigen::Matrix4d::Identity();
+    Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(currentRoll, Eigen::Vector3d::UnitZ()) * 
+                             Eigen::AngleAxisd(currentYaw, Eigen::Vector3d::UnitY()) *
+                             Eigen::AngleAxisd(currentPitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
+    Tcw_eigen(0, 3) = currentPosition.x;
+    Tcw_eigen(1, 3) = -currentPosition.y;
+    Tcw_eigen(2, 3) = currentPosition.z;
+
+    for(int i=0;i<4;i++){
+        for(int j=0;j<4;j++){
+            Tcw.m[j * 4 + i] = Tcw_eigen(i,j);
+        }
+    }
 
     std::vector<cv::Point3d> newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
     std::vector<cv::Point3d> pointsSeen = std::vector<cv::Point3d>();
@@ -382,22 +382,21 @@ int main(int argc, char **argv) {
             currentPitch = data["pitchRad"];
             currentRoll = data["rollRad"];
 
-            Tcw.m[3 * 4 + 0] = currentPosition.x;
             // Opengl has inversed Y axis
-            Tcw.m[3 * 4 + 1] = -currentPosition.y;
-            Tcw.m[3 * 4 + 2] = currentPosition.z;
+            // Assign yaw, pitch and roll rotations and translation
+            Eigen::Matrix4d Tcw_eigen = Eigen::Matrix4d::Identity();
+            Tcw_eigen.block<3, 3>(0, 0) = (Eigen::AngleAxisd(currentRoll, Eigen::Vector3d::UnitZ()) * 
+                                    Eigen::AngleAxisd(currentYaw, Eigen::Vector3d::UnitY()) *
+                                    Eigen::AngleAxisd(currentPitch, Eigen::Vector3d::UnitX())).toRotationMatrix();
+            Tcw_eigen(0, 3) = currentPosition.x;
+            Tcw_eigen(1, 3) = -currentPosition.y;
+            Tcw_eigen(2, 3) = currentPosition.z;
 
-            // TODO: Find better way
-            // Assign yaw, pitch, and roll rotations
-            Tcw.m[0] = cos(currentYaw) * cos(currentPitch);
-            Tcw.m[1] = -sin(currentRoll) * sin(currentPitch) * cos(currentYaw) + cos(currentRoll) * sin(currentYaw);
-            Tcw.m[2] = sin(currentRoll) * sin(currentYaw) + cos(currentRoll) * sin(currentRoll) * cos(currentYaw);
-            Tcw.m[4] = cos(currentYaw) * sin(currentPitch);
-            Tcw.m[5] = cos(currentRoll) * cos(currentYaw) + sin(currentRoll) * sin(currentPitch) * sin(currentYaw);
-            Tcw.m[6] = -sin(currentRoll) * cos(currentYaw) + cos(currentRoll) * sin(currentPitch) * sin(currentYaw);
-            Tcw.m[8] = -sin(currentPitch);
-            Tcw.m[9] = sin(currentRoll) * cos(currentPitch);
-            Tcw.m[10] = cos(currentRoll) * cos(currentPitch);
+            for(int i=0;i<4;i++){
+                for(int j=0;j<4;j++){
+                    Tcw.m[j * 4 + i] = Tcw_eigen(i,j);
+                }
+            }
 
             newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
             pointsSeen = std::vector<cv::Point3d>();
