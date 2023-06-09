@@ -168,9 +168,18 @@ int main(int argc, char **argv) {
     // Opengl has inversed Y axis
     Tcw.m[3 * 4 + 1] = -currentPosition.y;
     Tcw.m[3 * 4 + 2] = currentPosition.z;
-    Tcw.RotateX(currentPitch);
-    Tcw.RotateY(currentYaw);
-    Tcw.RotateZ(currentRoll);
+
+    // TODO: Find better way
+    // Assign yaw, pitch, and roll rotations
+    Tcw.m[0] = cos(currentYaw) * cos(currentPitch);
+    Tcw.m[1] = -sin(currentRoll) * sin(currentPitch) * cos(currentYaw) + cos(currentRoll) * sin(currentYaw);
+    Tcw.m[2] = sin(currentRoll) * sin(currentYaw) + cos(currentRoll) * sin(currentRoll) * cos(currentYaw);
+    Tcw.m[4] = cos(currentYaw) * sin(currentPitch);
+    Tcw.m[5] = cos(currentRoll) * cos(currentYaw) + sin(currentRoll) * sin(currentPitch) * sin(currentYaw);
+    Tcw.m[6] = -sin(currentRoll) * cos(currentYaw) + cos(currentRoll) * sin(currentPitch) * sin(currentYaw);
+    Tcw.m[8] = -sin(currentPitch);
+    Tcw.m[9] = sin(currentRoll) * cos(currentPitch);
+    Tcw.m[10] = cos(currentRoll) * cos(currentPitch);
 
     std::vector<cv::Point3d> newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
     std::vector<cv::Point3d> pointsSeen = std::vector<cv::Point3d>();
@@ -377,9 +386,18 @@ int main(int argc, char **argv) {
             // Opengl has inversed Y axis
             Tcw.m[3 * 4 + 1] = -currentPosition.y;
             Tcw.m[3 * 4 + 2] = currentPosition.z;
-            Tcw.RotateX(currentPitch);
-            Tcw.RotateY(currentYaw);
-            Tcw.RotateZ(currentRoll);
+
+            // TODO: Find better way
+            // Assign yaw, pitch, and roll rotations
+            Tcw.m[0] = cos(currentYaw) * cos(currentPitch);
+            Tcw.m[1] = -sin(currentRoll) * sin(currentPitch) * cos(currentYaw) + cos(currentRoll) * sin(currentYaw);
+            Tcw.m[2] = sin(currentRoll) * sin(currentYaw) + cos(currentRoll) * sin(currentRoll) * cos(currentYaw);
+            Tcw.m[4] = cos(currentYaw) * sin(currentPitch);
+            Tcw.m[5] = cos(currentRoll) * cos(currentYaw) + sin(currentRoll) * sin(currentPitch) * sin(currentYaw);
+            Tcw.m[6] = -sin(currentRoll) * cos(currentYaw) + cos(currentRoll) * sin(currentPitch) * sin(currentYaw);
+            Tcw.m[8] = -sin(currentPitch);
+            Tcw.m[9] = sin(currentRoll) * cos(currentPitch);
+            Tcw.m[10] = cos(currentRoll) * cos(currentPitch);
 
             newPointsSeen = Auxiliary::getPointsFromTcw(cloudPointPath, Tcw, Twc);
             pointsSeen = std::vector<cv::Point3d>();
