@@ -40,6 +40,8 @@ public:
 
     static std::vector<cv::Point3d> getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll, cv::Mat &Twc);
 
+    static std::vector<cv::Point3d> getPointsFromTcw(const std::string cloud_points, const pangolin::OpenGlMatrix &Tcw, pangolin::OpenGlMatrix &Twc);
+
     static std::vector<std::string> GetAllFrameDatas();
 
     static std::vector<std::string> GetFrameDatas(double amount=1); // Between 0 to 1
