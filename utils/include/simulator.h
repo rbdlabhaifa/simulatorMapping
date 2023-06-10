@@ -14,6 +14,21 @@ public:
 
     void Run();
 
+    void ToggleFollowCamera();
+    void ToggleShowPoints();
+    void DoReset();
+    void MoveLeft();
+    void MoveRight();
+    void MoveDown();
+    void MoveUp();
+    void MoveBackward();
+    void MoveForward();
+    void RotateLeft();
+    void RotateRight();
+    void RotateDown();
+    void RotateUp();
+    void FinishScan();
+
 private:
     // Methods
     void reset();

@@ -108,6 +108,62 @@ void Simulator::reset() {
     this->mPointsSeen = std::vector<cv::Point3d>();
 }
 
+void Simulator::ToggleFollowCamera() {
+    this->mFollowCamera = !this->mFollowCamera;
+}
+
+void Simulator::ToggleShowPoints() {
+    this->mShowPoints = !this->mShowPoints;
+}
+
+void Simulator::DoReset() {
+    this->mReset = true;
+}
+
+void Simulator::MoveLeft() {
+    this->mMoveLeft = true;
+}
+
+void Simulator::MoveRight() {
+    this->mMoveRight = true;
+}
+
+void Simulator::MoveDown() {
+    this->mMoveDown = true;
+}
+
+void Simulator::MoveUp() {
+    this->mMoveUp = true;
+}
+
+void Simulator::MoveBackward() {
+    this->mMoveBackward = true;
+}
+
+void Simulator::MoveForward() {
+    this->mMoveForward = true;
+}
+
+void Simulator::RotateLeft() {
+    this->mRotateLeft = true;
+}
+
+void Simulator::RotateRight() {
+    this->mRotateRight = true;
+}
+
+void Simulator::RotateDown() {
+    this->mRotateDown = true;
+}
+
+void Simulator::RotateUp() {
+    this->mRotateUp = true;
+}
+
+void Simulator::FinishScan() {
+    this->mFinishScan = true;
+}
+
 void Simulator::applyUpToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 1] -= value;
