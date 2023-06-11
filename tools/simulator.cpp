@@ -4,10 +4,16 @@
 
 #include "simulator.h"
 
+cv::Mat Simulator::getCurrentLocation() {
+    locationLock.lock();
+    cv::Mat locationCopy = Tcw.clone();
+    locationLock.unlock();
+    return locationCopy;
+}
+
 Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std::string modelTextureNameToAlignTo,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
-                     double movementFactor, int nFeatures, float fScaleFactor, int fIniThFAST, int fMinThFAST,
-                     int nLevels,
+                     double movementFactor,
                      std::string vocPath) : movementFactor(movementFactor), ready(false), stopFlag(false),
                                             viewportDesiredSize(640, 480), cull_backfaces(false), isSaveMap(saveMap),
                                             modelPath(model_path),
@@ -19,6 +25,14 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
+    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+    int nFeatures = fSettings["ORBextractor.nFeatures"];
+    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+    int nLevels = fSettings["ORBextractor.nLevels"];
+    SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, loadMap,
+                                               mapLoadPath,
+                                               true);
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
     char time_buf[21];
@@ -26,11 +40,9 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     std::time(&now);
     std::strftime(time_buf, 21, "%Y-%m-%d_%H:%S:%MZ", gmtime(&now));
     std::string currentTime(time_buf);
-    simulatorOutputDir = simulatorOutputDirPath +"/"+ currentTime + "/";
+    simulatorOutputDir = simulatorOutputDirPath + "/" + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
-    SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, loadMap,
-                                               mapLoadPath,
-                                               true);
+
 }
 
 void Simulator::command(std::string &command, int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
@@ -149,7 +161,9 @@ void Simulator::simulatorRunThread() {
                           << std::endl;
             }
             if (track) {
-                SLAM->TrackMonocular(img, timestamp);
+                locationLock.lock();
+                Tcw = SLAM->TrackMonocular(img, timestamp);
+                locationLock.unlock();
             }
 
             s_cam.Apply();
