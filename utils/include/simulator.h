@@ -29,6 +29,8 @@ public:
     void RotateUp();
     void FinishScan();
 
+    std::vector<cv::Point3d> GetCloudPoint();
+
 private:
     // Methods
     void reset();
@@ -43,9 +45,13 @@ private:
 
     void saveOnlyNewPoints();
 
+    void BuildCloudScanned();
+
     // Members
     std::vector<cv::Point3d> mPointsSeen;
     std::vector<cv::Point3d> mNewPointsSeen;
+
+    std::vector<cv::Point3d> mCloudScanned;
 
     double mPointSize;
 

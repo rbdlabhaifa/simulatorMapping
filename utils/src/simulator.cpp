@@ -7,6 +7,8 @@ Simulator::Simulator() {
     programData >> data;
     programData.close();
 
+    this->mCloudScanned = std::vector<cv::Point3d>();
+
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
 
@@ -272,11 +274,19 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
+std::vector<cv::Point3d> Simulator::GetCloudPoint() {
+    return this->mCloudScanned;
+}
+
+void Simulator::BuildCloudScanned() {
+    // Erased mNewPointsSeen to only new points but not combined yet so insert both
+    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
+    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
+}
+
 void Simulator::Run() {
     while (!this->mFinishScan) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 
         if (this->mFollowCamera && this->mFollow) {
             this->mS_cam.Follow(this->mTwc);
@@ -425,5 +435,5 @@ void Simulator::Run() {
         }
     }
 
-    std:: cout << this->mPointsSeen.size()+this->mNewPointsSeen.size() << std::endl;
+    this->BuildCloudScanned();
 }
