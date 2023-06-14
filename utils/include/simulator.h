@@ -11,6 +11,7 @@ class Simulator {
 public:
     // Methods
     Simulator();
+    ~Simulator();
 
     void Run();
 
@@ -31,8 +32,13 @@ public:
 
     std::vector<cv::Point3d> GetCloudPoint();
 
+    void SetResultPoint(cv::Point3d resultPoint);
+    void CheckResults();
+
 private:
     // Methods
+    void build_window(std::string title);
+
     void reset();
     void applyUpToModelCam(double value);
     void applyRightToModelCam(double value);
@@ -42,6 +48,9 @@ private:
     void applyPitchRotationToModelCam(double value);
 
     void drawMapPoints();
+    void drawResultPoints();
+
+    void updateTwcByResultPoint();
 
     void saveOnlyNewPoints();
 
@@ -53,7 +62,14 @@ private:
 
     std::vector<cv::Point3d> mCloudScanned;
 
+    cv::Point3d mResultPoint;
+    cv::Point3d mRealResultPoint;
+
+    std::string mSimulatorViewerTitle;
+    std::string mResultsWindowTitle;
+
     double mPointSize;
+    double mResultsPointSize;
 
     double mRotateScale;
     double mMovingScale;
@@ -99,6 +115,7 @@ private:
 
     std::string mCloudPointPath;
 
+    bool mCloseResults;
 };
 
 #endif //ORB_SLAM2_SIMULATOR_H

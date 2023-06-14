@@ -1,5 +1,9 @@
 #include "include/simulator.h"
 
+#define RESULT_POINT_X 0.1
+#define RESULT_POINT_Y 0.2
+#define RESULT_POINT_Z 0.3
+
 Simulator::Simulator() {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
@@ -8,6 +12,12 @@ Simulator::Simulator() {
     programData.close();
 
     this->mCloudScanned = std::vector<cv::Point3d>();
+
+    this->mRealResultPoint = cv::Point3d(RESULT_POINT_X, RESULT_POINT_Y, RESULT_POINT_Z);
+    this->mResultPoint = cv::Point3d();
+
+    this->mSimulatorViewerTitle = "Simulator Viewer";
+    this->mResultsWindowTitle = "Results";
 
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
@@ -31,6 +41,7 @@ Simulator::Simulator() {
     this->mStartRoll = data["rollRad"];
 
     this->mPointSize = fSettings["Viewer.PointSize"];
+    this->mResultsPointSize = this->mPointSize * 5;
 
     this->mTwc.SetIdentity();
     this->mTcw.SetIdentity();
@@ -38,17 +49,7 @@ Simulator::Simulator() {
     this->mMovingScale = data["movingScale"];
     this->mRotateScale = data["rotateScale"];
 
-    pangolin::CreateWindowAndBind("Simulator Viewer", 1024, 768);
-
-    // 3D Mouse handler requires depth testing to be enabled
-    glEnable(GL_DEPTH_TEST);
-
-    // Issue specific OpenGl we might need
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // For buttons TODO
-    // pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
+    this->build_window(this->mSimulatorViewerTitle);
 
     this->mFollowCamera = true;
     this->mShowPoints = true;
@@ -77,6 +78,17 @@ Simulator::Simulator() {
             .SetHandler(new pangolin::Handler3D(this->mS_cam));
 
     this->reset();
+}
+
+void Simulator::build_window(std::string title) {
+    pangolin::CreateWindowAndBind(title, 1024, 768);
+
+    // 3D Mouse handler requires depth testing to be enabled
+    glEnable(GL_DEPTH_TEST);
+
+    // Issue specific OpenGl we might need
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void Simulator::reset() {
@@ -274,16 +286,6 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
-std::vector<cv::Point3d> Simulator::GetCloudPoint() {
-    return this->mCloudScanned;
-}
-
-void Simulator::BuildCloudScanned() {
-    // Erased mNewPointsSeen to only new points but not combined yet so insert both
-    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
-}
-
 void Simulator::Run() {
     while (!this->mFinishScan) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -435,5 +437,81 @@ void Simulator::Run() {
         }
     }
 
+    pangolin::DestroyWindow(this->mSimulatorViewerTitle);
+    this->build_window(this->mResultsWindowTitle);
+
     this->BuildCloudScanned();
+}
+
+std::vector<cv::Point3d> Simulator::GetCloudPoint() {
+    return this->mCloudScanned;
+}
+
+void Simulator::BuildCloudScanned() {
+    // Erased mNewPointsSeen to only new points but not combined yet so insert both
+    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
+    this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
+}
+
+void Simulator::SetResultPoint(cv::Point3d resultPoint) {
+    this->mResultPoint = resultPoint;
+}
+
+void Simulator::drawResultPoints() {
+    // Remove result point and real result point from cloud scanned if exist
+    this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mResultPoint), this->mCloudScanned.end());
+    this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mRealResultPoint), this->mCloudScanned.end());
+
+    glPointSize(this->mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.0,0.0);
+
+    for(auto point : this->mCloudScanned)
+    {
+        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+    }
+
+    glEnd();
+
+    glPointSize(this->mResultsPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(1.0,0.0,0.0);
+
+    glVertex3f((float)this->mResultPoint.x, (float)this->mResultPoint.y, (float)this->mResultPoint.z);
+
+    glEnd();
+
+    glPointSize(this->mResultsPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,1.0,0.0);
+
+    glVertex3f((float)this->mRealResultPoint.x, (float)this->mRealResultPoint.y, (float)this->mRealResultPoint.z);
+
+    glEnd();
+}
+
+void Simulator::updateTwcByResultPoint() {
+}
+
+void Simulator::CheckResults() {
+    this->mCloseResults = false;
+
+    while (!this->mCloseResults) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        this->updateTwcByResultPoint();
+
+        this->mS_cam.Follow(this->mTwc);
+        this->mD_cam.Activate(this->mS_cam);
+
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        
+        this->drawResultPoints();
+
+        pangolin::FinishFrame();
+    }
+}
+
+Simulator::~Simulator() {
+    pangolin::DestroyWindow(this->mResultsWindowTitle);
 }
