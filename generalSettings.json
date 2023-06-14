@@ -4,9 +4,10 @@
   "offlineVideoTestPath": "/home/liam/Documents/videos/mapping.avi",
   "onlineVideoPath": "udp://0.0.0.0:11111?overrun_nonfatal=1&fifo_size=1000",
   "loadMap": false,
-  "loadMapPath": "/home/liam/dev/rbd/slamMaps/HaifaLab.bin",
+  "loadMapPath": "/home/liam/Documents/slamMaps/HaifaLab.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/Documents/slamMaps/",
+  "modelTextureNameToAlignTo": "floor",
   "mapInputDir": "/home/liam/Documents/slamMaps/example_mapping11/",
   "getPointDataCsv": "/home/liam/example.csv",
   "frameToCheck": 1,
@@ -33,14 +34,11 @@
   "pitchOffset": -0.35643,
   "rollOffset": -0.0139628,
   "scaleFactor": 0.0305,
-  "movementFactor": 0.04,
+  "movementFactor": 0.01,
   "framesFolder": "/home/liam/Documents/textures/",
   "framesOutput": "/home/liam/Documents/frames/",
-  "orbFrames": "/home/liam/Documents/orbFrames/",
   "frameNumber": 99,
   "useLabICP": true,
-  "modelTextureNameToAlignTo": "floor",
-  "usePredefinedScale": false,
-  "predefinedScale": 6.28 
+  "trackImages": false
 }
 

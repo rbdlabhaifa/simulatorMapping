@@ -34,7 +34,8 @@ bool has_suffix(const std::string &str, const std::string &suffix) {
 namespace ORB_SLAM2 {
 
     System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-                   const bool bUseViewer, bool bReuse, std::string mapName, bool continue_mapping,
+                   const bool bUseViewer, const bool bUseFrameDrawer, bool bReuse, std::string mapName,
+                   bool continue_mapping,
                    bool isPangolinExists) : mSensor(sensor), mbReset(false), mbActivateLocalizationMode(bReuse),
                                             mbDeactivateLocalizationMode(false) {
         // Output welcome message
@@ -127,7 +128,11 @@ namespace ORB_SLAM2 {
 
 
         //Create Drawers. These are used by the Viewer
-        mpFrameDrawer = new FrameDrawer(mpMap, bReuse);
+        if (bUseFrameDrawer) {
+            mpFrameDrawer = new FrameDrawer(mpMap, bReuse);
+        } else {
+            mpFrameDrawer = nullptr;
+        }
         mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
 
         //Initialize the Tracking thread

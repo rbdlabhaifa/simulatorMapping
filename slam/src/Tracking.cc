@@ -230,8 +230,10 @@ namespace ORB_SLAM2 {
         return mCurrentFrame.mTcw.clone();
     }
 
-    cv::Mat Tracking::GrabImageMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const float cols, const float rows,
-                                         const double &timestamp) {
+    cv::Mat
+    Tracking::GrabImageMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const float cols,
+                                 const float rows,
+                                 const double &timestamp) {
 
         if (mImGray.channels() == 3) {
             if (mbRGB)
@@ -244,15 +246,16 @@ namespace ORB_SLAM2 {
             else
                 cvtColor(mImGray, mImGray, CV_BGRA2GRAY);
         }
-        if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET) {
-            //mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
-            std::cout << "first frame must be with image " << std::endl;
-            return {};
-        } else {
-            mCurrentFrame = Frame(descriptors, keyPoints,cols,rows, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef,
-                                  mbf,
-                                  mThDepth);
-        }
+//        if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET) {
+//            //mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+//            std::cout << "first frame must be with image " << std::endl;
+//            return {};
+//        } else {
+        mCurrentFrame = Frame(descriptors, keyPoints, cols, rows, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
+                              mDistCoef,
+                              mbf,
+                              mThDepth);
+        //}
         Track();
 
         return mCurrentFrame.mTcw.clone();
@@ -304,8 +307,9 @@ namespace ORB_SLAM2 {
                 StereoInitialization();
             else
                 MonocularInitialization();
-
-            mpFrameDrawer->Update(this);
+            if (mpFrameDrawer != nullptr) {
+                mpFrameDrawer->Update(this);
+            }
 
             if (mState != OK)
                 return;
@@ -409,7 +413,9 @@ namespace ORB_SLAM2 {
                 mState = LOST;
 
             // Update drawer
-            mpFrameDrawer->Update(this);
+            if (mpFrameDrawer != nullptr) {
+                mpFrameDrawer->Update(this);
+            }
 
             // If tracking were good, check if we insert a keyframe
             if (bOK) {
@@ -566,7 +572,7 @@ namespace ORB_SLAM2 {
 
                 return;
             } //else
-                //cout << __FUNCTION__ << "The Key Frame-s points are less: " << mCurrentFrame.mvKeys.size() << endl;
+            //cout << __FUNCTION__ << "The Key Frame-s points are less: " << mCurrentFrame.mvKeys.size() << endl;
         } else {
             // Try to initialize
             if ((int) mCurrentFrame.mvKeys.size() <= 100) {

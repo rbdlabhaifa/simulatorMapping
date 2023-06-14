@@ -75,8 +75,13 @@ namespace ORB_SLAM2 {
 
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer = true, bool reuse = false, std::string mapName = "Slam_latest_Map.bin",
-               bool continue_mapping = false, bool isPangolinExists = false);
+               const bool bUseViewer = true,
+               const bool bUseFrameDrawer = true,
+               bool reuse = false, std::string
+               mapName = "Slam_latest_Map.bin",
+               bool continue_mapping = false,
+               bool isPangolinExists = false
+        );
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -93,7 +98,9 @@ namespace ORB_SLAM2 {
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
-        cv::Mat TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
+
+        cv::Mat
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
@@ -106,18 +113,15 @@ namespace ORB_SLAM2 {
 
         Map *GetMap();
 
-        inline MapDrawer *GetMapDrawer()
-        {
+        inline MapDrawer *GetMapDrawer() {
             return mpMapDrawer;
         }
 
-        inline LocalMapping *GetLocalMapping()
-        {
+        inline LocalMapping *GetLocalMapping() {
             return mpLocalMapper;
         }
 
-        inline LoopClosing *GetLoopClosing()
-        {
+        inline LoopClosing *GetLoopClosing() {
             return mpLoopCloser;
         }
 
