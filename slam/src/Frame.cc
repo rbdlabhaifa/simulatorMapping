@@ -82,11 +82,12 @@ namespace ORB_SLAM2 {
         N = mvKeys.size();
 
         UndistortKeyPoints();
-
-        ComputeStereoMatches();
+        mvuRight = vector<float>(N, -1);
+        mvDepth = vector<float>(N, -1);
 
         mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
         mvbOutlier = vector<bool>(N, false);
+
 
 
         // This is done only for the first Frame (or after a change in the calibration)

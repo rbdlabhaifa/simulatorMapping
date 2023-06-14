@@ -13,8 +13,9 @@ int main(int argc, char **argv) {
     std::string configPath = data["DroneYamlPathSlam"];
     std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
     std::string model_path = data["modelPath"];
+    bool trackImages = data["trackImages"];
 
-    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo);
+    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages);
     auto simulatorThread = simulator.run();
     while (!simulator.isReady()) { // wait for the 3D model to load
         usleep(1000);

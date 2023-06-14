@@ -12,13 +12,15 @@ cv::Mat Simulator::getCurrentLocation() {
 }
 
 Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std::string modelTextureNameToAlignTo,
+                     bool trackImages,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
                      double movementFactor,
-                     std::string vocPath) : movementFactor(movementFactor), ready(false), stopFlag(false),
-                                            viewportDesiredSize(640, 480), cull_backfaces(false), isSaveMap(saveMap),
-                                            modelPath(model_path),
-                                            modelTextureNameToAlignTo(modelTextureNameToAlignTo), track(false),
-                                            saveMapSignal(false) {
+                     std::string vocPath) : stopFlag(false), ready(false), saveMapSignal(false),
+                                            track(false),
+                                            movementFactor(movementFactor), modelPath(model_path), modelTextureNameToAlignTo(modelTextureNameToAlignTo),
+                                            isSaveMap(saveMap),
+                                            trackImages(trackImages), cull_backfaces(false),
+                                            viewportDesiredSize(640, 480) {
     cv::FileStorage fSettings(ORBSLAMConfigFile, cv::FileStorage::READ);
 
     float fx = fSettings["Camera.fx"];
@@ -30,7 +32,8 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
-    SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, loadMap,
+    SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, trackImages,
+                                               loadMap,
                                                mapLoadPath,
                                                true);
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
@@ -112,7 +115,7 @@ void Simulator::simulatorRunThread() {
     pangolin::View &d_cam = pangolin::CreateDisplay()
             .SetBounds(0.0, 1.0, 0.0, 1.0, ((float) -viewportDesiredSize[0] / (float) viewportDesiredSize[1]))
             .SetHandler(&handler);
-
+    int numberOfFramesForOrbslam = 0;
     while (!pangolin::ShouldQuit() && !stopFlag) {
         ready = true;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -162,7 +165,15 @@ void Simulator::simulatorRunThread() {
             }
             if (track) {
                 locationLock.lock();
-                Tcw = SLAM->TrackMonocular(img, timestamp);
+                if (trackImages){
+                    Tcw = SLAM->TrackMonocular(img, timestamp);
+                }else{
+                    std::vector<cv::KeyPoint> pts;
+                    cv::Mat mDescriptors;
+                    orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
+                    Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
+                }
+
                 locationLock.unlock();
             }
 

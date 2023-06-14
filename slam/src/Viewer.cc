@@ -196,9 +196,12 @@ namespace ORB_SLAM2 {
 
             if (!menuOpenSimulator)
             {
-                cv::Mat im = mpFrameDrawer->DrawFrame();
-                cv::imshow("ORB-SLAM2: Current Frame", im);
-                cv::waitKey(mT);
+                if (mpFrameDrawer != nullptr){
+                    cv::Mat im = mpFrameDrawer->DrawFrame();
+                    cv::imshow("ORB-SLAM2: Current Frame", im);
+                    cv::waitKey(mT);
+                }
+
             }
 
             if (menuMoveLeft)
