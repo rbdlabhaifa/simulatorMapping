@@ -55,7 +55,7 @@ int main() {
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
     std::string videoPath = data["offlineVideoTestPath"];
     std::string loadMapPath = data["loadMapPath"];
-    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false,
+    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, false,
                                                loadMapPath,
                                                true);
     std::set<cv::Mat, MatCompare> descriptorsSet;

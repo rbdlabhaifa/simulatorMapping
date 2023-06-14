@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   std::string frames_folder = data["framesFolder"];
 
   // Load ORB_SLAM2 map and extract its descriptors
-  ORB_SLAM2::System system(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, map_input_dir + "simulatorMap.bin", true, false);
+  ORB_SLAM2::System system(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, true, map_input_dir + "simulatorMap.bin", true, false);
   std::vector<cv::Mat> orb_slam_kf_descriptors_vector;
   std::vector<std::vector<cv::KeyPoint>> orb_slam_kf_keypoints_vector;
   std::vector<cv::Mat> orb_slam_kf_image_vector;

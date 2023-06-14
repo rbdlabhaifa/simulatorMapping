@@ -39,6 +39,6 @@
   "framesOutput": "/home/liam/Documents/frames/",
   "frameNumber": 99,
   "useLabICP": true,
-  "trackImages": false
+  "trackImagesClass": false
 }
 

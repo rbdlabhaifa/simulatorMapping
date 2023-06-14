@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
     std::string map_input_dir = data["mapInputDir"];
     // Load the ORB-SLAM2 system
-    System system(vocPath, droneYamlPathSlam, System::MONOCULAR, true, true, map_input_dir + "simulatorMap.bin", true, false);
+    System system(vocPath, droneYamlPathSlam, System::MONOCULAR, true, true, true, map_input_dir + "simulatorMap.bin", true, false);
 
     // Track the monocular camera and get the current camera pose
     int frame_to_check = data["frameToCheck"];
