@@ -4,12 +4,98 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
+cv::Mat readDesc(const std::string& filename, int rows, int cols)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        // Handle file open error
+        return cv::Mat();
+    }
+
+    cv::Mat mat(rows, cols, CV_8UC1);
+
+    std::string line;
+    std::getline(file, line);
+    std::istringstream iss(line);
+    
+    int row = 0, col = 0;
+    std::string value;
+    while (std::getline(iss, value, ','))
+    {
+        mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value));
+        col++;
+    }
+
+    file.close();
+
+    return mat;
+}
+
+void Simulator::initPoints() {
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
+
+    std::ifstream pointData;
+    std::ifstream descData;
+    std::vector<std::string> row;
+    std::string line, word, temp;
+    int pointIndex;
+    cv::Mat currDesc;
+    std::string currDescFilename;
+
+    std::string mappingPath = data["simulatorPointsPath"];
+    std::string pointsPath = mappingPath + "cloud0.csv";
+
+    cv::Vec<double, 8> point;
+    OfflineMapPoint *offlineMapPoint;
+    pointData.open(pointsPath, std::ios::in);
+
+    while (!pointData.eof()) {
+        row.clear();
+
+        std::getline(pointData, line);
+
+        std::stringstream words(line);
+
+        if (line == "") {
+            continue;
+        }
+
+        while (std::getline(words, word, ',')) {
+            try
+            {
+                std::stod(word);
+            }
+            catch(std::out_of_range)
+            {
+                word = "0";
+            }
+            row.push_back(word);
+        }
+        point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
+
+        pointIndex = std::stoi(row[0]);
+        currDescFilename = mappingPath + "point" + std::to_string(pointIndex) + ".csv";
+        currDesc = readDesc(currDescFilename, 1, 32);
+        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currDesc);
+        this->mPoints.emplace_back(offlineMapPoint);
+    }
+    pointData.close();
+}
+
 Simulator::Simulator() {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
+
+    this->mPoints = std::vector<OfflineMapPoint*>();
+    this->initPoints();
 
     this->mCloudScanned = std::vector<cv::Point3d>();
 
@@ -518,4 +604,7 @@ void Simulator::CheckResults() {
 
 Simulator::~Simulator() {
     pangolin::DestroyWindow(this->mResultsWindowTitle);
+    for (auto ptr : this->mPoints) {
+        free(ptr);
+    }
 }

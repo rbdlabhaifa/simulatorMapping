@@ -32,22 +32,27 @@ void saveMap(int mapNumber) {
             worldPos.at<double>(0) = vector.x();
             worldPos.at<double>(1) = vector.y();
             worldPos.at<double>(2) = vector.z();
+            p->UpdateNormalAndDepth();
+            cv::Mat Pn = p->GetNormal();
+            Pn.convertTo(Pn, CV_64F);
+            pointData << i << ",";
             pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
-            pointData << std::endl;
+            pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
 
             // Save Descriptor to another file
             cv::Mat current_descriptor = p->GetDescriptor();
             std::ofstream descriptorData;
             descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + ".csv");
             for (int j=0; j < current_descriptor.rows; j++) {
-                descriptorData << std::to_string(current_descriptor.at<uchar>(j, 0));
+                descriptorData << static_cast<int>(current_descriptor.at<uchar>(j, 0));
                 for (int k=1; k < current_descriptor.cols; k++) {
-                    descriptorData << "," << std::to_string(current_descriptor.at<uchar>(j, k));
+                    descriptorData << "," << static_cast<int>(current_descriptor.at<uchar>(j, k));
                 }
                 descriptorData << std::endl;
             }
             descriptorData.close();
 
+            pointData << std::endl;
             i++;
         }
     }

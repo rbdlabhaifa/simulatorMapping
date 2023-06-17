@@ -79,9 +79,9 @@ void saveMap(int mapNumber) {
             std::ofstream descriptorData;
             descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + ".csv");
             for (int j=0; j < current_descriptor.rows; j++) {
-                descriptorData << current_descriptor.at<uchar>(j, 0);
+                descriptorData << static_cast<int>(current_descriptor.at<uchar>(j, 0));
                 for (int k=1; k < current_descriptor.cols; k++) {
-                    descriptorData << "," << current_descriptor.at<uchar>(j, k);
+                    descriptorData << "," << static_cast<int>(current_descriptor.at<uchar>(j, k));
                 }
                 descriptorData << std::endl;
             }

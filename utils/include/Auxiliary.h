@@ -48,4 +48,4 @@ public:
 
     static void add_unique_points(std::vector<cv::Point3d>& target, const std::vector<cv::Point3d>& source);
 };
-#endif //ORB_SLAM2_AUXILIARY_H
+#endif // ORB_SLAM2_AUXILIARY_H

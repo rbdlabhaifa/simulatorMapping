@@ -2,6 +2,7 @@
 // Created by Liam Vanunu
 //
 
+#include "include/OfflineMapPoint.h"
 #include "include/Auxiliary.h"
 
 #ifndef ORB_SLAM2_SIMULATOR_H
@@ -37,6 +38,8 @@ public:
 
 private:
     // Methods
+    void initPoints();
+
     void build_window(std::string title);
 
     void reset();
@@ -57,6 +60,8 @@ private:
     void BuildCloudScanned();
 
     // Members
+    std::vector<OfflineMapPoint*> mPoints;
+
     std::vector<cv::Point3d> mCurrentFramePoints;
     std::vector<cv::Point3d> mPointsSeen;
     std::vector<cv::Point3d> mNewPointsSeen;

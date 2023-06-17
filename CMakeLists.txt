@@ -92,6 +92,7 @@ add_library(${PROJECT_NAME}
         utils/src/Point.cpp
         utils/src/Line.cpp
         utils/src/Auxiliary.cpp
+        utils/src/OfflineMapPoint.cpp
         utils/src/simulator.cpp
         )
 

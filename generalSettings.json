@@ -39,6 +39,7 @@
   "framesOutput": "/home/liam/Documents/frames/",
   "frameNumber": 99,
   "useLabICP": true,
-  "trackImagesClass": false
+  "trackImagesClass": false,
+  "simulatorPointsPath": "/home/liam/Documents/slamMaps/example_mapping_desc0/"
 }
 
