@@ -249,11 +249,38 @@ void Simulator::applyPitchRotationToModelCam(double value) {
 
 void Simulator::drawMapPoints()
 {
+    std::vector<cv::Point3d> pointsExceptThisFrame = this->mPointsSeen;
+    std::vector<cv::Point3d>::iterator it;
+    for (it = pointsExceptThisFrame.begin(); it != pointsExceptThisFrame.end();)
+    {
+        if (std::find(this->mCurrentFramePoints.begin(), this->mCurrentFramePoints.end(), *it) != this->mCurrentFramePoints.end())
+        {
+            it = pointsExceptThisFrame.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    std::vector<cv::Point3d> oldPointsFromFrame = this->mCurrentFramePoints;
+    for (it = oldPointsFromFrame.begin(); it != oldPointsFromFrame.end();)
+    {
+        if (std::find(this->mNewPointsSeen.begin(), this->mNewPointsSeen.end(), *it) != this->mNewPointsSeen.end())
+        {
+            it = oldPointsFromFrame.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
     glPointSize(this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
-    for(auto point : this->mPointsSeen)
+    for(auto point : pointsExceptThisFrame)
     {
         glVertex3f((float)point.x, (float)point.y, (float)point.z);
     }
@@ -263,6 +290,17 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
+    for(auto point : oldPointsFromFrame)
+    {
+        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+
+    }
+    glEnd();
+
+    glPointSize(this->mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,1.0,0.0);
+
     for(auto point : this->mNewPointsSeen)
     {
         glVertex3f((float)point.x, (float)point.y, (float)point.z);
@@ -271,7 +309,16 @@ void Simulator::drawMapPoints()
     glEnd();
 }
 
+bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
+    for (int i = 0; i < 16; i++) {
+        if (matrix1.m[i] != matrix2.m[i])
+            return false;
+    }
+    return true;
+}
+
 void Simulator::saveOnlyNewPoints() {
+    this->mNewPointsSeen = this->mCurrentFramePoints;
     std::vector<cv::Point3d>::iterator it;
     for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();)
     {
@@ -286,7 +333,15 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
+void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
+    for (int i = 0; i < 16; i++) {
+        matrix1.m[i] = matrix2.m[i];
+    }
+}
+
 void Simulator::Run() {
+    pangolin::OpenGlMatrix previousTwc;
+
     while (!this->mFinishScan) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -301,6 +356,13 @@ void Simulator::Run() {
             this->mFollow = false;
         }
 
+        this->mCurrentFramePoints = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
+
+        if (!areMatricesEqual(previousTwc, this->mTwc)) {
+            this->saveOnlyNewPoints();
+            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
+        }
+
         this->mD_cam.Activate(this->mS_cam);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -310,125 +372,67 @@ void Simulator::Run() {
 
         pangolin::FinishFrame();
 
+        assignPreviousTwc(previousTwc, this->mTwc);
+
         if (this->mMoveLeft)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyRightToModelCam(-this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveLeft = false;
         }
 
         if (this->mMoveRight)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyRightToModelCam(this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveRight = false;
         }
 
         if (this->mMoveDown)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             // Opengl has inversed Y axis so we pass -value
             this->applyUpToModelCam(this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveDown = false;
         }
 
         if (this->mMoveUp)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             // Opengl has inversed Y axis so we pass -value
             this->applyUpToModelCam(-this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveUp = false;
         }
 
         if (this->mMoveBackward)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyForwardToModelCam(-this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveBackward = false;
         }
 
         if (this->mMoveForward)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyForwardToModelCam(this->mMovingScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mMoveForward = false;
         }
 
         if (this->mRotateLeft)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyYawRotationToModelCam(-this->mRotateScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mRotateLeft = false;
         }
 
         if (this->mRotateRight)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyYawRotationToModelCam(this->mRotateScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mRotateRight = false;
         }
 
         if (this->mRotateDown)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyPitchRotationToModelCam(-this->mRotateScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mRotateDown = false;
         }
 
         if (this->mRotateUp)
         {
-            this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
-
             this->applyPitchRotationToModelCam(this->mRotateScale);
-
-            this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-            this->saveOnlyNewPoints();
-
             this->mRotateUp = false;
         }
 

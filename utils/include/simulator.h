@@ -57,6 +57,7 @@ private:
     void BuildCloudScanned();
 
     // Members
+    std::vector<cv::Point3d> mCurrentFramePoints;
     std::vector<cv::Point3d> mPointsSeen;
     std::vector<cv::Point3d> mNewPointsSeen;
 
