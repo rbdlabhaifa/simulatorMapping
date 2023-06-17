@@ -21,6 +21,7 @@ std::string simulatorOutputDir;
 void saveMap(int mapNumber) {
     std::ofstream pointData;
     std::unordered_set<int> seen_frames;
+    int i = 0;
 
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
@@ -33,6 +34,21 @@ void saveMap(int mapNumber) {
             worldPos.at<double>(2) = vector.z();
             pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
             pointData << std::endl;
+
+            // Save Descriptor to another file
+            cv::Mat current_descriptor = p->GetDescriptor();
+            std::ofstream descriptorData;
+            descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + ".csv");
+            for (int j=0; j < current_descriptor.rows; j++) {
+                descriptorData << std::to_string(current_descriptor.at<uchar>(j, 0));
+                for (int k=1; k < current_descriptor.cols; k++) {
+                    descriptorData << "," << std::to_string(current_descriptor.at<uchar>(j, k));
+                }
+                descriptorData << std::endl;
+            }
+            descriptorData.close();
+
+            i++;
         }
     }
     pointData.close();

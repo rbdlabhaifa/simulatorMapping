@@ -56,6 +56,7 @@ void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_poi
 void saveMap(int mapNumber) {
     std::ofstream pointData;
     std::unordered_set<int> seen_frames;
+    int i = 0;
 
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
     for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
@@ -69,8 +70,25 @@ void saveMap(int mapNumber) {
             p->UpdateNormalAndDepth();
             cv::Mat Pn = p->GetNormal();
             Pn.convertTo(Pn, CV_64F);
+            pointData << i << ",";
             pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
             pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
+
+            // Save Descriptor to another file
+            cv::Mat current_descriptor = p->GetDescriptor();
+            std::ofstream descriptorData;
+            descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + ".csv");
+            for (int j=0; j < current_descriptor.rows; j++) {
+                descriptorData << current_descriptor.at<uchar>(j, 0);
+                for (int k=1; k < current_descriptor.cols; k++) {
+                    descriptorData << "," << current_descriptor.at<uchar>(j, k);
+                }
+                descriptorData << std::endl;
+            }
+            descriptorData.close();
+
+            i++;
+
             std::map<ORB_SLAM2::KeyFrame*, size_t> observations = p->GetObservations();
             for (auto obs : observations) {
                 ORB_SLAM2::KeyFrame *currentFrame = obs.first;
