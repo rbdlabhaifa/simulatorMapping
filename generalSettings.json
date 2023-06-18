@@ -7,6 +7,7 @@
   "loadMapPath": "/home/liam/Documents/slamMaps/HaifaLab.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/Documents/slamMaps/",
+  "orbFrames": "/home/liam/Documents/orbFrames/",
   "modelTextureNameToAlignTo": "floor",
   "mapInputDir": "/home/liam/Documents/slamMaps/example_mapping11/",
   "getPointDataCsv": "/home/liam/example.csv",
@@ -40,6 +41,9 @@
   "frameNumber": 99,
   "useLabICP": true,
   "trackImagesClass": false,
-  "simulatorPointsPath": "/home/liam/Documents/slamMaps/example_mapping_desc0/"
+  "simulatorPointsPath": "/home/liam/Documents/slamMaps/example_mapping_desc0/",
+  "targetPointX": 3.0,
+  "targetPointY": -1.0,
+  "targetPointZ": 2.0
 }
 

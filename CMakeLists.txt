@@ -215,3 +215,6 @@ target_link_libraries(run_model_with_orbs_and_orb_slam_map ${PROJECT_NAME})
 
 add_executable(demo exe/demo.cc)
 target_link_libraries(demo ${PROJECT_NAME})
+
+add_executable(navigate_to_point exe/navigate_to_point.cc)
+target_link_libraries(navigate_to_point ${PROJECT_NAME})
