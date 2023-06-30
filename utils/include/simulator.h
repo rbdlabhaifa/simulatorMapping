@@ -2,8 +2,13 @@
 // Created by Liam Vanunu
 //
 
+#include <unistd.h>
+#include <nlohmann/json.hpp>
+#include <opencv2/opencv.hpp>
+#include <pangolin/pangolin.h>
+
+#include "System.h"
 #include "include/OfflineMapPoint.h"
-#include "include/Auxiliary.h"
 
 #ifndef ORB_SLAM2_SIMULATOR_H
 #define ORB_SLAM2_SIMULATOR_H
@@ -33,14 +38,18 @@ public:
 
     std::vector<OfflineMapPoint*> GetCloudPoint();
 
-    void SetResultPoint(cv::Point3d resultPoint);
+    void SetResultPoint(const cv::Point3d resultPoint);
     void CheckResults();
 
 private:
     // Methods
     void initPoints();
 
+    void createSimulatorSettings();
+
     void build_window(std::string title);
+
+    void trackOrbSlam();
 
     std::vector<OfflineMapPoint*> getPointsFromTcw();
 
@@ -62,7 +71,16 @@ private:
     void BuildCloudScanned();
 
     // Members
+    nlohmann::json mData;
+
     std::vector<OfflineMapPoint*> mPoints;
+
+    bool mUseOrbSlam;
+    std::string mVocPath;
+    bool mTrackImages;
+    bool mLoadMap;
+    std::string mLoadMapPath;
+    ORB_SLAM2::System *mSystem;
 
     std::vector<OfflineMapPoint*> mCurrentFramePoints;
     std::vector<OfflineMapPoint*> mPointsSeen;
@@ -122,6 +140,7 @@ private:
     double mCurrentRoll;
 
     std::string mCloudPointPath;
+    std::string mConfigPath;
 
     bool mCloseResults;
 };

@@ -32,13 +32,17 @@ cv::Mat readDesc(const std::string& filename, int rows, int cols)
     return mat;
 }
 
-void Simulator::initPoints() {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+void Simulator::createSimulatorSettings() {
+    char currentDirPath[256];
+    getcwd(currentDirPath, 256);
+    std::string settingPath = currentDirPath;
+    settingPath += "/../demoSettings.json";
     std::ifstream programData(settingPath);
-    nlohmann::json data;
-    programData >> data;
+    programData >> this->mData;
     programData.close();
+}
 
+void Simulator::initPoints() {
     std::ifstream pointData;
     std::ifstream descData;
     std::vector<std::string> row;
@@ -47,12 +51,9 @@ void Simulator::initPoints() {
     cv::Mat currDesc;
     std::string currDescFilename;
 
-    std::string mappingPath = data["simulatorPointsPath"];
-    std::string pointsPath = mappingPath + "cloud0.csv";
-
     cv::Vec<double, 8> point;
     OfflineMapPoint *offlineMapPoint;
-    pointData.open(pointsPath, std::ios::in);
+    pointData.open(this->mCloudPointPath, std::ios::in);
 
     while (!pointData.eof()) {
         row.clear();
@@ -79,7 +80,7 @@ void Simulator::initPoints() {
         point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
 
         pointIndex = std::stoi(row[0]);
-        currDescFilename = mappingPath + "point" + std::to_string(pointIndex) + ".csv";
+        currDescFilename = this->mCloudPointPath + "point" + std::to_string(pointIndex) + ".csv";
         currDesc = readDesc(currDescFilename, 1, 32);
         offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currDesc);
         this->mPoints.emplace_back(offlineMapPoint);
@@ -88,13 +89,13 @@ void Simulator::initPoints() {
 }
 
 Simulator::Simulator() {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-    std::ifstream programData(settingPath);
-    nlohmann::json data;
-    programData >> data;
-    programData.close();
+    this->createSimulatorSettings();
 
     this->mPoints = std::vector<OfflineMapPoint*>();
+
+    std::string map_input_dir = this->mData["simulatorPointsPath"];
+    this->mCloudPointPath = map_input_dir + "cloud0.csv";
+
     this->initPoints();
 
     this->mCloudScanned = std::vector<OfflineMapPoint*>();
@@ -105,26 +106,23 @@ Simulator::Simulator() {
     this->mSimulatorViewerTitle = "Simulator Viewer";
     this->mResultsWindowTitle = "Results";
 
-    std::string configPath = data["DroneYamlPathSlam"];
-    cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
+    this->mConfigPath = this->mData["DroneYamlPathSlam"];
+    cv::FileStorage fSettings(this->mConfigPath, cv::FileStorage::READ);
 
     this->mViewpointX = fSettings["Viewer.ViewpointX"];
     this->mViewpointY = fSettings["Viewer.ViewpointY"];
     this->mViewpointZ = fSettings["Viewer.ViewpointZ"];
     this->mViewpointF = fSettings["Viewer.ViewpointF"];
 
-    std::string map_input_dir = data["mapInputDir"];
-    this->mCloudPointPath = map_input_dir + "cloud1.csv";
-
-    double startPointX = data["startingCameraPosX"];
-    double startPointY = data["startingCameraPosY"];
-    double startPointZ = data["startingCameraPosZ"];
+    double startPointX = this->mData["startingCameraPosX"];
+    double startPointY = this->mData["startingCameraPosY"];
+    double startPointZ = this->mData["startingCameraPosZ"];
 
     this->mStartPosition = cv::Point3d(startPointX, startPointY, startPointZ);
 
-    this->mStartYaw = data["yawRad"];
-    this->mStartPitch = data["pitchRad"];
-    this->mStartRoll = data["rollRad"];
+    this->mStartYaw = this->mData["yawRad"];
+    this->mStartPitch = this->mData["pitchRad"];
+    this->mStartRoll = this->mData["rollRad"];
 
     this->mPointSize = fSettings["Viewer.PointSize"];
     this->mResultsPointSize = this->mPointSize * 5;
@@ -132,10 +130,21 @@ Simulator::Simulator() {
     this->mTwc.SetIdentity();
     this->mTcw.SetIdentity();
 
-    this->mMovingScale = data["movingScale"];
-    this->mRotateScale = data["rotateScale"];
+    this->mMovingScale = this->mData["movingScale"];
+    this->mRotateScale = this->mData["rotateScale"];
 
     this->build_window(this->mSimulatorViewerTitle);
+
+    this->mUseOrbSlam = this->mData["useOrbSlam"];
+    this->mVocPath = this->mData["VocabularyPath"];
+    this->mTrackImages = this->mData["trackImagesClass"];
+    this->mLoadMap = this->mData["loadMap"];
+    this->mLoadMapPath = this->mData["loadMapPath"];
+    this->mSystem = nullptr;
+    if (this->mUseOrbSlam) {
+        this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,
+                                          this->mLoadMap, this->mLoadMapPath, false);
+    }
 
     this->mFollowCamera = true;
     this->mShowPoints = true;
@@ -178,21 +187,11 @@ void Simulator::build_window(std::string title) {
 }
 
 std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-    std::ifstream programData(settingPath);
-    nlohmann::json data;
-    programData >> data;
-    programData.close();
-
-    std::ifstream pointData;
-    std::vector<std::string> row;
-    std::string line, word, temp;
-
     // Check settings file
-    cv::FileStorage fsSettings(data["DroneYamlPathSlam"], cv::FileStorage::READ);
+    cv::FileStorage fsSettings(this->mConfigPath, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
-        std::cerr << "Failed to open settings file at: " << data["DroneYamlPathSlam"] << std::endl;
+        std::cerr << "Failed to open settings file at: " << this->mConfigPath << std::endl;
         exit(-1);
     }
 
@@ -536,6 +535,25 @@ void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMa
     }
 }
 
+void Simulator::trackOrbSlam() {
+    // Create timestamp
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto value = now_ms.time_since_epoch();
+    double timestamp = value.count() / 1000.0;
+
+    // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
+    std::vector<cv::KeyPoint> keypoints;
+
+    // TODO: Create cv::Mat of all the descriptors
+    cv::Mat descriptors;
+    for (auto point : this->mCurrentFramePoints) {
+        descriptors.push_back(point->descriptor);
+    }
+
+    this->mSystem->TrackMonocular(descriptors, keypoints, timestamp);
+}
+
 void Simulator::Run() {
     pangolin::OpenGlMatrix previousTwc;
 
@@ -554,6 +572,9 @@ void Simulator::Run() {
         }
 
         this->mCurrentFramePoints = this->getPointsFromTcw();
+        // If running with orb-slam move this points to orb-slam
+        if (this->mUseOrbSlam)
+            this->trackOrbSlam();
 
         if (!areMatricesEqual(previousTwc, this->mTwc)) {
             this->saveOnlyNewPoints();
@@ -654,7 +675,7 @@ void Simulator::BuildCloudScanned() {
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
 }
 
-void Simulator::SetResultPoint(cv::Point3d resultPoint) {
+void Simulator::SetResultPoint(const cv::Point3d resultPoint) {
     this->mResultPoint = resultPoint;
 }
 
@@ -672,8 +693,6 @@ void Simulator::drawResultPoints() {
             break;
         }
     }
-    // this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mResultPoint), this->mCloudScanned.end());
-    // this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mRealResultPoint), this->mCloudScanned.end());
 
     glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
@@ -704,6 +723,7 @@ void Simulator::drawResultPoints() {
 }
 
 void Simulator::updateTwcByResultPoint() {
+    // TODO: Change Twc to center the result point when I do check results
 }
 
 void Simulator::CheckResults() {
@@ -723,11 +743,14 @@ void Simulator::CheckResults() {
 
         pangolin::FinishFrame();
     }
+
+    pangolin::DestroyWindow(this->mResultsWindowTitle);
 }
 
 Simulator::~Simulator() {
-    pangolin::DestroyWindow(this->mResultsWindowTitle);
     for (auto ptr : this->mPoints) {
         free(ptr);
     }
+    if (this->mSystem != nullptr)
+        free(this->mSystem);
 }
