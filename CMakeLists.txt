@@ -89,8 +89,6 @@ add_library(${PROJECT_NAME}
         slam/src/Initializer.cc
         slam/src/Viewer.cc
         slam/src/LoopClosing.cc
-        utils/src/Point.cpp
-        utils/src/Line.cpp
         utils/src/Auxiliary.cpp
         utils/src/OfflineMapPoint.cpp
         utils/src/simulator.cpp
@@ -116,9 +114,6 @@ target_link_libraries(runSimulator simulator)
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
-
-add_executable(get_point_data exe/get_point_data.cc)
-target_link_libraries(get_point_data ${PROJECT_NAME})
 
 add_executable(unused_get_points_from_camera exe/unused/get_points_from_camera.cc)
 target_link_libraries(unused_get_points_from_camera ${PROJECT_NAME})

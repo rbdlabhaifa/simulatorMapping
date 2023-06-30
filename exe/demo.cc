@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     simulator.Run();
 
     // Process cloud point generated
-    std::vector<cv::Point3d> cloudPoints = simulator.GetCloudPoint();
+    std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
     std::cout << "Number of points: " << cloudPoints.size() << std::endl;
 
     handleKeyboardEventsResult(&simulator);

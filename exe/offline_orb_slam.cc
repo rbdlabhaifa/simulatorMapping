@@ -10,7 +10,6 @@
 
 #include "System.h"
 #include "Converter.h"
-#include "include/Point.h"
 #include "include/Auxiliary.h"
 
 /************* SIGNAL *************/

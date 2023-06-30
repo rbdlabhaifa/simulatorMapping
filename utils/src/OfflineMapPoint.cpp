@@ -32,6 +32,10 @@ bool matCompare(const cv::Mat& a, const cv::Mat& b) {
         return true;
     }
 
+bool OfflineMapPoint::operator==(const cv::Point3d& anotherPoint) {
+    return this->point == anotherPoint;
+}
+
 bool OfflineMapPoint::compare(OfflineMapPoint offlineMapPoint) {
     if (this->point == offlineMapPoint.point && matCompare(this->descriptor, offlineMapPoint.descriptor))
         return true;

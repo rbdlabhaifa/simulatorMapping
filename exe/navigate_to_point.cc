@@ -8,7 +8,7 @@
 #define FAR_PLANE 20
 
 #define ANIMATION_DURATION 5.0
-#define ANIMATION_STEPS 100
+#define ANIMATION_STEPS 100.0
 
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -115,6 +115,35 @@ std::vector<cv::Point3d> loadPoints() {
     pointData.close();
 
     return points;
+}
+
+void applyYawRotationToModelCam(pangolin::OpenGlRenderState *s_cam, double value) {
+    double rand = double(value) * (M_PI / 180);
+    double c = std::cos(rand);
+    double s = std::sin(rand);
+
+    Eigen::Matrix3d R;
+    R << c, 0, s,
+            0, 1, 0,
+            -s, 0, c;
+
+    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
+    pangolinR.block<3, 3>(0, 0) = R;
+
+    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
+
+    // Left-multiply the rotation
+    camMatrix = pangolinR * camMatrix;
+
+    // Convert back to pangolin matrix and set
+    pangolin::OpenGlMatrix newModelView;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            newModelView.m[j * 4 + i] = camMatrix(i, j);
+        }
+    }
+
+    s_cam->SetModelViewMatrix(newModelView);
 }
 
 int main(int argc, char **argv) {
@@ -226,16 +255,57 @@ int main(int argc, char **argv) {
         s_cam.GetModelViewMatrix().m[13],
         s_cam.GetModelViewMatrix().m[14]
     );
-    const Eigen::Vector3d target_point(targetPointX, targetPointY, targetPointZ);
+    cv::Point3d target_point_transform(targetPointX, targetPointY, targetPointZ);
+    target_point_transform = transformPoint(target_point_transform, transformation);
+    const Eigen::Vector3d target_point(target_point_transform.x, start_point[1] - 1, target_point_transform.z + 2);
 
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
 
-    // Wait for a certain time before starting the camera animation (if desired)
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
     const Eigen::Vector3d step = (target_point - start_point) / ANIMATION_STEPS;
-    const auto animation_start_time = std::chrono::steady_clock::now();
+    const float yaw_movement = data["yawMovement"];
+
+    for (int i = 1; i <= ANIMATION_STEPS; ++i) {
+        // Update the camera's model view matrix        
+        applyYawRotationToModelCam(&s_cam, yaw_movement/ANIMATION_STEPS);
+
+        // Render the scene
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
+            Pick_w = handler.Selected_P_w();
+            Picks_w.push_back(Pick_w);
+            std::cout << pangolin::FormatString("\"Translation\": [%,%,%]", Pick_w[0], Pick_w[1], Pick_w[2])
+                      << std::endl;
+        }
+        if (d_cam.IsShown()) {
+            d_cam.Activate();
+
+            // Load any pending geometry to the GPU.
+            if (d_cam.IsShown()) {
+                d_cam.Activate();
+            }
+
+            if (cull_backfaces) {
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_BACK);
+            }
+            default_prog.Bind();
+            default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
+            pangolin::GlDraw( default_prog, geomToRender, nullptr);
+            default_prog.Unbind();
+
+            s_cam.Apply();
+
+            glDisable(GL_CULL_FACE);
+
+            drawPoints(std::vector<cv::Point3d>(), points_to_draw);
+
+            pangolin::FinishFrame();
+        }
+
+        // Delay to control the animation speed
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
 
     for (int i = 1; i <= ANIMATION_STEPS; ++i) {
         const Eigen::Vector3d current_point = start_point + step * i;
@@ -282,6 +352,39 @@ int main(int argc, char **argv) {
 
         // Delay to control the animation speed
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    while (!pangolin::ShouldQuit()) {
+        if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
+            Pick_w = handler.Selected_P_w();
+            Picks_w.push_back(Pick_w);
+            std::cout << pangolin::FormatString("\"Translation\": [%,%,%]", Pick_w[0], Pick_w[1], Pick_w[2])
+                      << std::endl;
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Load any pending geometry to the GPU.
+        if (d_cam.IsShown()) {
+            d_cam.Activate();
+
+            if (cull_backfaces) {
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_BACK);
+            }
+            default_prog.Bind();
+            default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
+            pangolin::GlDraw( default_prog, geomToRender, nullptr);
+            default_prog.Unbind();
+
+            s_cam.Apply();
+
+            glDisable(GL_CULL_FACE);
+        }
+    
+        drawPoints(std::vector<cv::Point3d>(), points_to_draw);
+
+        pangolin::FinishFrame();
     }
 
     return 0;

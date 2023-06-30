@@ -31,7 +31,7 @@ public:
     void RotateUp();
     void FinishScan();
 
-    std::vector<cv::Point3d> GetCloudPoint();
+    std::vector<OfflineMapPoint*> GetCloudPoint();
 
     void SetResultPoint(cv::Point3d resultPoint);
     void CheckResults();
@@ -41,6 +41,8 @@ private:
     void initPoints();
 
     void build_window(std::string title);
+
+    std::vector<OfflineMapPoint*> getPointsFromTcw();
 
     void reset();
     void applyUpToModelCam(double value);
@@ -62,11 +64,11 @@ private:
     // Members
     std::vector<OfflineMapPoint*> mPoints;
 
-    std::vector<cv::Point3d> mCurrentFramePoints;
-    std::vector<cv::Point3d> mPointsSeen;
-    std::vector<cv::Point3d> mNewPointsSeen;
+    std::vector<OfflineMapPoint*> mCurrentFramePoints;
+    std::vector<OfflineMapPoint*> mPointsSeen;
+    std::vector<OfflineMapPoint*> mNewPointsSeen;
 
-    std::vector<cv::Point3d> mCloudScanned;
+    std::vector<OfflineMapPoint*> mCloudScanned;
 
     cv::Point3d mResultPoint;
     cv::Point3d mRealResultPoint;

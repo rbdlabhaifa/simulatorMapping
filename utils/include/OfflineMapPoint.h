@@ -21,6 +21,8 @@ public:
 
     OfflineMapPoint &operator=(const OfflineMapPoint &offlineMapPoint) = default;
 
+    bool operator==(const cv::Point3d& anotherPoint);
+
     cv::Point3d point;
     double minDistanceInvariance;
     double maxDistanceInvariance;

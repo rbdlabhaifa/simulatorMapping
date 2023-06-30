@@ -97,7 +97,7 @@ Simulator::Simulator() {
     this->mPoints = std::vector<OfflineMapPoint*>();
     this->initPoints();
 
-    this->mCloudScanned = std::vector<cv::Point3d>();
+    this->mCloudScanned = std::vector<OfflineMapPoint*>();
 
     this->mRealResultPoint = cv::Point3d(RESULT_POINT_X, RESULT_POINT_Y, RESULT_POINT_Z);
     this->mResultPoint = cv::Point3d();
@@ -177,6 +177,116 @@ void Simulator::build_window(std::string title) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
+
+    std::ifstream pointData;
+    std::vector<std::string> row;
+    std::string line, word, temp;
+
+    // Check settings file
+    cv::FileStorage fsSettings(data["DroneYamlPathSlam"], cv::FileStorage::READ);
+    if(!fsSettings.isOpened())
+    {
+        std::cerr << "Failed to open settings file at: " << data["DroneYamlPathSlam"] << std::endl;
+        exit(-1);
+    }
+
+    double fx = fsSettings["Camera.fx"];
+    double fy = fsSettings["Camera.fy"];
+    double cx = fsSettings["Camera.cx"];
+    double cy = fsSettings["Camera.cy"];
+    int width = fsSettings["Camera.width"];
+    int height = fsSettings["Camera.height"];
+
+    double minX = 3.7;
+    double maxX = width;
+    double minY = 3.7;
+    double maxY = height;
+
+    cv::Mat Tcw_cv = cv::Mat::eye(4, 4, CV_64FC1);
+    for(int i=0;i<4;i++){
+        for(int j=0;j<4;j++){
+            Tcw_cv.at<double>(i,j) = this->mTcw.m[j * 4 + i];
+        }
+    }
+
+    cv::Mat Rcw = Tcw_cv.rowRange(0, 3).colRange(0, 3);
+    cv::Mat Rwc = Rcw.t();
+    cv::Mat tcw = Tcw_cv.rowRange(0, 3).col(3);
+    cv::Mat mOw = -Rcw.t() * tcw;
+
+    // Save Twc for s_cam
+    cv::Mat Twc_cv = cv::Mat::eye(4, 4, CV_64FC1);
+    Rwc.copyTo(Twc_cv.rowRange(0,3).colRange(0,3));
+    Twc_cv.at<double>(0, 3) = mOw.at<double>(0);
+    Twc_cv.at<double>(1, 3) = mOw.at<double>(1);
+    Twc_cv.at<double>(2, 3) = mOw.at<double>(2);
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            this->mTwc.m[j * 4 + i] = Twc_cv.at<double>(i, j);
+        }
+    }
+
+    std::vector<OfflineMapPoint*> seen_points;
+
+    for(OfflineMapPoint*  point : this->mPoints)
+    {
+        cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
+        worldPos.at<double>(0) = point->point.x;
+        worldPos.at<double>(1) = point->point.y;
+        worldPos.at<double>(2) = point->point.z;
+
+        const cv::Mat Pc = Rcw*worldPos+tcw;
+        const double &PcX = Pc.at<double>(0);
+        const double &PcY= Pc.at<double>(1);
+        const double &PcZ = Pc.at<double>(2);
+
+        // Check positive depth
+        if(PcZ<0.0f)
+            continue;
+
+        // Project in image and check it is not outside
+        const double invz = 1.0f/PcZ;
+        const double u=fx*PcX*invz+cx;
+        const double v=fy*PcY*invz+cy;
+
+        if(u<minX || u>maxX)
+            continue;
+        if(v<minY || v>maxY)
+            continue;
+
+        // Check distance is in the scale invariance region of the MapPoint
+        const double minDistance = point->minDistanceInvariance;
+        const double maxDistance = point->maxDistanceInvariance;
+        const cv::Mat PO = worldPos-mOw;
+        const double dist = cv::norm(PO);
+
+        if(dist<minDistance || dist>maxDistance)
+            continue;
+
+        // Check viewing angle
+        cv::Mat Pn = cv::Mat(3, 1, CV_64F);
+        Pn.at<double>(0) = point->normal.x;
+        Pn.at<double>(1) = point->normal.y;
+        Pn.at<double>(2) = point->normal.z;
+
+        const double viewCos = PO.dot(Pn)/dist;
+
+        if(viewCos<0.5)
+            continue;
+
+        seen_points.push_back(point);
+    }
+
+    return seen_points;
+}
+
 void Simulator::reset() {
     this->mShowPoints = true;
     this->mFollow = true;
@@ -204,8 +314,9 @@ void Simulator::reset() {
         }
     }
 
-    this->mNewPointsSeen = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
-    this->mPointsSeen = std::vector<cv::Point3d>();
+    this->mNewPointsSeen = this->getPointsFromTcw();
+
+    this->mPointsSeen = std::vector<OfflineMapPoint*>();
 }
 
 void Simulator::ToggleFollowCamera() {
@@ -335,8 +446,8 @@ void Simulator::applyPitchRotationToModelCam(double value) {
 
 void Simulator::drawMapPoints()
 {
-    std::vector<cv::Point3d> pointsExceptThisFrame = this->mPointsSeen;
-    std::vector<cv::Point3d>::iterator it;
+    std::vector<OfflineMapPoint*> pointsExceptThisFrame = this->mPointsSeen;
+    std::vector<OfflineMapPoint*>::iterator it;
     for (it = pointsExceptThisFrame.begin(); it != pointsExceptThisFrame.end();)
     {
         if (std::find(this->mCurrentFramePoints.begin(), this->mCurrentFramePoints.end(), *it) != this->mCurrentFramePoints.end())
@@ -349,7 +460,7 @@ void Simulator::drawMapPoints()
         }
     }
 
-    std::vector<cv::Point3d> oldPointsFromFrame = this->mCurrentFramePoints;
+    std::vector<OfflineMapPoint*> oldPointsFromFrame = this->mCurrentFramePoints;
     for (it = oldPointsFromFrame.begin(); it != oldPointsFromFrame.end();)
     {
         if (std::find(this->mNewPointsSeen.begin(), this->mNewPointsSeen.end(), *it) != this->mNewPointsSeen.end())
@@ -362,34 +473,34 @@ void Simulator::drawMapPoints()
         }
     }
 
-    glPointSize(this->mPointSize);
+    glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
     for(auto point : pointsExceptThisFrame)
     {
-        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+        glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
     }
     glEnd();
 
-    glPointSize(this->mPointSize);
+    glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
     for(auto point : oldPointsFromFrame)
     {
-        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+        glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
     }
     glEnd();
 
-    glPointSize(this->mPointSize);
+    glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
 
     for(auto point : this->mNewPointsSeen)
     {
-        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+        glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
     }
     glEnd();
@@ -405,7 +516,7 @@ bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::Ope
 
 void Simulator::saveOnlyNewPoints() {
     this->mNewPointsSeen = this->mCurrentFramePoints;
-    std::vector<cv::Point3d>::iterator it;
+    std::vector<OfflineMapPoint*>::iterator it;
     for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();)
     {
         if (std::find(this->mPointsSeen.begin(), this->mPointsSeen.end(), *it) != this->mPointsSeen.end())
@@ -442,7 +553,7 @@ void Simulator::Run() {
             this->mFollow = false;
         }
 
-        this->mCurrentFramePoints = Auxiliary::getPointsFromTcw(this->mCloudPointPath, this->mTcw, this->mTwc);
+        this->mCurrentFramePoints = this->getPointsFromTcw();
 
         if (!areMatricesEqual(previousTwc, this->mTwc)) {
             this->saveOnlyNewPoints();
@@ -533,7 +644,7 @@ void Simulator::Run() {
     this->BuildCloudScanned();
 }
 
-std::vector<cv::Point3d> Simulator::GetCloudPoint() {
+std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
     return this->mCloudScanned;
 }
 
@@ -549,21 +660,33 @@ void Simulator::SetResultPoint(cv::Point3d resultPoint) {
 
 void Simulator::drawResultPoints() {
     // Remove result point and real result point from cloud scanned if exist
-    this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mResultPoint), this->mCloudScanned.end());
-    this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mRealResultPoint), this->mCloudScanned.end());
+    for(int i = 0; i < this->mCloudScanned.size(); i++) {
+        if (*this->mCloudScanned[i] == this->mResultPoint) {
+            this->mCloudScanned.erase(this->mCloudScanned.begin() + i);
+            break;
+        }
+    }
+    for(int i = 0; i < this->mCloudScanned.size(); i++) {
+        if (*this->mCloudScanned[i] == this->mRealResultPoint) {
+            this->mCloudScanned.erase(this->mCloudScanned.begin() + i);
+            break;
+        }
+    }
+    // this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mResultPoint), this->mCloudScanned.end());
+    // this->mCloudScanned.erase(std::remove(this->mCloudScanned.begin(), this->mCloudScanned.end(), this->mRealResultPoint), this->mCloudScanned.end());
 
-    glPointSize(this->mPointSize);
+    glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
     for(auto point : this->mCloudScanned)
     {
-        glVertex3f((float)point.x, (float)point.y, (float)point.z);
+        glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
     }
 
     glEnd();
 
-    glPointSize(this->mResultsPointSize);
+    glPointSize((GLfloat)this->mResultsPointSize);
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
@@ -571,7 +694,7 @@ void Simulator::drawResultPoints() {
 
     glEnd();
 
-    glPointSize(this->mResultsPointSize);
+    glPointSize((GLfloat)this->mResultsPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
 
