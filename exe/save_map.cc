@@ -38,17 +38,31 @@ void saveMap(int mapNumber) {
             pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
             pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << "," << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
 
-            // Save Descriptor to another file
-            cv::Mat current_descriptor = p->GetDescriptor();
+            std::map<ORB_SLAM2::KeyFrame*, size_t> observations = p->GetObservations();
+            std::ofstream keyPointsData;
             std::ofstream descriptorData;
-            descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + ".csv");
-            for (int j=0; j < current_descriptor.rows; j++) {
-                descriptorData << static_cast<int>(current_descriptor.at<uchar>(j, 0));
-                for (int k=1; k < current_descriptor.cols; k++) {
-                    descriptorData << "," << static_cast<int>(current_descriptor.at<uchar>(j, k));
+            keyPointsData.open(simulatorOutputDir + "point" + std::to_string(i) + "_keypoints.csv");
+            descriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + "_descriptors.csv");
+            for (auto obs : observations) {
+                ORB_SLAM2::KeyFrame *currentFrame = obs.first;
+
+                // Save keyPoints
+                cv::KeyPoint currentKeyPoint = currentFrame->mvKeys[obs.second];
+                keyPointsData << currentKeyPoint.pt.x << "," << currentKeyPoint.pt.y << "," << currentKeyPoint.size <<
+                              "," << currentKeyPoint.angle << "," << currentKeyPoint.response << "," <<
+                              currentKeyPoint.octave << "," << currentKeyPoint.class_id << std::endl;
+
+                // Save Descriptors
+                cv::Mat current_descriptor = currentFrame->mDescriptors.row(obs.second);
+                for (int j=0; j < current_descriptor.rows; j++) {
+                    descriptorData << static_cast<int>(current_descriptor.at<uchar>(j, 0));
+                    for (int k=1; k < current_descriptor.cols; k++) {
+                        descriptorData << "," << static_cast<int>(current_descriptor.at<uchar>(j, k));
+                    }
+                    descriptorData << std::endl;
                 }
-                descriptorData << std::endl;
             }
+            keyPointsData.close();
             descriptorData.close();
 
             pointData << std::endl;

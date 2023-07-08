@@ -7,14 +7,16 @@ OfflineMapPoint::OfflineMapPoint(const OfflineMapPoint &offlineMapPoint) {
     this->minDistanceInvariance = offlineMapPoint.minDistanceInvariance;
     this->maxDistanceInvariance = offlineMapPoint.maxDistanceInvariance;
     this->normal = offlineMapPoint.normal;
+    this->keyPoints = offlineMapPoint.keyPoints;
     this->descriptor = offlineMapPoint.descriptor;
 }
 
-OfflineMapPoint::OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, cv::Mat descriptor) {
+OfflineMapPoint::OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<cv::KeyPoint> keyPoints, cv::Mat descriptor) {
     this->point = point;
     this->minDistanceInvariance = minDistanceInvariance;
     this->maxDistanceInvariance = maxDistanceInvariance;
     this->normal = normal;
+    this->keyPoints = keyPoints;
     this->descriptor = descriptor;
 }
 

@@ -139,6 +139,7 @@ private:
     double mStartRoll;
     double mCurrentRoll;
 
+    std::string mSimulatorPath;
     std::string mCloudPointPath;
     std::string mConfigPath;
 

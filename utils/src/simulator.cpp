@@ -4,7 +4,7 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
-cv::Mat readDesc(const std::string& filename, int rows, int cols)
+cv::Mat readDesc(const std::string& filename, int cols)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -13,23 +13,57 @@ cv::Mat readDesc(const std::string& filename, int rows, int cols)
         return cv::Mat();
     }
 
-    cv::Mat mat(rows, cols, CV_8UC1);
+    std::vector<cv::Mat> descs = std::vector<cv::Mat>();
 
     std::string line;
-    std::getline(file, line);
-    std::istringstream iss(line);
-    
-    int row = 0, col = 0;
-    std::string value;
-    while (std::getline(iss, value, ','))
-    {
-        mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value));
-        col++;
-    }
+    int row = 0;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
 
+        cv::Mat mat(1, cols, CV_8UC1);
+        int col = 0;
+        std::string value;
+
+        while (std::getline(iss, value, ',')) {
+            mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value));
+            col++;
+        }
+        descs.push_back(mat);
+    }
     file.close();
 
-    return mat;
+    cv::Mat all_descs;
+    cv::vconcat(descs, all_descs);
+
+    return all_descs;
+}
+
+std::vector<cv::KeyPoint> readKeyPoints(std::string filename) {
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        // Handle file open error
+        return std::vector<cv::KeyPoint>();
+    }
+
+    std::vector<cv::KeyPoint> keyPoints = std::vector<cv::KeyPoint>();
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+
+        std::string value;
+        std::vector<std::string> row;
+
+        while (std::getline(iss, value, ',')) {
+            row.push_back(value);
+        }
+        cv::KeyPoint keyPoint(cv::Point2f(stof(row[0]), stof(row[1])), stof(row[2]), stof(row[3]), stof(row[4]), stoi(row[5]), stoi(row[6]));
+        keyPoints.push_back(keyPoint);
+    }
+    file.close();
+
+    return keyPoints;
 }
 
 void Simulator::createSimulatorSettings() {
@@ -48,6 +82,8 @@ void Simulator::initPoints() {
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
+    std::vector<cv::KeyPoint> currKeyPoints;
+    std::string currKeyPointsFilename;
     cv::Mat currDesc;
     std::string currDescFilename;
 
@@ -80,9 +116,11 @@ void Simulator::initPoints() {
         point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
 
         pointIndex = std::stoi(row[0]);
-        currDescFilename = this->mCloudPointPath + "point" + std::to_string(pointIndex) + ".csv";
-        currDesc = readDesc(currDescFilename, 1, 32);
-        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currDesc);
+        currDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
+        currDesc = readDesc(currDescFilename, 32);
+        currKeyPointsFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_keypoints.csv";
+        currKeyPoints = readKeyPoints(currKeyPointsFilename);
+        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currKeyPoints, currDesc);
         this->mPoints.emplace_back(offlineMapPoint);
     }
     pointData.close();
@@ -93,8 +131,8 @@ Simulator::Simulator() {
 
     this->mPoints = std::vector<OfflineMapPoint*>();
 
-    std::string map_input_dir = this->mData["simulatorPointsPath"];
-    this->mCloudPointPath = map_input_dir + "cloud0.csv";
+    this->mSimulatorPath = this->mData["simulatorPointsPath"];
+    this->mCloudPointPath = this->mSimulatorPath + "cloud0.csv";
 
     this->initPoints();
 
@@ -543,7 +581,12 @@ void Simulator::trackOrbSlam() {
     double timestamp = value.count() / 1000.0;
 
     // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
-    std::vector<cv::KeyPoint> keypoints;
+    std::vector<cv::KeyPoint> keyPoints;
+    for (auto point : this->mCurrentFramePoints) {
+        for (auto keyPoint : point->keyPoints) {
+            keyPoints.push_back(keyPoint);
+        }
+    }
 
     // TODO: Create cv::Mat of all the descriptors
     cv::Mat descriptors;
@@ -551,7 +594,7 @@ void Simulator::trackOrbSlam() {
         descriptors.push_back(point->descriptor);
     }
 
-    this->mSystem->TrackMonocular(descriptors, keypoints, timestamp);
+    this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
 }
 
 void Simulator::Run() {

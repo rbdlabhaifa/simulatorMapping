@@ -28,6 +28,6 @@
   "scaleFactor": 0.0305,
   "useLabICP": true,
   "trackImagesClass": false,
-  "simulatorPointsPath": "/home/liam/Documents/slamMaps/example_mapping_desc0/",
-  "useOrbSlam": false
+  "simulatorPointsPath": "/home/liam/Documents/slamMaps/simulator_mapping_all0/",
+  "useOrbSlam": true
 }
