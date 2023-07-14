@@ -8,38 +8,28 @@ OfflineMapPoint::OfflineMapPoint(const OfflineMapPoint &offlineMapPoint) {
     this->maxDistanceInvariance = offlineMapPoint.maxDistanceInvariance;
     this->normal = offlineMapPoint.normal;
     this->keyPoints = offlineMapPoint.keyPoints;
-    this->descriptor = offlineMapPoint.descriptor;
+    this->descriptors = std::vector<cv::Mat>();
+    for (auto desc : offlineMapPoint.descriptors)
+        this->descriptors.push_back(desc.clone());
 }
 
-OfflineMapPoint::OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<cv::KeyPoint> keyPoints, cv::Mat descriptor) {
+OfflineMapPoint::OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<cv::KeyPoint> keyPoints, std::vector<cv::Mat> descriptors) {
     this->point = point;
     this->minDistanceInvariance = minDistanceInvariance;
     this->maxDistanceInvariance = maxDistanceInvariance;
     this->normal = normal;
     this->keyPoints = keyPoints;
-    this->descriptor = descriptor;
+    this->descriptors = std::vector<cv::Mat>();
+    for (auto desc : descriptors)
+        this->descriptors.push_back(desc.clone());
 }
-
-bool matCompare(const cv::Mat& a, const cv::Mat& b) {
-        if (a.rows != b.rows || a.cols != b.cols || a.type() != b.type()) {
-            return false;
-        }
-        for (int i = 0; i < a.rows; i++) {
-            const void* a_row = a.ptr(i);
-            const void* b_row = b.ptr(i);
-            if (memcmp(a_row, b_row, a.cols*a.elemSize()) != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
 
 bool OfflineMapPoint::operator==(const cv::Point3d& anotherPoint) {
     return this->point == anotherPoint;
 }
 
 bool OfflineMapPoint::compare(OfflineMapPoint offlineMapPoint) {
-    if (this->point == offlineMapPoint.point && matCompare(this->descriptor, offlineMapPoint.descriptor))
+    if (this->point == offlineMapPoint.point)
         return true;
     return false;
 }

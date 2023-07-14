@@ -4,7 +4,7 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
-cv::Mat readDesc(const std::string& filename, int cols)
+std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -32,10 +32,7 @@ cv::Mat readDesc(const std::string& filename, int cols)
     }
     file.close();
 
-    cv::Mat all_descs;
-    cv::vconcat(descs, all_descs);
-
-    return all_descs;
+    return descs;
 }
 
 std::vector<cv::KeyPoint> readKeyPoints(std::string filename) {
@@ -84,7 +81,7 @@ void Simulator::initPoints() {
     int pointIndex;
     std::vector<cv::KeyPoint> currKeyPoints;
     std::string currKeyPointsFilename;
-    cv::Mat currDesc;
+    std::vector<cv::Mat> currDesc;
     std::string currDescFilename;
 
     cv::Vec<double, 8> point;
@@ -591,7 +588,9 @@ void Simulator::trackOrbSlam() {
     // TODO: Create cv::Mat of all the descriptors
     cv::Mat descriptors;
     for (auto point : this->mCurrentFramePoints) {
-        descriptors.push_back(point->descriptor);
+        for (auto descriptor : point->descriptors) {
+            descriptors.push_back(descriptor);
+        }
     }
 
     this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
