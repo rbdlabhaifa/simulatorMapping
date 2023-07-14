@@ -35,15 +35,15 @@ std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
     return descs;
 }
 
-std::vector<cv::KeyPoint> readKeyPoints(std::string filename) {
+std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::string filename) {
     std::ifstream file(filename);
     if (!file.is_open())
     {
         // Handle file open error
-        return std::vector<cv::KeyPoint>();
+        return std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
     }
 
-    std::vector<cv::KeyPoint> keyPoints = std::vector<cv::KeyPoint>();
+    std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints = std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
 
     std::string line;
     while (std::getline(file, line)) {
@@ -55,8 +55,12 @@ std::vector<cv::KeyPoint> readKeyPoints(std::string filename) {
         while (std::getline(iss, value, ',')) {
             row.push_back(value);
         }
-        cv::KeyPoint keyPoint(cv::Point2f(stof(row[0]), stof(row[1])), stof(row[2]), stof(row[3]), stof(row[4]), stoi(row[5]), stoi(row[6]));
-        keyPoints.push_back(keyPoint);
+        std::pair<long unsigned int, cv::KeyPoint> currentKeyPoint;
+        long unsigned int frameId = stol(row[0]);
+        cv::KeyPoint keyPoint(cv::Point2f(stof(row[1]), stof(row[2])), stof(row[3]), stof(row[4]), stof(row[5]), stoi(row[6]), stoi(row[7]));
+        currentKeyPoint.first = frameId;
+        currentKeyPoint.second = keyPoint;
+        keyPoints.push_back(currentKeyPoint);
     }
     file.close();
 
@@ -79,7 +83,7 @@ void Simulator::initPoints() {
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
-    std::vector<cv::KeyPoint> currKeyPoints;
+    std::vector<std::pair<long unsigned int, cv::KeyPoint>> currKeyPoints;
     std::string currKeyPointsFilename;
     std::vector<cv::Mat> currDesc;
     std::string currDescFilename;
@@ -581,7 +585,7 @@ void Simulator::trackOrbSlam() {
     std::vector<cv::KeyPoint> keyPoints;
     for (auto point : this->mCurrentFramePoints) {
         for (auto keyPoint : point->keyPoints) {
-            keyPoints.push_back(keyPoint);
+            keyPoints.push_back(keyPoint.second);
         }
     }
 

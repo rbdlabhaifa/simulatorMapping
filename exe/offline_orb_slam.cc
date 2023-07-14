@@ -83,9 +83,10 @@ void saveMap(int mapNumber) {
 
                 // Save keyPoints
                 cv::KeyPoint currentKeyPoint = currentFrame->mvKeys[obs.second];
-                keyPointsData << currentKeyPoint.pt.x << "," << currentKeyPoint.pt.y << "," << currentKeyPoint.size <<
-                              "," << currentKeyPoint.angle << "," << currentKeyPoint.response << "," <<
-                              currentKeyPoint.octave << "," << currentKeyPoint.class_id << std::endl;
+                keyPointsData << currentFrame->mnId << "," << currentKeyPoint.pt.x << "," << currentKeyPoint.pt.y <<
+                              "," << currentKeyPoint.size << "," << currentKeyPoint.angle << "," <<
+                              currentKeyPoint.response << "," << currentKeyPoint.octave << "," <<
+                              currentKeyPoint.class_id << std::endl;
 
                 // Save Descriptors
                 cv::Mat current_descriptor = currentFrame->mDescriptors.row(obs.second);
