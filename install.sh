@@ -56,13 +56,6 @@ cd build
 cmake ..
 sudo make -j$(nproc) install
 cd ~
-git clone https://github.com/tzukpolinsky/ctello.git
-cd ctello
-mkdir build
-cd build
-cmake ..
-sudo make -j$(nproc) install
-cd ~
 git clone https://gitlab.com/libeigen/eigen.git
 cd eigen
 git checkout 3.4.0

@@ -1,12 +1,12 @@
 {
-  "VocabularyPath": "/home/tzuk/simulatorMapping/Vocabulary/ORBvoc.txt",
-  "DroneYamlPathSlam": "/home/tzuk/simulatorMapping/config/tello_9F5EC2_640.yaml",
-  "offlineVideoTestPath": "/home/tzuk/Downloads/mapping.avi",
+  "VocabularyPath": "C:\\Users\\tzuk9\\Documents\\simulatorMapping\\Vocabulary\\ORBvoc.bin",
+  "DroneYamlPathSlam": "C:\\Users\\tzuk9\\Documents\\simulatorMapping\\config\\tello_9F5EC2_640.yaml",
+  "offlineVideoTestPath": "C:\\Users\\tzuk9\\Documents\\simulatorMapping\\videos\\mapping.avi",
   "onlineVideoPath": "udp://0.0.0.0:11111?overrun_nonfatal=1&fifo_size=1000",
   "loadMap": false,
   "loadMapPath": "/home/tzuk/slamMaps/HaifaLab.bin",
   "saveMap": true,
-  "simulatorOutputDir": "/home/tzuk/slamMaps/",
+  "simulatorOutputDir": "C:\\Users\\tzuk9\\Documents\\simulatorMapping\\slamMaps\\",
   "modelTextureNameToAlignTo": "floor",
   "mapInputDir": "/home/tzuk/slamMaps/example_mapping11/",
   "getPointDataCsv": "/home/liam/example.csv",
@@ -25,7 +25,7 @@
   "rollRad": 2.87,
   "movingScale": 0.2,
   "rotateScale": 0.2,
-  "modelPath": "/home/tzuk/Documents/TLV_lab/FBX/drones_lab.obj",
+  "modelPath": "C:\\Users\\tzuk9\\Documents\\simulatorMapping\\TLV-data\\drones_lab.obj",
   "pointSize": 10,
   "xOffset": 0.0696954,
   "yOffset": 0.232057,
@@ -34,11 +34,11 @@
   "pitchOffset": -0.35643,
   "rollOffset": -0.0139628,
   "scaleFactor": 0.0305,
-  "movementFactor": 0.01,
+  "movementFactor": 0.1,
   "framesFolder": "/home/liam/Documents/textures/",
   "framesOutput": "/home/liam/Downloads/frames/",
   "frameNumber": 99,
   "useLabICP": true,
-  "trackImages": false
+  "trackImages": true
 }
 

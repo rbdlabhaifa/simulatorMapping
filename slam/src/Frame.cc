@@ -281,7 +281,7 @@ namespace ORB_SLAM2 {
         }
 
         mb = mbf / fx;
-
+        std::cout << "AssignFeaturesToGrid" <<std::endl;
         AssignFeaturesToGrid();
     }
 
@@ -397,19 +397,19 @@ namespace ORB_SLAM2 {
         vector<size_t> vIndices;
         vIndices.reserve(N);
 
-        const int nMinCellX = max(0, (int) floor((x - mnMinX - r) * mfGridElementWidthInv));
+        const int nMinCellX = std::max(0, (int) std::floor((x - mnMinX - r) * mfGridElementWidthInv));
         if (nMinCellX >= FRAME_GRID_COLS)
             return vIndices;
 
-        const int nMaxCellX = min((int) FRAME_GRID_COLS - 1, (int) ceil((x - mnMinX + r) * mfGridElementWidthInv));
+        const int nMaxCellX = std::min((int) FRAME_GRID_COLS - 1, (int) std::ceil((x - mnMinX + r) * mfGridElementWidthInv));
         if (nMaxCellX < 0)
             return vIndices;
 
-        const int nMinCellY = max(0, (int) floor((y - mnMinY - r) * mfGridElementHeightInv));
+        const int nMinCellY = std::max(0, (int) std::floor((y - mnMinY - r) * mfGridElementHeightInv));
         if (nMinCellY >= FRAME_GRID_ROWS)
             return vIndices;
 
-        const int nMaxCellY = min((int) FRAME_GRID_ROWS - 1, (int) ceil((y - mnMinY + r) * mfGridElementHeightInv));
+        const int nMaxCellY = std::min((int) FRAME_GRID_ROWS - 1, (int) std::ceil((y - mnMinY + r) * mfGridElementHeightInv));
         if (nMaxCellY < 0)
             return vIndices;
 

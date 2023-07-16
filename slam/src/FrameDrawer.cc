@@ -66,7 +66,7 @@ namespace ORB_SLAM2 {
             }
         } // destroy scoped mutex -> release mutex
 
-        if (im.channels() < 3) //this should be always true
+        if (!im.empty() && im.channels() < 3) //this should be always true
             cvtColor(im, im, CV_GRAY2BGR);
 
         //Draw

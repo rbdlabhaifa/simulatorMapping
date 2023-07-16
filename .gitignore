@@ -41,3 +41,10 @@ simulatorDataSets/
 
 **/**/build/
 slamMaps/
+.vs
+.vscode
+vcpkg_installed/
+out/
+videos/
+**/bin**
+**/Debug**

@@ -23,8 +23,8 @@
 #include <iostream>
 using namespace std;
 #include "MapPoint.h"
-#include "../Thirdparty/DBoW2/DBoW2/BowVector.h"
-#include "../Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include "DBoW2/BowVector.h"
+#include "DBoW2/FeatureVector.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
 #include "Frame.h"
@@ -41,7 +41,7 @@ using namespace std;
 #include <boost/serialization/split_member.hpp>
 #include <mutex>
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 
 // #define _BAR
 

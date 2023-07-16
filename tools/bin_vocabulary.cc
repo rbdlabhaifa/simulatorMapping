@@ -16,11 +16,11 @@ void load_as_xml(ORB_SLAM2::ORBVocabulary* voc, const std::string infile) {
   printf("Loading fom xml: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 }
 
-void load_as_binary(ORB_SLAM2::ORBVocabulary* voc, const std::string infile) {
+/*void load_as_binary(ORB_SLAM2::ORBVocabulary* voc, const std::string infile) {
   clock_t tStart = clock();
   voc->loadFromBinaryFile(infile);
   printf("Loading fom binary: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-}
+}*/
 
 void save_as_xml(ORB_SLAM2::ORBVocabulary* voc, const std::string outfile) {
   clock_t tStart = clock();
