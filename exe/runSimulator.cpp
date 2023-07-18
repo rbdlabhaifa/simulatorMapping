@@ -13,12 +13,13 @@ int main(int argc, char **argv) {
     programData.close();
 
     std::string configPath = data["DroneYamlPathSlam"];
+    std::string VocabularyPath = data["VocabularyPath"];
     std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
     std::string model_path = data["modelPath"];
     bool trackImages = data["trackImages"];
     double movementFactor = data["movementFactor"];
-    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, "../slamMaps/", false,
-                        "", movementFactor);
+    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, "../../slamMaps/", false,
+                        "", movementFactor,VocabularyPath);
     auto simulatorThread = simulator.run();
     while (!simulator.isReady()) { // wait for the 3D model to load
         usleep(1000);

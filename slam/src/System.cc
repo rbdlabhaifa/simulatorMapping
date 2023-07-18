@@ -68,8 +68,8 @@ namespace ORB_SLAM2 {
         bool bVocLoad = false; // chose loading method based on file extension
         if (has_suffix(strVocFile, ".txt"))
             bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        //else
-        //bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+        else
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
 
 
         //bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
