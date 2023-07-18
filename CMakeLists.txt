@@ -42,7 +42,7 @@ find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(PCL 1.8 REQUIRED)
-
+add_subdirectory(Thirdparty)
 include_directories(
 
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/
@@ -107,108 +107,4 @@ add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
 add_library(exitRoom tools/navigation/roomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})
-add_executable(runSimulator exe/runSimulator.cpp)
-target_link_libraries(runSimulator simulator exitRoom)
-
-add_executable(offline_orb_slam exe/offline_orb_slam.cc)
-target_link_libraries(offline_orb_slam ${PROJECT_NAME})
-
-add_executable(get_point_data exe/get_point_data.cc)
-target_link_libraries(get_point_data ${PROJECT_NAME})
-
-add_executable(unused_get_points_from_camera exe/unused/get_points_from_camera.cc)
-target_link_libraries(unused_get_points_from_camera ${PROJECT_NAME})
-
-add_executable(unused_test_is_point_visible exe/unused/test_is_point_visible.cc)
-target_link_libraries(unused_test_is_point_visible ${PROJECT_NAME})
-
-add_executable(unused_get_points_from_camera_second exe/unused/get_points_from_camera_second.cc)
-target_link_libraries(unused_get_points_from_camera_second ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame exe/unused/points_seen_by_camera_by_frame.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame_second exe/unused/points_seen_by_camera_by_frame_second.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame_second ${PROJECT_NAME})
-
-add_executable(get_points_from_frame_orb_slam exe/get_points_from_frame_orb_slam.cc)
-target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
-
-add_executable(unused_get_points_from_camera_third exe/unused/get_points_from_camera_third.cc)
-target_link_libraries(unused_get_points_from_camera_third ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame_third exe/unused/points_seen_by_camera_by_frame_third.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame_third ${PROJECT_NAME})
-
-add_executable(points_seen_by_frame_data exe/points_seen_by_frame_data.cc)
-target_link_libraries(points_seen_by_frame_data ${PROJECT_NAME})
-
-add_executable(points_seen_by_frames exe/points_seen_by_frames.cc)
-target_link_libraries(points_seen_by_frames ${PROJECT_NAME})
-
-add_executable(points_seen_by_pos exe/points_seen_by_pos.cc)
-target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
-
-add_executable(mapping exe/mapping.cc)
-target_link_libraries(mapping ${PROJECT_NAME})
-
-#add_executable(simulator exe/simulator.cc)
-#target_link_libraries(simulator ${PROJECT_NAME})
-
-add_executable(run_model exe/run_model.cc)
-target_link_libraries(run_model ${PROJECT_NAME})
-
-add_executable(get_pos_from_frame_orb_slam exe/get_pos_from_frame_orb_slam.cc)
-target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
-
-add_executable(check_matches exe/check_matches.cc)
-target_link_libraries(check_matches ${PROJECT_NAME})
-
-add_executable(icp_model_orbs_slam exe/icp_model_orbs_slam.cc)
-target_link_libraries(icp_model_orbs_slam ${PROJECT_NAME})
-
-add_executable(take_frame_images exe/take_frame_images.cc)
-target_link_libraries(take_frame_images ${PROJECT_NAME})
-
-#add_executable(run_orb_slam_matching exe/run_orb_slam_matching.cc)
-#target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
-
-add_executable(check_matches_opencv exe/check_matches_opencv.cc)
-target_link_libraries(check_matches_opencv ${PROJECT_NAME})
-
-add_executable(check_matches_one_by_one exe/check_matches_one_by_one.cc)
-target_link_libraries(check_matches_one_by_one ${PROJECT_NAME})
-
-add_executable(run_model_with_printed_orbs exe/run_model_with_printed_orbs.cc)
-target_link_libraries(run_model_with_printed_orbs ${PROJECT_NAME})
-
-add_executable(run_model_with_icp exe/run_model_with_icp.cc)
-target_link_libraries(run_model_with_icp ${PROJECT_NAME})
-
-#add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
-#target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
-
-add_executable(see_keypoints exe/see_keypoints.cc)
-target_link_libraries(see_keypoints ${PROJECT_NAME})
-
-add_executable(save_map exe/save_map.cc)
-target_link_libraries(save_map ${PROJECT_NAME})
-
-add_executable(remove_outliers exe/remove_outliers.cc)
-target_link_libraries(remove_outliers ${PROJECT_NAME})
-
-add_executable(run_model_with_orb_slam_points exe/run_model_with_orb_slam_points.cc)
-target_link_libraries(run_model_with_orb_slam_points ${PROJECT_NAME})
-
-add_executable(pcd_to_xyz exe/pcd_to_xyz.cc)
-target_link_libraries(pcd_to_xyz ${PROJECT_NAME})
-
-add_executable(csv_to_xyz exe/csv_to_xyz.cc)
-target_link_libraries(csv_to_xyz ${PROJECT_NAME})
-
-add_executable(run_model_with_orbs_and_orb_slam_map exe/run_model_with_orbs_and_orb_slam_map.cc)
-target_link_libraries(run_model_with_orbs_and_orb_slam_map ${PROJECT_NAME})
-add_executable(mono_tum exe/mono_tum.cpp)
-target_link_libraries(mono_tum ${PROJECT_NAME})
-add_executable(test_exitRoomAlgo exe/test_exitRoomAlgo.cpp)
-target_link_libraries(test_exitRoomAlgo exitRoom)
+add_subdirectory(exe)
