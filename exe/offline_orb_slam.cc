@@ -134,9 +134,7 @@ int main() {
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
     simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
-    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, loadMap,
-                                               loadMapPath,
-                                               true);
+    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true);
     int amountOfAttepmpts = 0;
     while (amountOfAttepmpts++ < 1) {
         cv::VideoCapture capture(videoPath);

@@ -4,10 +4,7 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF ()
-
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -lncurses")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -lncurses")
 #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -march=native")
 
@@ -90,7 +87,6 @@ add_library(${PROJECT_NAME}
         slam/src/Viewer.cc
         slam/src/LoopClosing.cc
         utils/src/Point.cpp
-        utils/src/Line.cpp
         utils/src/Auxiliary.cpp
         )
 
@@ -107,10 +103,12 @@ target_link_libraries(${PROJECT_NAME}
 	    -lboost_serialization
 	    -lboost_system
         )
-add_library(simulator tools/simulator.cpp)
+add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
+add_library(exitRoom tools/navigation/roomExit.cpp)
+target_link_libraries(exitRoom ${PROJECT_NAME})
 add_executable(runSimulator exe/runSimulator.cpp)
-target_link_libraries(runSimulator simulator)
+target_link_libraries(runSimulator simulator exitRoom)
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
@@ -172,8 +170,8 @@ target_link_libraries(icp_model_orbs_slam ${PROJECT_NAME})
 add_executable(take_frame_images exe/take_frame_images.cc)
 target_link_libraries(take_frame_images ${PROJECT_NAME})
 
-add_executable(run_orb_slam_matching exe/run_orb_slam_matching.cc)
-target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
+#add_executable(run_orb_slam_matching exe/run_orb_slam_matching.cc)
+#target_link_libraries(run_orb_slam_matching ${PROJECT_NAME})
 
 add_executable(check_matches_opencv exe/check_matches_opencv.cc)
 target_link_libraries(check_matches_opencv ${PROJECT_NAME})
@@ -187,8 +185,8 @@ target_link_libraries(run_model_with_printed_orbs ${PROJECT_NAME})
 add_executable(run_model_with_icp exe/run_model_with_icp.cc)
 target_link_libraries(run_model_with_icp ${PROJECT_NAME})
 
-add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
-target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
+#add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
+#target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
 
 add_executable(see_keypoints exe/see_keypoints.cc)
 target_link_libraries(see_keypoints ${PROJECT_NAME})
@@ -210,3 +208,7 @@ target_link_libraries(csv_to_xyz ${PROJECT_NAME})
 
 add_executable(run_model_with_orbs_and_orb_slam_map exe/run_model_with_orbs_and_orb_slam_map.cc)
 target_link_libraries(run_model_with_orbs_and_orb_slam_map ${PROJECT_NAME})
+add_executable(mono_tum exe/mono_tum.cpp)
+target_link_libraries(mono_tum ${PROJECT_NAME})
+add_executable(test_exitRoomAlgo exe/test_exitRoomAlgo.cpp)
+target_link_libraries(test_exitRoomAlgo exitRoom)

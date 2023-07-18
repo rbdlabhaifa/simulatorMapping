@@ -24,7 +24,6 @@
 #include <pangolin/scene/scenehandler.h>
 
 #include "Point.h"
-#include "Line.h"
 
 class Auxiliary {
 public:
