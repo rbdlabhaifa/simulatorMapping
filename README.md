@@ -1,6 +1,24 @@
-For running simulator:
+# RBD-Simulator
+lab simulator for virtually running and testing algorithms without the need for hardware.
 
-Start with ./install.sh
+## Project State
+need to check and fix memory leaks, merge windows and make it  more user friendly.
+
+## Current Assignments
+merge windows for openc, opengl and orbslam
+
+## Dependencies
+
+1. [Eigen](https://eigen.tuxfamily.org/) < 3.4.0 - Linear Algebra
+2. OpenCV
+3. [Boost](https://www.boost.org/) - Used for thread-safe camera streaming
+
+# Compilation
+For running simulator on linux:
+
+1) clone the repository and change into it using the terminal
+
+2) run ./install.sh
 
 After we installed the program we want to run it, this is the flow:
 
