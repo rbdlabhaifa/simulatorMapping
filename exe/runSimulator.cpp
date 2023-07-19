@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
-    std::ifstream programData("C:\\Users\\tzuk9\\Documents\\simulatorMapping\\generalSettings.json");
+    std::ifstream programData(argv[1]);
     nlohmann::json data;
     programData >> data;
     programData.close();

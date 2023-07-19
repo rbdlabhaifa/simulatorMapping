@@ -281,7 +281,6 @@ namespace ORB_SLAM2 {
         }
 
         mb = mbf / fx;
-        std::cout << "AssignFeaturesToGrid" <<std::endl;
         AssignFeaturesToGrid();
     }
 
@@ -379,7 +378,7 @@ namespace ORB_SLAM2 {
             return false;
 
         // Predict scale in the image
-        const int nPredictedLevel = pMP->PredictScale(dist, mfLogScaleFactor);
+        const int nPredictedLevel = pMP->PredictScale(dist, this);
 
         // Data used by the tracking
         pMP->mbTrackInView = true;

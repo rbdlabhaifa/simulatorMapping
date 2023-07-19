@@ -5,11 +5,10 @@ IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Debug)
 ENDIF ()
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -W0 -MT -bigobj")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W0 -MT -bigobj")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -W0 -MD -bigobj")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W0 -MD -bigobj")
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 list(APPEND VCPKG_FEATURE_FLAGS "versions")
-find_package(lz4 CONFIG REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -18,7 +17,7 @@ find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(OpenCV REQUIRED)
 add_subdirectory(Thirdparty)
-find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
+find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/Thirdparty/Pangolin")
 
 include_directories(
             ${EIGEN3_INCLUDE_DIR}        
@@ -62,7 +61,6 @@ add_library(${PROJECT_NAME} STATIC
 target_link_libraries(${PROJECT_NAME} PUBLIC
         ${OpenCV_LIBS}
         ${EIGEN3_LIBS}
-        lz4::lz4
         ${Pangolin_LIBRARIES}
         g2o
         DBoW2

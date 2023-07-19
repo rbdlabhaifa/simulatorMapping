@@ -84,7 +84,7 @@ namespace ORB_SLAM2 {
             mnTrackedVO = 0;
             const float r = 5;
             for (int i = 0; i < N; i++) {
-                if (vbVO[i] || vbMap[i]) {
+                if ((i<vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
                     cv::Point2f pt1, pt2;
                     pt1.x = vCurrentKeys[i].pt.x - r;
                     pt1.y = vCurrentKeys[i].pt.y - r;

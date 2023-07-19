@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     // signal(SIGTERM, stopProgramHandler);
     // signal(SIGABRT, stopProgramHandler);
     // signal(SIGSEGV, stopProgramHandler);
-    std::ifstream programData("C:/Users/tzuk9/Documents/simulatorMapping/generalSettings.json");
+    std::ifstream programData(argv[1]);
     nlohmann::json data;
     programData >> data;
     programData.close();
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
     SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true);
         std::cout << "here4" <<std::endl;
-        cv::VideoCapture capture(videoPath);
+        cv::VideoCapture capture(videoPath,cv::CAP_OPENCV_MJPEG);
         if (!capture.isOpened()) {
             std::cout << "Error opening video stream or file" << std::endl;
             return 0;

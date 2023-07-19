@@ -508,7 +508,10 @@ namespace ORB_SLAM2
         std::vector<std::vector<int>> Distances(N);
         for (size_t i = 0; i < N; i++)
         {
-            Distances.emplace_back(N);
+            Distances[i] = std::vector<int>(N);
+        }
+        for (size_t i = 0; i < N; i++)
+        {
             Distances[i][i] = 0;
             for (size_t j = i + 1; j < N; j++)
             {
@@ -622,15 +625,38 @@ namespace ORB_SLAM2
         return 1.2f * mfMaxDistance;
     }
 
-    int MapPoint::PredictScale(const float &currentDist, const float &logScaleFactor)
+    int MapPoint::PredictScale(const float& currentDist, KeyFrame* pKF)
     {
         float ratio;
         {
-            unique_lock<mutex> lock3(mMutexPos);
+            unique_lock<mutex> lock(mMutexPos);
             ratio = mfMaxDistance / currentDist;
         }
 
-        return ceil(log(ratio) / logScaleFactor);
+        int nScale = ceil(log(ratio) / pKF->mfLogScaleFactor);
+        if (nScale < 0)
+            nScale = 0;
+        else if (nScale >= pKF->mnScaleLevels)
+            nScale = pKF->mnScaleLevels - 1;
+
+        return nScale;
+    }
+
+    int MapPoint::PredictScale(const float& currentDist, Frame* pF)
+    {
+        float ratio;
+        {
+            unique_lock<mutex> lock(mMutexPos);
+            ratio = mfMaxDistance / currentDist;
+        }
+
+        int nScale = ceil(log(ratio) / pF->mfLogScaleFactor);
+        if (nScale < 0)
+            nScale = 0;
+        else if (nScale >= pF->mnScaleLevels)
+            nScale = pF->mnScaleLevels - 1;
+
+        return nScale;
     }
 
 } // namespace ORB_SLAM

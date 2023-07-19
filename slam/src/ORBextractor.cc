@@ -835,7 +835,6 @@ namespace ORB_SLAM2
                             cv::KeyPoint kp = (*vit);
                             //vToDistributeKeys.push_back(*vit);
                             vToDistributeKeys.emplace_back(kp);
-
                         }
                     }
 
