@@ -5,10 +5,6 @@ IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF ()
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -march=native")
-
-# Check C++17 or C++0x support
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -37,12 +33,13 @@ endif ()
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
-find_package(Pangolin REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(PCL 1.8 REQUIRED)
 add_subdirectory(Thirdparty)
+find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
+
 include_directories(
 
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/
