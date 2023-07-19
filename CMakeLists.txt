@@ -96,7 +96,7 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         ${PCL_LIBRARIES}
-        -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
+        -lpthread ${PYTHON_LIBRARIES}
 	    -lboost_serialization
 	    -lboost_system
         )
