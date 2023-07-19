@@ -48,3 +48,4 @@ out/
 videos/
 **/bin**
 **/Debug**
+CMakeSettings.json

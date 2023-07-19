@@ -16,9 +16,10 @@ find_package(Eigen3 REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
-find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
 find_package(OpenCV REQUIRED)
 add_subdirectory(Thirdparty)
+find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
+
 include_directories(
             ${EIGEN3_INCLUDE_DIR}        
         ${Pangolin_INCLUDE_DIRS}
