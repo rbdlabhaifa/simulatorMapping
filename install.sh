@@ -10,10 +10,14 @@ mkdir build
 cd build
 cmake ..
 sudo make -j$(nproc) install
-sudo ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
-sudo ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
-sudo ln -sf /usr/local/include/eigen3/Eigen /usr/local/include/Eigen
-sudo ln -sf /usr/local/include/eigen3/unsupported /usr/local/include/unsupported
+if [ ! -f "/usr/local/include/Eigen" ]; then
+  sudo ln -sf /usr/local/include/eigen3/Eigen /usr/local/include/Eigen
+  sudo ln -sf /usr/local/include/eigen3/unsupported /usr/local/include/unsupported
+  sudo rm -rf /usr/include/eigen3/
+  sudo cp -r /usr/local/include/eigen3/ /usr/include/
+  sudo ln -sf /usr/include/eigen3/Eigen/ /usr/include/Eigen
+  sudo ln -sf /usr/include/eigen3/unsupported/ /usr/include/unsupported
+fi
 cd "$cwd"
 
 cd Thirdparty/DBoW2
