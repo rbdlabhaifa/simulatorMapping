@@ -41,3 +41,6 @@ simulatorDataSets/
 
 **/**/build/
 slamMaps/
+
+build/
+*.csv
