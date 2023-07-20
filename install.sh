@@ -2,10 +2,19 @@
 cwd=$(pwd)
 echo "Configuring and building Thirdparty/DBoW2 ..."
 sudo apt install -y libeigen3-dev
+cd ~
+git clone https://gitlab.com/libeigen/eigen.git
+cd eigen
+git checkout 3.4.0
+mkdir build
+cd build
+cmake ..
+sudo make -j$(nproc) install
 sudo ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 sudo ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
 sudo ln -sf /usr/local/include/eigen3/Eigen /usr/local/include/Eigen
 sudo ln -sf /usr/local/include/eigen3/unsupported /usr/local/include/unsupported
+cd "$cwd"
 
 cd Thirdparty/DBoW2
 mkdir build
@@ -61,14 +70,5 @@ mkdir build
 cd build
 cmake ..
 sudo make -j$(nproc) install
-cd ~
-git clone https://gitlab.com/libeigen/eigen.git
-cd eigen
-git checkout 3.4.0
-mkdir build
-cd build
-cmake ..
-sudo make -j$(nproc) install
-cd "$cwd"
 chmod +x build.sh
 ./build.sh
