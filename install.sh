@@ -31,7 +31,16 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
+
+cd ../../Pangolin
+
 echo "Configuring and building Thirdparty/Pangolin ..."
+
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+
 sudo apt-get install -y libncurses5-dev
 sudo apt-get install -y libglew-dev
 sudo apt-get install -y libglu1-mesa-dev freeglut3-dev mesa-common-dev
@@ -70,5 +79,7 @@ mkdir build
 cd build
 cmake ..
 sudo make -j$(nproc) install
+
+cd "$cwd"
 chmod +x build.sh
 ./build.sh
