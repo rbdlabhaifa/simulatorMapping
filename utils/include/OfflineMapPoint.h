@@ -29,6 +29,8 @@ public:
     double minDistanceInvariance;
     double maxDistanceInvariance;
     cv::Point3d normal;
+    cv::KeyPoint bestKeyPoint;
+    cv::Mat bestDescriptor;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints;
     std::vector<cv::Mat> descriptors;
 };

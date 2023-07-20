@@ -574,6 +574,30 @@ void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMa
     }
 }
 
+long unsigned int getMostFreqFrame(std::vector<long unsigned int> frameIds) {
+    std::map<long unsigned int, int> frameCounter;
+
+    for (auto frameId : frameIds) {
+        if (frameCounter.find(frameId) == frameCounter.end()) {
+            frameCounter[frameId] = 1;
+        } else {
+            frameCounter[frameId]++;
+        }
+    }
+
+    int maxCounter = -1;
+    long unsigned int biggestFrame = 0;
+
+    for (auto currFrame : frameCounter) {
+        if (currFrame.second > maxCounter) {
+            maxCounter = currFrame.second;
+            biggestFrame = currFrame.first;
+        }
+    }
+
+    return biggestFrame;
+}
+
 void Simulator::trackOrbSlam() {
     // Create timestamp
     auto now = std::chrono::system_clock::now();
@@ -582,18 +606,23 @@ void Simulator::trackOrbSlam() {
     double timestamp = value.count() / 1000.0;
 
     // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
-    std::vector<cv::KeyPoint> keyPoints;
+    std::vector<long unsigned int> frameIds;
     for (auto point : this->mCurrentFramePoints) {
         for (auto keyPoint : point->keyPoints) {
-            keyPoints.push_back(keyPoint.second);
+            frameIds.push_back(keyPoint.first);
         }
     }
+    long unsigned int frameId = getMostFreqFrame(frameIds);
 
     // TODO: Create cv::Mat of all the descriptors
+    std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptors;
     for (auto point : this->mCurrentFramePoints) {
-        for (auto descriptor : point->descriptors) {
-            descriptors.push_back(descriptor);
+        for (int i = 0; i < point->keyPoints.size(); i++) {
+            if (point->keyPoints[i].first == frameId) {
+                keyPoints.push_back(point->keyPoints[i].second);
+                descriptors.push_back(point->descriptors[i]);
+            }
         }
     }
 
