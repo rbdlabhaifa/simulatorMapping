@@ -114,8 +114,8 @@ int main() {
     signal(SIGSEGV, stopProgramHandler);
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
-    nlohmann::json data;
-    programData >> data;
+    nlohmann::json data = nlohmann::json::parse(programData);
+    // programData >> data;
     programData.close();
     char currentDirPath[256];
     getcwd(currentDirPath, 256);

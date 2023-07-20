@@ -22,8 +22,8 @@ target_link_libraries(unused_points_seen_by_camera_by_frame ${PROJECT_NAME})
 add_executable(unused_points_seen_by_camera_by_frame_second unused/points_seen_by_camera_by_frame_second.cc)
 target_link_libraries(unused_points_seen_by_camera_by_frame_second ${PROJECT_NAME})
 
-add_executable(get_points_from_frame_orb_slam get_points_from_frame_orb_slam.cc)
-target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
+#add_executable(get_points_from_frame_orb_slam get_points_from_frame_orb_slam.cc)
+#target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
 
 add_executable(unused_get_points_from_camera_third unused/get_points_from_camera_third.cc)
 target_link_libraries(unused_get_points_from_camera_third ${PROJECT_NAME})
@@ -40,8 +40,8 @@ target_link_libraries(points_seen_by_frames ${PROJECT_NAME})
 add_executable(points_seen_by_pos points_seen_by_pos.cc)
 target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
 
-add_executable(mapping mapping.cc)
-target_link_libraries(mapping ${PROJECT_NAME})
+#add_executable(mapping mapping.cc)
+#target_link_libraries(mapping ${PROJECT_NAME})
 
 #add_executable(simulator simulator.cc)
 #target_link_libraries(simulator ${PROJECT_NAME})
@@ -49,11 +49,11 @@ target_link_libraries(mapping ${PROJECT_NAME})
 add_executable(run_model run_model.cc)
 target_link_libraries(run_model ${PROJECT_NAME})
 
-add_executable(get_pos_from_frame_orb_slam get_pos_from_frame_orb_slam.cc)
-target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
+#add_executable(get_pos_from_frame_orb_slam get_pos_from_frame_orb_slam.cc)
+#target_link_libraries(get_pos_from_frame_orb_slam ${PROJECT_NAME})
 
-add_executable(check_matches check_matches.cc)
-target_link_libraries(check_matches ${PROJECT_NAME})
+#add_executable(check_matches check_matches.cc)
+#target_link_libraries(check_matches ${PROJECT_NAME})
 
 add_executable(icp_model_orbs_slam icp_model_orbs_slam.cc)
 target_link_libraries(icp_model_orbs_slam ${PROJECT_NAME})
