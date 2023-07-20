@@ -77,7 +77,7 @@ cd build
 cmake ..
 sudo make -j$(nproc) install
 cd ~
-git clone https://github.com/tzukpolinsky/ctello.git
+git clone https://github.com/liamvanunu/ctello.git
 cd ctello
 mkdir build
 cd build
