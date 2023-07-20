@@ -204,7 +204,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
     std::string simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
-    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, loadMap,
+    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, loadMap,
                                                loadMapPath,
                                                true);
 
