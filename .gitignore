@@ -43,4 +43,6 @@ simulatorDataSets/
 slamMaps/
 
 build/
+exe/
+CMakeFiles/
 *.csv
