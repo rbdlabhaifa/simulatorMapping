@@ -31,15 +31,17 @@ int main(int argc, char **argv) {
     std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
     std::cout << "Number of points: " << cloudPoints.size() << std::endl;
 
-    std::string fileLocation = "~/firstFramePoints.csv";
+    std::string fileLocation = "/home/liam/firstFramePoints.csv";
 
     std::cout << "Saving points to " << fileLocation << std::endl;
 
     std::ofstream pointsData(fileLocation);
     for (auto &point : cloudPoints) {
-        pointData << point->point.x << point->point.y << point->point.z << std::endl;
+        pointsData << point->point.x << "," << point->point.y << "," << point->point.z << std::endl;
     }
     pointsData.close();
+
+    std::cout << "Points saved!" << std::endl;
 
     return 0;
 }
