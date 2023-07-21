@@ -9,7 +9,7 @@ class OfflineMapPoint {
 public:
     OfflineMapPoint(const OfflineMapPoint &offlineMapPoint);
 
-    OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints, std::vector<cv::Mat> descriptors);
+    OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, cv::KeyPoint bestKeyPoint, cv::Mat bestDescriptor, std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints, std::vector<cv::Mat> descriptors);
 
     std::string to_string() const {
         std::ostringstream ss;
@@ -29,6 +29,8 @@ public:
     double minDistanceInvariance;
     double maxDistanceInvariance;
     cv::Point3d normal;
+    cv::KeyPoint bestKeyPoint;
+    cv::Mat bestDescriptor;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints;
     std::vector<cv::Mat> descriptors;
 };

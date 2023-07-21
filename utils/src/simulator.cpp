@@ -4,6 +4,60 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
+cv::Mat readBestDesc(const std::string& filename, int cols) {
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        // Handle file open error
+        return cv::Mat();
+    }
+
+    std::string line;
+    int row = 0;
+    std::getline(file, line);
+    std::istringstream iss(line);
+
+    cv::Mat mat(1, cols, CV_8UC1);
+    int col = 0;
+    std::string value;
+
+    while (std::getline(iss, value, ',')) {
+        mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value));
+        col++;
+    }
+    file.close();
+
+    return mat;
+}
+
+cv::KeyPoint readBestKeyPoint(std::string filename) {
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        // Handle file open error
+        return cv::KeyPoint();
+    }
+
+    std::string line;
+    if (!std::getline(file, line)) {
+        // Handle empty file by returning a default KeyPoint
+        file.close();
+        return cv::KeyPoint();
+    }
+
+    std::istringstream iss(line);
+    std::string value;
+    std::vector<std::string> row;
+
+    while (std::getline(iss, value, ',')) {
+        row.push_back(value);
+    }
+    cv::KeyPoint keyPoint(cv::Point2f(stof(row[1]), stof(row[2])), stof(row[3]), stof(row[4]), stof(row[5]), stoi(row[6]), stoi(row[7]));
+    file.close();
+
+    return keyPoint;
+}
+
 std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
 {
     std::ifstream file(filename);
@@ -83,9 +137,13 @@ void Simulator::initPoints() {
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
+    cv::KeyPoint bestKeyPoint;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> currKeyPoints;
+    std::string bestKeyPointFilename;
     std::string currKeyPointsFilename;
+    cv::Mat bestDescriptor;
     std::vector<cv::Mat> currDesc;
+    std::string bestDescFilename;
     std::string currDescFilename;
 
     cv::Vec<double, 8> point;
@@ -117,11 +175,15 @@ void Simulator::initPoints() {
         point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
 
         pointIndex = std::stoi(row[0]);
+        bestDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_bestDescriptor.csv";
+        bestDescriptor = readBestDesc(bestDescFilename, 32);
         currDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
         currDesc = readDesc(currDescFilename, 32);
+        bestKeyPointFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_bestKeyPoint.csv";
+        bestKeyPoint = readBestKeyPoint(bestKeyPointFilename);
         currKeyPointsFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_keypoints.csv";
         currKeyPoints = readKeyPoints(currKeyPointsFilename);
-        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currKeyPoints, currDesc);
+        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), bestKeyPoint, bestDescriptor, currKeyPoints, currDesc);
         this->mPoints.emplace_back(offlineMapPoint);
     }
     pointData.close();
@@ -581,15 +643,12 @@ void Simulator::trackOrbSlam() {
     auto value = now_ms.time_since_epoch();
     double timestamp = value.count() / 1000.0;
 
-    // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
     std::vector<cv::KeyPoint> keyPoints;
     for (auto point : this->mCurrentFramePoints) {
         for (auto keyPoint : point->keyPoints) {
             keyPoints.push_back(keyPoint.second);
         }
     }
-
-    // TODO: Create cv::Mat of all the descriptors
     cv::Mat descriptors;
     for (auto point : this->mCurrentFramePoints) {
         for (auto descriptor : point->descriptors) {

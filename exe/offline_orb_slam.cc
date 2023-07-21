@@ -16,6 +16,19 @@
 std::unique_ptr<ORB_SLAM2::System> SLAM;
 std::string simulatorOutputDir;
 
+bool matCompare(cv::Mat& a, cv::Mat& b) {
+    if (a.rows != b.rows || a.cols != b.cols || a.type() != b.type()) {
+        return false;
+    }
+    for (int i = 0; i < a.rows; i++) {
+        const void* a_row = a.ptr(i);
+        const void* b_row = b.ptr(i);
+        if (memcmp(a_row, b_row, a.cols*a.elemSize()) != 0) {
+            return false;
+        }
+    }
+    return true;
+};
 
 void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_points) {
     if (img.empty()) 
@@ -100,6 +113,35 @@ void saveMap(int mapNumber) {
             }
             keyPointsData.close();
             descriptorData.close();
+
+            std::ofstream bestDescriptorData;
+            bestDescriptorData.open(simulatorOutputDir + "point" + std::to_string(i) + "_bestDescriptor.csv");
+            // Save Descriptor
+            cv::Mat best_descriptor = p->GetDescriptor();
+            for (int j = 0; j < best_descriptor.rows; j++) {
+                bestDescriptorData << static_cast<int>(best_descriptor.at<uchar>(j, 0));
+                for (int k = 1; k < best_descriptor.cols; k++) {
+                    bestDescriptorData << "," << static_cast<int>(best_descriptor.at<uchar>(j, k));
+                }
+                bestDescriptorData << std::endl;
+            }
+            bestDescriptorData.close();
+
+            std::ofstream bestKeyPointData;
+            bestKeyPointData.open(simulatorOutputDir + "point" + std::to_string(i) + "_bestKeyPoint.csv");
+            for (auto obs : observations) {
+                ORB_SLAM2::KeyFrame *currentFrame = obs.first;
+                cv::Mat current_descriptor = currentFrame->mDescriptors.row(obs.second);
+                if (matCompare(best_descriptor, current_descriptor)) {
+                    // Save Related Keypoint
+                    cv::KeyPoint currentKeyPoint = currentFrame->mvKeys[obs.second];
+                    bestKeyPointData << currentFrame->mnId << "," << currentKeyPoint.pt.x << "," << currentKeyPoint.pt.y <<
+                                     "," << currentKeyPoint.size << "," << currentKeyPoint.angle << "," <<
+                                     currentKeyPoint.response << "," << currentKeyPoint.octave << "," <<
+                                     currentKeyPoint.class_id << std::endl;
+                }
+            }
+            bestKeyPointData.close();
 
             pointData << std::endl;
             i++;
