@@ -241,10 +241,11 @@ Simulator::Simulator() {
     this->mTrackImages = this->mData["trackImagesClass"];
     this->mLoadMap = this->mData["loadMap"];
     this->mLoadMapPath = this->mData["loadMapPath"];
+    this->mContinueMapping = this->mData["continueMapping"];
     this->mSystem = nullptr;
     if (this->mUseOrbSlam) {
         this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,
-                                          this->mLoadMap, this->mLoadMapPath, false);
+                                          this->mLoadMap, this->mLoadMapPath, this->mContinueMapping);
     }
 
     this->mFollowCamera = true;

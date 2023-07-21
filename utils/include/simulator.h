@@ -80,6 +80,7 @@ private:
     bool mTrackImages;
     bool mLoadMap;
     std::string mLoadMapPath;
+    bool mContinueMapping;
     ORB_SLAM2::System *mSystem;
 
     std::vector<OfflineMapPoint*> mCurrentFramePoints;
