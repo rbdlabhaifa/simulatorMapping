@@ -115,29 +115,8 @@ target_link_libraries(runSimulator simulator)
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 
-add_executable(unused_get_points_from_camera exe/unused/get_points_from_camera.cc)
-target_link_libraries(unused_get_points_from_camera ${PROJECT_NAME})
-
-add_executable(unused_test_is_point_visible exe/unused/test_is_point_visible.cc)
-target_link_libraries(unused_test_is_point_visible ${PROJECT_NAME})
-
-add_executable(unused_get_points_from_camera_second exe/unused/get_points_from_camera_second.cc)
-target_link_libraries(unused_get_points_from_camera_second ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame exe/unused/points_seen_by_camera_by_frame.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame_second exe/unused/points_seen_by_camera_by_frame_second.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame_second ${PROJECT_NAME})
-
 add_executable(get_points_from_frame_orb_slam exe/get_points_from_frame_orb_slam.cc)
 target_link_libraries(get_points_from_frame_orb_slam ${PROJECT_NAME})
-
-add_executable(unused_get_points_from_camera_third exe/unused/get_points_from_camera_third.cc)
-target_link_libraries(unused_get_points_from_camera_third ${PROJECT_NAME})
-
-add_executable(unused_points_seen_by_camera_by_frame_third exe/unused/points_seen_by_camera_by_frame_third.cc)
-target_link_libraries(unused_points_seen_by_camera_by_frame_third ${PROJECT_NAME})
 
 add_executable(points_seen_by_frame_data exe/points_seen_by_frame_data.cc)
 target_link_libraries(points_seen_by_frame_data ${PROJECT_NAME})
@@ -150,9 +129,6 @@ target_link_libraries(points_seen_by_pos ${PROJECT_NAME})
 
 add_executable(mapping exe/mapping.cc)
 target_link_libraries(mapping ${PROJECT_NAME})
-
-#add_executable(simulator exe/simulator.cc)
-#target_link_libraries(simulator ${PROJECT_NAME})
 
 add_executable(run_model exe/run_model.cc)
 target_link_libraries(run_model ${PROJECT_NAME})
@@ -213,3 +189,9 @@ target_link_libraries(demo ${PROJECT_NAME})
 
 add_executable(navigate_to_point exe/navigate_to_point.cc)
 target_link_libraries(navigate_to_point ${PROJECT_NAME})
+
+add_executable(remove_map_points exe/remove_map_points.cc)
+target_link_libraries(remove_map_points ${PROJECT_NAME})
+
+add_executable(save_first_frame exe/save_first_frame.cc)
+target_link_libraries(save_first_frame ${PROJECT_NAME})
