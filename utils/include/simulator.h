@@ -38,6 +38,8 @@ public:
 
     std::vector<OfflineMapPoint*> GetCloudPoint();
 
+    ORB_SLAM2::System* GetSystem();
+
     void SetResultPoint(const cv::Point3d resultPoint);
     void CheckResults();
 

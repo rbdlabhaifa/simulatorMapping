@@ -775,6 +775,10 @@ std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
     return this->mCloudScanned;
 }
 
+ORB_SLAM2::System* Simulator::GetSystem() {
+    return this->mSystem;
+}
+
 void Simulator::BuildCloudScanned() {
     // Erased mNewPointsSeen to only new points but not combined yet so insert both
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());

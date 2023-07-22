@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
 
     // Process cloud point generated
     std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
-    std::cout << "Number of points: " << cloudPoints.size() << std::endl;
+    std::cout << "Number of points - User: " << cloudPoints.size() << std::endl;
+    std::cout << "Number of points - ORB SLAM: " << simulator.GetSystem()->GetMap()->GetAllMapPoints().size() << std::endl;
 
     handleKeyboardEventsResult(&simulator);
 
