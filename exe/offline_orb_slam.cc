@@ -16,55 +16,11 @@
 std::unique_ptr<ORB_SLAM2::System> SLAM; // an orb slam system instance allowing the usage of orb slam functionalities
 std::string simulatorOutputDir; //path of directory to put the output in
 
-
-// this function is not used
-
-// saves information on camera position and the number of points in this frame
-// gets as input the position of the camera, the image captured this frame, the frame id and the number of 
-// keypoints found
-void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_points) {
-    if (img.empty()) // if no image was given as input, return
-    {
-        std::cout << "Image is empty!!!" << std::endl;
-        return;
-    }
-    std::ofstream frameData;  // create a frameData object to hold info on camera in current frame
-    frameData.open(simulatorOutputDir + "frameData" +
-                   std::to_string(currentFrameId) + ".csv"); // opening frameData in specified path
-
-    std::ofstream framePointsCount; // framePointsCount will hold the number of points
-    framePointsCount.open(simulatorOutputDir + "framePointsCount" +
-                   std::to_string(currentFrameId) + ".txt"); // set the path of the file
-    framePointsCount << number_of_points; // put the number of points in the frame into framePointsCount
-    framePointsCount.close(); // close the file
-
-    // Extract position from pose matrix
-    double x = pose.at<float>(0,3);
-    double y = pose.at<float>(1,3);
-    double z = pose.at<float>(2,3);
-
-    cv::Point3d camera_position(x, y, z); // set the camera position
-
-    // Extract orientation from pose matrix
-    double yaw, pitch, roll;
-    yaw = atan2(pose.at<float>(1,0), pose.at<float>(0,0)); // rotation on x axis (left-right)
-    pitch = atan2(-pose.at<float>(2,0), sqrt(pose.at<float>(2,1)*pose.at<float>(2,1) + pose.at<float>(2,2)*pose.at<float>(2,2))); // rotation on y axis (up-down)
-    roll = atan2(pose.at<float>(2,1), pose.at<float>(2,2)); // rotation on z axis (sideways)
-
-    frameData << currentFrameId << ',' << camera_position.x << ',' << camera_position.y << ',' << camera_position.z << ','
-              << yaw << ',' << pitch << ',' << roll << std::endl; // put into frameData the camera position
-    cv::imwrite(simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + ".png", img); //saves the current frame image to the specified path
-    frameData.close(); //close frameData file
-}
-// ---------------------------------------------------------
-
-
 // filters the 3d points found with orb slam and saves them using mapNumber for the name of the directory
 // the info of the map points is saved to pointData, the info of the keyPoints is saved to keyPointsData
 // and the keyPoints descriptors are saved to descriptorData
 void saveMap(int mapNumber) {
     std::ofstream pointData; // the data of the points will be saved to this object
-    std::unordered_set<int> seen_frames; // not used
     int i = 0;
 
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
@@ -148,11 +104,6 @@ int main() {
     nlohmann::json data; // create an empty json object
     programData >> data; // put programData into data.json
     programData.close(); // close programData file
-    
-    // may be useless because currentDirPath is not used at all again
-    char currentDirPath[256];
-    getcwd(currentDirPath, 256); // put the current directory we are in to currentDirPath
-    // -------------------------------------
 
     // get the current time to put in the directory name
     char time_buf[21];
