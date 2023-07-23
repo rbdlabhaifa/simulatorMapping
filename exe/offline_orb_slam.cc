@@ -20,59 +20,10 @@
 std::unique_ptr<ORB_SLAM2::System> SLAM;    //'unique_ptr' represent execlusive ownership of a dynamically allocated object.
 std::string simulatorOutputDir;
 
-
-// this function saves data of the frame
-/*this function takes 4 parameters: 
-1. the image captured by the camera simulator
-2.the position of the given frame
-3.an integer representing the current frame ID (index)
-4.an integer representing the number of points detected in the image*/
-void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_points) {
-    
-    //image is empty, so return!
-    if (img.empty()) 
-    {
-        std::cout << "Image is empty!!!" << std::endl;
-        return;
-    }
-
-    std::ofstream frameData;    //creating instance of 'ofstream' called frameData
-    //open frameData and write there the currentFrameId
-    frameData.open(simulatorOutputDir + "frameData" +
-                   std::to_string(currentFrameId) + ".csv");    
-
-    std::ofstream framePointsCount; //creating instance of 'ofstream' called framePointsCount
-    //open framePointsCount and write there the num of points detected in the image
-    framePointsCount.open(simulatorOutputDir + "framePointsCount" +
-                   std::to_string(currentFrameId) + ".txt");    
-    framePointsCount << number_of_points;  //update num of points  
-    framePointsCount.close();   
-
-    // Extract position from pose matrix    (num)
-    double x = pose.at<float>(0,3);
-    double y = pose.at<float>(1,3);
-    double z = pose.at<float>(2,3);
-
-    cv::Point3d camera_position(x, y, z);      
-
-    // Extract orientation from pose matrix (angle)
-    double yaw, pitch, roll;
-    yaw = atan2(pose.at<float>(1,0), pose.at<float>(0,0));
-    pitch = atan2(-pose.at<float>(2,0), sqrt(pose.at<float>(2,1)*pose.at<float>(2,1) + pose.at<float>(2,2)*pose.at<float>(2,2)));
-    roll = atan2(pose.at<float>(2,1), pose.at<float>(2,2));
-
-    //save frame data (currentFrameId, positions(x,y,z), positions(yaw,pitch,roll))
-    frameData << currentFrameId << ',' << camera_position.x << ',' << camera_position.y << ',' << camera_position.z << ','
-              << yaw << ',' << pitch << ',' << roll << std::endl;
-    cv::imwrite(simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + ".png", img);
-    frameData.close();
-}
-
 // this function save the entire map
 //this function take one paramater -> mapNumber 
 void saveMap(int mapNumber) {
     std::ofstream pointData;
-    std::unordered_set<int> seen_frames;        //the frames that we have seen
     int i = 0;
 
     //open an output file to save the data of the map point data
@@ -166,8 +117,6 @@ int main() {
     nlohmann::json data;    
     programData >> data;
     programData.close();
-    char currentDirPath[256];
-    getcwd(currentDirPath, 256);
 
     //get current time and create an output directory for saving the SLAM results.
     char time_buf[21];
@@ -189,7 +138,7 @@ int main() {
     SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, loadMap,
                                                loadMapPath,
                                                true);
-    int amountOfAttepmpts = 0;
+    int amountOfAttepmpts = 0;  //we can delete this, and in while just enter 1.
     //video processing loop (processes the video frames from 'videoPath')
     while (amountOfAttepmpts++ < 1) {
         //open the video of the of the lab

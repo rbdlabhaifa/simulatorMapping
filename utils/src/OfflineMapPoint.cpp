@@ -34,10 +34,10 @@ bool OfflineMapPoint::operator==(const cv::Point3d& anotherPoint) {
 
 //check if this 3D point and the other offlineMapPoint's 3D point are similar
 bool OfflineMapPoint::compare(OfflineMapPoint offlineMapPoint) {
-    //if (this->point == offlineMapPoint.point)
-    //    return true;
-    //return false;
+    if (this->point == offlineMapPoint.point)
+        return true;
+    return false;
 
     //we can write it in one line
-    return (this->point == offlineMapPoint.point);
+    //return (this->point == offlineMapPoint.point);
 }

@@ -91,10 +91,9 @@ void Simulator::createSimulatorSettings() {
 //this function initialize all points
 void Simulator::initPoints() {
     //definitions
-    std::ifstream pointData;    //creating an input file stream object 
-    std::ifstream descData;   
+    std::ifstream pointData;    //creating an input file stream object   
     std::vector<std::string> row;   
-    std::string line, word, temp;
+    std::string line, word;
     int pointIndex;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> currKeyPoints;
     std::string currKeyPointsFilename;
