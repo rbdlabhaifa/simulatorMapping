@@ -17,47 +17,10 @@ std::unique_ptr<ORB_SLAM2::System> SLAM; //Slam variable that will allow us to u
 std::string simulatorOutputDir; //path of the directory to put the output in
 
 
-//saveFrame function is not used at all. saves information about the frame.
-void saveFrame(cv::Mat &img, cv::Mat pose, int currentFrameId, int number_of_points) {
-    if (img.empty()) //if there is no input, stop the running
-    {
-        std::cout << "Image is empty!!!" << std::endl;
-        return;
-    }
-    std::ofstream frameData;
-    frameData.open(simulatorOutputDir + "frameData" +
-                   std::to_string(currentFrameId) + ".csv"); //open the file
-
-    std::ofstream framePointsCount;
-    framePointsCount.open(simulatorOutputDir + "framePointsCount" +
-                   std::to_string(currentFrameId) + ".txt"); //open the file
-    framePointsCount << number_of_points; //write to file the number of points
-    framePointsCount.close();
-
-    // Extract position from pose matrix
-    double x = pose.at<float>(0,3);
-    double y = pose.at<float>(1,3);
-    double z = pose.at<float>(2,3);
-
-    cv::Point3d camera_position(x, y, z); //concert the position to Point3d variable
-
-    // Extract orientation from pose matrix
-    double yaw, pitch, roll;
-    yaw = atan2(pose.at<float>(1,0), pose.at<float>(0,0)); 
-    pitch = atan2(-pose.at<float>(2,0), sqrt(pose.at<float>(2,1)*pose.at<float>(2,1) + pose.at<float>(2,2)*pose.at<float>(2,2))); 
-    roll = atan2(pose.at<float>(2,1), pose.at<float>(2,2)); 
-
-    frameData << currentFrameId << ',' << camera_position.x << ',' << camera_position.y << ',' << camera_position.z << ','
-              << yaw << ',' << pitch << ',' << roll << std::endl; //write details about the frame in the file
-    cv::imwrite(simulatorOutputDir + "frame_" + std::to_string(currentFrameId) + ".png", img);
-    frameData.close();
-}
-
 //the function saves the map points (all observations - keypoints and descriptors). 
 //mapNumber is always 1
 void saveMap(int mapNumber) {
     std::ofstream pointData; //contains the cloud of map points
-    std::unordered_set<int> seen_frames; //unused set
     int i = 0;
 
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv"); //open the cloud of map points
@@ -138,10 +101,6 @@ int main() {
     nlohmann::json data;
     programData >> data;
     programData.close();
-    
-    //unused
-    char currentDirPath[256]; 
-    getcwd(currentDirPath, 256); //curr directory
 
     //save the current time in order to save it in directory name
     char time_buf[21];
@@ -149,7 +108,6 @@ int main() {
     std::time(&now);
     std::strftime(time_buf, 21, "%Y-%m-%d_%H:%S:%MZ", gmtime(&now)); //convert time to string and save in time_buf
     std::string currentTime(time_buf); 
-
 
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"]; //the settings of the camera
@@ -164,43 +122,40 @@ int main() {
     SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, loadMap,
                                                loadMapPath,
                                                true); //instance of System variable, allows access to ORBSLAM functionality
-    int amountOfAttepmpts = 0; //unused variable. we can to remove it and the while-loop.
-    while (amountOfAttepmpts++ < 1) { //do it one time
-        cv::VideoCapture capture(videoPath); //the video
-        if (!capture.isOpened()) { // if opening the video has failed, stop the running
-            std::cout << "Error opening video stream or file" << std::endl;
-            return 0;
-        } else {
-            std::cout << "Success opening video stream or file" << std::endl;
-        }
-
-        cv::Mat frame; //data structure that will save the frames
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        for (int i = 0; i < 170; ++i) { //skip the 170 first frames (we save it)
-            capture >> frame;
-        }
-        int amount_of_frames = 1; //unused variable (its not updated)
-
-        for (;;) { //switch to do-while loop
-            SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC)); //track all the frames. 
-            //receives a frame and finds key points in it. Updates the SLAM with new information about the map points.
-
-            capture >> frame; // save curr frame and go to next frame
-
-            if (frame.empty()) { //if the frame is empty, stop
-                break;
-            }
-        }
-        saveMap(amountOfAttepmpts); //save the map (map points, keypoints and descriptors)
-
-        //print the time differece
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();  //when we ended play the video
-        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()
-                  << std::endl;
-
-        std::cout << amount_of_frames << std::endl; //print the amount of frames. the amount_of_frames variable is not updated!
-        capture.release(); //release the video
+    
+    cv::VideoCapture capture(videoPath); //the video
+    if (!capture.isOpened()) { // if opening the video has failed, stop the running
+        std::cout << "Error opening video stream or file" << std::endl;
+        return 0;
+    } else {
+        std::cout << "Success opening video stream or file" << std::endl;
     }
+
+    cv::Mat frame; //data structure that will save the frames
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < 170; ++i) { //skip the 170 first frames (we save it)
+        capture >> frame;
+    }
+
+    for (;;) { //switch to do-while loop
+        SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC)); //track all the frames. 
+        //receives a frame and finds key points in it. Updates the SLAM with new information about the map points.
+
+        capture >> frame; // save curr frame and go to next frame
+
+        if (frame.empty()) { //if the frame is empty, stop
+            break;
+        }
+    }
+    saveMap(1); //save the map (map points, keypoints and descriptors). IDK why to save 1.
+
+    //print the time differece
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();  //when we ended play the video
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()
+                << std::endl;
+
+    //std::cout << 1 << std::endl; //should print amount of frames. the variables wasnt updated (was inizialized to 1). 
+    capture.release(); //release the video
 
     if (isSavingMap) { //if we need to save the map, do it
         SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");

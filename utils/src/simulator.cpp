@@ -82,9 +82,8 @@ void Simulator::createSimulatorSettings() {
 
 void Simulator::initPoints() {
     std::ifstream pointData; //cloud of map points
-    std::ifstream descData; //unused
     std::vector<std::string> row;
-    std::string line, word, temp;
+    std::string line, word;
     int pointIndex;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> currKeyPoints;
     std::string currKeyPointsFilename;
