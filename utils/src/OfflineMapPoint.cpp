@@ -24,11 +24,12 @@ OfflineMapPoint::OfflineMapPoint(cv::Point3d point, double minDistanceInvariance
         this->descriptors.push_back(desc.clone());
 }
 
-bool OfflineMapPoint::operator==(const cv::Point3d& anotherPoint) {
+bool OfflineMapPoint::operator==(const cv::Point3d& anotherPoint) { //returns if the points are equal. the argument is Point3D variable
     return this->point == anotherPoint;
 }
 
-bool OfflineMapPoint::compare(OfflineMapPoint offlineMapPoint) {
+//why not const reference
+bool OfflineMapPoint::compare(OfflineMapPoint offlineMapPoint) { //returns if the points are equal. the argument is OfflineMapPoint variable.
     if (this->point == offlineMapPoint.point)
         return true;
     return false;

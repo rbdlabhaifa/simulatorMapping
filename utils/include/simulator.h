@@ -16,13 +16,15 @@
 class Simulator {
 public:
     // Methods
-    Simulator();
-    ~Simulator();
+    Simulator(); //constructor. Initializes all variables.
+    ~Simulator(); //destructor
 
-    void Run();
+    void Run(); //runs the simulator
 
-    void ToggleFollowCamera();
-    void ToggleShowPoints();
+    void ToggleFollowCamera(); //The user has changed the state of whether the camera is being followed
+    void ToggleShowPoints(); //The user changed the state of whether to show the points
+    
+    //Various options the user can set/do
     void DoReset();
     void MoveLeft();
     void MoveRight();
@@ -36,57 +38,58 @@ public:
     void RotateUp();
     void FinishScan();
 
-    std::vector<OfflineMapPoint*> GetCloudPoint();
+    std::vector<OfflineMapPoint*> GetCloudPoint(); //returns the cloud of map points
 
-    void SetResultPoint(const cv::Point3d resultPoint);
-    void CheckResults();
+    void SetResultPoint(const cv::Point3d resultPoint); //set new result point
+    void CheckResults(); 
 
 private:
     // Methods
-    void initPoints();
+    void initPoints(); //Initializes the offline map points from the cloud
 
-    void createSimulatorSettings();
+    void createSimulatorSettings(); //save the demoSettings.json in attribute mData
 
-    void build_window(std::string title);
+    void build_window(std::string title); //creates a new window with the title
 
-    void trackOrbSlam();
+    void trackOrbSlam();//finds map points from key points&descriptors
 
-    std::vector<OfflineMapPoint*> getPointsFromTcw();
+    std::vector<OfflineMapPoint*> getPointsFromTcw(); //returns the points we can see from the camera
 
-    void reset();
-    void applyUpToModelCam(double value);
-    void applyRightToModelCam(double value);
-    void applyForwardToModelCam(double value);
+    void reset(); //reset the simulator (position&camera settings)
+    void applyUpToModelCam(double value); //move the drone up by value
+    void applyRightToModelCam(double value); //move the drone right by value
+    void applyForwardToModelCam(double value); //move the drone forward by value
 
-    void applyYawRotationToModelCam(double value);
-    void applyPitchRotationToModelCam(double value);
+    void applyYawRotationToModelCam(double value); //rotate the drone yaw rotation by value
+    void applyPitchRotationToModelCam(double value); //rotate the drone pitch rotation by value
 
-    void drawMapPoints();
-    void drawResultPoints();
+    void drawMapPoints(); //draws the points in three colors (new points from curr frame, old (seen) points from curr frame, points from other frames)
+    void drawResultPoints(); // draws the result points and the map points
 
-    void updateTwcByResultPoint();
+    void updateTwcByResultPoint(); // TODO: Change Twc to center the result point when I do check results
 
-    void saveOnlyNewPoints();
+    void saveOnlyNewPoints(); //removes all the seen (old) points
 
-    void BuildCloudScanned();
+    void BuildCloudScanned(); //builds a new cloud of map points (from old(seen) map points & new map points)
 
     // Members
-    nlohmann::json mData;
+    nlohmann::json mData; //contains demoSettings.json
 
-    std::vector<OfflineMapPoint*> mPoints;
+    std::vector<OfflineMapPoint*> mPoints; //all the map points
 
-    bool mUseOrbSlam;
+    bool mUseOrbSlam; //whether we use orbslam or not
     std::string mVocPath;
     bool mTrackImages;
-    bool mLoadMap;
-    std::string mLoadMapPath;
-    ORB_SLAM2::System *mSystem;
+    bool mLoadMap; //whether load the map
+    std::string mLoadMapPath; //path to the map
+    ORB_SLAM2::System *mSystem; //instance of ORBSLAM(if we use it)
 
-    std::vector<OfflineMapPoint*> mCurrentFramePoints;
-    std::vector<OfflineMapPoint*> mPointsSeen;
-    std::vector<OfflineMapPoint*> mNewPointsSeen;
+    //vectors of map points
+    std::vector<OfflineMapPoint*> mCurrentFramePoints; //map points from curr frame
+    std::vector<OfflineMapPoint*> mPointsSeen; //seen map points
+    std::vector<OfflineMapPoint*> mNewPointsSeen; //new map points
 
-    std::vector<OfflineMapPoint*> mCloudScanned;
+    std::vector<OfflineMapPoint*> mCloudScanned; //cloud of map points
 
     cv::Point3d mResultPoint;
     cv::Point3d mRealResultPoint;
@@ -94,9 +97,11 @@ private:
     std::string mSimulatorViewerTitle;
     std::string mResultsWindowTitle;
 
+    //size of points
     double mPointSize;
     double mResultsPointSize;
 
+    //scales of rotating and moving
     double mRotateScale;
     double mMovingScale;
 
@@ -104,12 +109,14 @@ private:
 
     pangolin::View mD_cam;
 
-    pangolin::OpenGlMatrix mTcw;
-    pangolin::OpenGlMatrix mTwc;    
+    
+    pangolin::OpenGlMatrix mTcw; //transformation from camera points to real points
+    pangolin::OpenGlMatrix mTwc; //transformation from real points to camera points   
 
     bool mFollow;
 
-    bool mFollowCamera;
+    //different options and unctionalities the user
+    bool mFollowCamera; //Is a user following the camera
     bool mShowPoints;
     bool mReset;
     bool mMoveLeft;
@@ -124,14 +131,17 @@ private:
     bool mRotateUp;
     bool mFinishScan;
 
+    //the view of the camera
     float mViewpointX;
     float mViewpointY;
     float mViewpointZ;
     float mViewpointF;
 
+    //positions
     cv::Point3d mStartPosition;
     cv::Point3d mCurrentPosition;
 
+    //values of drone rotations
     double mStartYaw;
     double mCurrentYaw;
     double mStartPitch;
@@ -139,6 +149,7 @@ private:
     double mStartRoll;
     double mCurrentRoll;
 
+    //different paths
     std::string mSimulatorPath;
     std::string mCloudPointPath;
     std::string mConfigPath;

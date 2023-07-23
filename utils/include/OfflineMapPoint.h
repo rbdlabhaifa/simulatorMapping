@@ -7,11 +7,12 @@
 
 class OfflineMapPoint {
 public:
-    OfflineMapPoint(const OfflineMapPoint &offlineMapPoint);
+    OfflineMapPoint(const OfflineMapPoint &offlineMapPoint); //copy constructor
 
+    //constructor
     OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints, std::vector<cv::Mat> descriptors);
 
-    std::string to_string() const {
+    std::string to_string() const { //converts all the data to string, and returns it.
         std::ostringstream ss;
         ss << "(" << this->point << ", " << this->minDistanceInvariance << ", " << this->maxDistanceInvariance << ", " << this->normal;
         for (auto desc : this->descriptors)
@@ -19,18 +20,18 @@ public:
         return ss.str();
     }
 
-    bool compare(OfflineMapPoint offlineMapPoint);
+    bool compare(OfflineMapPoint offlineMapPoint);  //returns if the points are equal. the argument is OfflineMapPoint variable
 
-    OfflineMapPoint &operator=(const OfflineMapPoint &offlineMapPoint) = default;
+    OfflineMapPoint &operator=(const OfflineMapPoint &offlineMapPoint) = default; //default = operator overloading. 
 
-    bool operator==(const cv::Point3d& anotherPoint);
+    bool operator==(const cv::Point3d& anotherPoint); //returns if the points are equal. the argument is Point3D variable
 
-    cv::Point3d point;
-    double minDistanceInvariance;
-    double maxDistanceInvariance;
-    cv::Point3d normal;
-    std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints;
-    std::vector<cv::Mat> descriptors;
+    cv::Point3d point; //3D point
+    double minDistanceInvariance; 
+    double maxDistanceInvariance; 
+    cv::Point3d normal; //the normal of the point
+    std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints; //vector of the keypoints and their frameId
+    std::vector<cv::Mat> descriptors; //vector that contains the descriptors
 };
 
 #endif // OFFLINE_MAP_POINT_H

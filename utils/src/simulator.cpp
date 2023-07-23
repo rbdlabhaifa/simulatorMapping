@@ -4,20 +4,21 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
-std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
-{
+//returns the descriptors from the file
+std::vector<cv::Mat> readDesc(const std::string& filename, int cols) {
     std::ifstream file(filename);
-    if (!file.is_open())
+    if (!file.is_open()) //if the file is not opened, handle file open error
     {
         // Handle file open error
         return cv::Mat();
     }
 
-    std::vector<cv::Mat> descs = std::vector<cv::Mat>();
+    std::vector<cv::Mat> descs = std::vector<cv::Mat>(); //a vector to store cv::Mat objects
 
     std::string line;
     int row = 0;
-    while (std::getline(file, line)) {
+    //Saves the descriptor in cv::Mat, and all the matrices are in the vector
+    while (std::getline(file, line)) { //read each line from the file
         std::istringstream iss(line);
 
         cv::Mat mat(1, cols, CV_8UC1);
@@ -35,18 +36,20 @@ std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
     return descs;
 }
 
+//returns the keypoints (with frameID)
 std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::string filename) {
     std::ifstream file(filename);
-    if (!file.is_open())
+    if (!file.is_open()) //if the file is not opened
     {
         // Handle file open error
         return std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
     }
 
-    std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints = std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
+    //vector of pairs that saves the key points with the frameId(the frame we found the key point)
+    std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints = std::vector<std::pair<long unsigned int, cv::KeyPoint>>(); 
 
     std::string line;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line)) { //go over all lines
         std::istringstream iss(line);
 
         std::string value;
@@ -58,28 +61,28 @@ std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::strin
         std::pair<long unsigned int, cv::KeyPoint> currentKeyPoint;
         long unsigned int frameId = stol(row[0]);
         cv::KeyPoint keyPoint(cv::Point2f(stof(row[1]), stof(row[2])), stof(row[3]), stof(row[4]), stof(row[5]), stoi(row[6]), stoi(row[7]));
-        currentKeyPoint.first = frameId;
-        currentKeyPoint.second = keyPoint;
-        keyPoints.push_back(currentKeyPoint);
+        currentKeyPoint.first = frameId; //first value of the pair is the frame which we found the key point
+        currentKeyPoint.second = keyPoint; //the second value is the key point
+        keyPoints.push_back(currentKeyPoint); //push the pair to the vector
     }
-    file.close();
+    file.close(); 
 
-    return keyPoints;
+    return keyPoints; //return the vector
 }
 
 void Simulator::createSimulatorSettings() {
     char currentDirPath[256];
-    getcwd(currentDirPath, 256);
+    getcwd(currentDirPath, 256); //curr directory
     std::string settingPath = currentDirPath;
     settingPath += "/../demoSettings.json";
     std::ifstream programData(settingPath);
-    programData >> this->mData;
+    programData >> this->mData; //save the demoSettings.json in attribute mData
     programData.close();
 }
 
 void Simulator::initPoints() {
-    std::ifstream pointData;
-    std::ifstream descData;
+    std::ifstream pointData; //cloud of map points
+    std::ifstream descData; //unused
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
@@ -90,12 +93,12 @@ void Simulator::initPoints() {
 
     cv::Vec<double, 8> point;
     OfflineMapPoint *offlineMapPoint;
-    pointData.open(this->mCloudPointPath, std::ios::in);
+    pointData.open(this->mCloudPointPath, std::ios::in); 
 
-    while (!pointData.eof()) {
+    while (!pointData.eof()) { //while we have more map points, save them
         row.clear();
 
-        std::getline(pointData, line);
+        std::getline(pointData, line); //get the line from the cloud
 
         std::stringstream words(line);
 
@@ -103,7 +106,7 @@ void Simulator::initPoints() {
             continue;
         }
 
-        while (std::getline(words, word, ',')) {
+        while (std::getline(words, word, ',')) { //if one of the fields is incorrect - change it to 0
             try
             {
                 std::stod(word);
@@ -118,73 +121,80 @@ void Simulator::initPoints() {
 
         pointIndex = std::stoi(row[0]);
         currDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
-        currDesc = readDesc(currDescFilename, 32);
+        currDesc = readDesc(currDescFilename, 32); //the descriptors of the points
         currKeyPointsFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_keypoints.csv";
-        currKeyPoints = readKeyPoints(currKeyPointsFilename);
-        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currKeyPoints, currDesc);
+        currKeyPoints = readKeyPoints(currKeyPointsFilename); //the keypoints
+        offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currKeyPoints, currDesc); //creates an offline map point from the map points
         this->mPoints.emplace_back(offlineMapPoint);
     }
     pointData.close();
 }
 
 Simulator::Simulator() {
-    this->createSimulatorSettings();
+    this->createSimulatorSettings(); //save the demoSettings.json in attribute mData
 
-    this->mPoints = std::vector<OfflineMapPoint*>();
+    this->mPoints = std::vector<OfflineMapPoint*>(); //vector of OfflineMapPoint
 
-    this->mSimulatorPath = this->mData["simulatorPointsPath"];
-    this->mCloudPointPath = this->mSimulatorPath + "cloud0.csv";
+    this->mSimulatorPath = this->mData["simulatorPointsPath"]; //path from where simulator data is taken
+    this->mCloudPointPath = this->mSimulatorPath + "cloud0.csv"; 
 
-    this->initPoints();
+    this->initPoints(); //init the offline_map_points from the cloud
 
-    this->mCloudScanned = std::vector<OfflineMapPoint*>();
+    this->mCloudScanned = std::vector<OfflineMapPoint*>(); //vector of offline map points
 
-    this->mRealResultPoint = cv::Point3d(RESULT_POINT_X, RESULT_POINT_Y, RESULT_POINT_Z);
-    this->mResultPoint = cv::Point3d();
+    this->mRealResultPoint = cv::Point3d(RESULT_POINT_X, RESULT_POINT_Y, RESULT_POINT_Z); //random point?
+    this->mResultPoint = cv::Point3d(); //initialized to empty 3D point
 
     this->mSimulatorViewerTitle = "Simulator Viewer";
     this->mResultsWindowTitle = "Results";
 
-    this->mConfigPath = this->mData["DroneYamlPathSlam"];
-    cv::FileStorage fSettings(this->mConfigPath, cv::FileStorage::READ);
+    this->mConfigPath = this->mData["DroneYamlPathSlam"]; //the settings of the camera
+    cv::FileStorage fSettings(this->mConfigPath, cv::FileStorage::READ); //FSettings contains these details
 
+    //the view of the camera
     this->mViewpointX = fSettings["Viewer.ViewpointX"];
     this->mViewpointY = fSettings["Viewer.ViewpointY"];
     this->mViewpointZ = fSettings["Viewer.ViewpointZ"];
     this->mViewpointF = fSettings["Viewer.ViewpointF"];
 
+    //starting coordinates of the camera
     double startPointX = this->mData["startingCameraPosX"];
     double startPointY = this->mData["startingCameraPosY"];
     double startPointZ = this->mData["startingCameraPosZ"];
 
-    this->mStartPosition = cv::Point3d(startPointX, startPointY, startPointZ);
+    this->mStartPosition = cv::Point3d(startPointX, startPointY, startPointZ); //set the coordinates as a 3d point
 
+    //Initializing the drone rotations
     this->mStartYaw = this->mData["yawRad"];
     this->mStartPitch = this->mData["pitchRad"];
     this->mStartRoll = this->mData["rollRad"];
 
+    //set the size of a point and mResultsPointSize
     this->mPointSize = fSettings["Viewer.PointSize"];
     this->mResultsPointSize = this->mPointSize * 5;
 
+    //---------------------
     this->mTwc.SetIdentity();
     this->mTcw.SetIdentity();
 
+    //set moving and rotating scale. if its larger -> move/rotate faster
     this->mMovingScale = this->mData["movingScale"];
     this->mRotateScale = this->mData["rotateScale"];
 
     this->build_window(this->mSimulatorViewerTitle);
 
-    this->mUseOrbSlam = this->mData["useOrbSlam"];
-    this->mVocPath = this->mData["VocabularyPath"];
+    this->mUseOrbSlam = this->mData["useOrbSlam"]; //use orbslam or not
+    this->mVocPath = this->mData["VocabularyPath"]; 
     this->mTrackImages = this->mData["trackImagesClass"];
-    this->mLoadMap = this->mData["loadMap"];
-    this->mLoadMapPath = this->mData["loadMapPath"];
+    this->mLoadMap = this->mData["loadMap"]; //whether loas a map
+    this->mLoadMapPath = this->mData["loadMapPath"]; //the path to the map
     this->mSystem = nullptr;
-    if (this->mUseOrbSlam) {
+    if (this->mUseOrbSlam) { //if we use orbslam, create an instance of the class to use its functionality
         this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,
                                           this->mLoadMap, this->mLoadMapPath, false);
     }
 
+    //more setting of the camera
     this->mFollowCamera = true;
     this->mShowPoints = true;
     this->mReset = false;
@@ -228,12 +238,13 @@ void Simulator::build_window(std::string title) {
 std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
     // Check settings file
     cv::FileStorage fsSettings(this->mConfigPath, cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
+    if(!fsSettings.isOpened()) //if the file is not opened
     {
         std::cerr << "Failed to open settings file at: " << this->mConfigPath << std::endl;
         exit(-1);
     }
 
+    //settings of the camera
     double fx = fsSettings["Camera.fx"];
     double fy = fsSettings["Camera.fy"];
     double cx = fsSettings["Camera.cx"];
@@ -271,9 +282,9 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         }
     }
 
-    std::vector<OfflineMapPoint*> seen_points;
+    std::vector<OfflineMapPoint*> seen_points; //vector for seen points
 
-    for(OfflineMapPoint*  point : this->mPoints)
+    for(OfflineMapPoint*  point : this->mPoints) //go over all map points and check whether we can see them
     {
         cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
         worldPos.at<double>(0) = point->point.x;
@@ -286,7 +297,7 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         const double &PcZ = Pc.at<double>(2);
 
         // Check positive depth
-        if(PcZ<0.0f)
+        if(PcZ<0.0f) //if depth is negative, continue to next point
             continue;
 
         // Project in image and check it is not outside
@@ -294,9 +305,9 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         const double u=fx*PcX*invz+cx;
         const double v=fy*PcY*invz+cy;
 
-        if(u<minX || u>maxX)
+        if(u<minX || u>maxX) //if x is not in range, continue to next point
             continue;
-        if(v<minY || v>maxY)
+        if(v<minY || v>maxY) //if y is not in range, continute to next point
             continue;
 
         // Check distance is in the scale invariance region of the MapPoint
@@ -331,6 +342,7 @@ void Simulator::reset() {
     this->mFollowCamera = true;
     this->mReset = false;
 
+    //reset camera rotations
     this->mCurrentPosition = this->mStartPosition;
     this->mCurrentYaw = this->mStartYaw;
     this->mCurrentPitch = this->mStartPitch;
@@ -352,12 +364,12 @@ void Simulator::reset() {
         }
     }
 
-    this->mNewPointsSeen = this->getPointsFromTcw();
+    this->mNewPointsSeen = this->getPointsFromTcw(); //the points we can see from our poisition
 
-    this->mPointsSeen = std::vector<OfflineMapPoint*>();
+    this->mPointsSeen = std::vector<OfflineMapPoint*>(); //reset the vector of seen points (because er reset the simulator)
 }
 
-void Simulator::ToggleFollowCamera() {
+void Simulator::ToggleFollowCamera() { 
     this->mFollowCamera = !this->mFollowCamera;
 }
 
@@ -482,10 +494,11 @@ void Simulator::applyPitchRotationToModelCam(double value) {
     }
 }
 
-void Simulator::drawMapPoints()
-{
+void Simulator::drawMapPoints(){
     std::vector<OfflineMapPoint*> pointsExceptThisFrame = this->mPointsSeen;
     std::vector<OfflineMapPoint*>::iterator it;
+    
+    //divide the points to three groups: new points from curr frame, old (seen) points from curr frame, points from other frames
     for (it = pointsExceptThisFrame.begin(); it != pointsExceptThisFrame.end();)
     {
         if (std::find(this->mCurrentFramePoints.begin(), this->mCurrentFramePoints.end(), *it) != this->mCurrentFramePoints.end())
@@ -515,7 +528,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
-    for(auto point : pointsExceptThisFrame)
+    for(auto point : pointsExceptThisFrame) //points from other frames in black
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
     }
@@ -525,7 +538,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(auto point : oldPointsFromFrame)
+    for(auto point : oldPointsFromFrame) //old (seen) points from curr frame in red
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
@@ -536,7 +549,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
 
-    for(auto point : this->mNewPointsSeen)
+    for(auto point : this->mNewPointsSeen) //new points in green 
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
@@ -544,9 +557,10 @@ void Simulator::drawMapPoints()
     glEnd();
 }
 
+//returns whether the matrices are equal
 bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
-    for (int i = 0; i < 16; i++) {
-        if (matrix1.m[i] != matrix2.m[i])
+    for (int i = 0; i < 16; i++) { 
+        if (matrix1.m[i] != matrix2.m[i]) 
             return false;
     }
     return true;
@@ -555,7 +569,7 @@ bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::Ope
 void Simulator::saveOnlyNewPoints() {
     this->mNewPointsSeen = this->mCurrentFramePoints;
     std::vector<OfflineMapPoint*>::iterator it;
-    for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();)
+    for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();) //go over all seen points, and remove them from new points
     {
         if (std::find(this->mPointsSeen.begin(), this->mPointsSeen.end(), *it) != this->mPointsSeen.end())
         {
@@ -568,6 +582,7 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
+//copies matrix2 to matrix1
 void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
     for (int i = 0; i < 16; i++) {
         matrix1.m[i] = matrix2.m[i];
@@ -583,30 +598,30 @@ void Simulator::trackOrbSlam() {
 
     // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
     std::vector<cv::KeyPoint> keyPoints;
-    for (auto point : this->mCurrentFramePoints) {
+    for (auto point : this->mCurrentFramePoints) { //save keypoints
         for (auto keyPoint : point->keyPoints) {
-            keyPoints.push_back(keyPoint.second);
+            keyPoints.push_back(keyPoint.second); //saves all the kerpoints from the frame
         }
     }
 
     // TODO: Create cv::Mat of all the descriptors
     cv::Mat descriptors;
-    for (auto point : this->mCurrentFramePoints) {
+    for (auto point : this->mCurrentFramePoints) { //save descriptors
         for (auto descriptor : point->descriptors) {
-            descriptors.push_back(descriptor);
+            descriptors.push_back(descriptor); //saves all the descriptors from the frame
         }
     }
 
-    this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
+    this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp); //perform tracking. finds map points from keypoints and timestamp
 }
 
-void Simulator::Run() {
+void Simulator::Run() { 
     pangolin::OpenGlMatrix previousTwc;
 
     while (!this->mFinishScan) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (this->mFollowCamera && this->mFollow) {
+        if (this->mFollowCamera && this->mFollow) { //whether following the camera (according to relevant attributes)
             this->mS_cam.Follow(this->mTwc);
         } else if (this->mFollowCamera && !this->mFollow) {
             this->mS_cam.SetModelViewMatrix(
@@ -622,7 +637,7 @@ void Simulator::Run() {
         if (this->mUseOrbSlam)
             this->trackOrbSlam();
 
-        if (!areMatricesEqual(previousTwc, this->mTwc)) {
+        if (!areMatricesEqual(previousTwc, this->mTwc)) { //if the camera state changes, save the new map points
             this->saveOnlyNewPoints();
             this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
         }
@@ -630,14 +645,15 @@ void Simulator::Run() {
         this->mD_cam.Activate(this->mS_cam);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        if (this->mShowPoints) {
+        if (this->mShowPoints) { //if we need to show the points -> do it :)
             this->drawMapPoints();
         }
 
         pangolin::FinishFrame();
 
-        assignPreviousTwc(previousTwc, this->mTwc);
+        assignPreviousTwc(previousTwc, this->mTwc); //update the camera state
 
+        //do whatever the user says
         if (this->mMoveLeft)
         {
             this->applyRightToModelCam(-this->mMovingScale);
@@ -705,10 +721,10 @@ void Simulator::Run() {
         }
     }
 
-    pangolin::DestroyWindow(this->mSimulatorViewerTitle);
-    this->build_window(this->mResultsWindowTitle);
+    pangolin::DestroyWindow(this->mSimulatorViewerTitle); //close the window
+    this->build_window(this->mResultsWindowTitle); //cuild a new window
 
-    this->BuildCloudScanned();
+    this->BuildCloudScanned(); //saves the map points to cloud
 }
 
 std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
@@ -725,16 +741,18 @@ void Simulator::SetResultPoint(const cv::Point3d resultPoint) {
     this->mResultPoint = resultPoint;
 }
 
+
 void Simulator::drawResultPoints() {
-    // Remove result point and real result point from cloud scanned if exist
-    for(int i = 0; i < this->mCloudScanned.size(); i++) {
-        if (*this->mCloudScanned[i] == this->mResultPoint) {
-            this->mCloudScanned.erase(this->mCloudScanned.begin() + i);
+    // Remove result point and real result point from cloud scanned if exist, and draws them in different color
+    //option to merge the for loops
+    for(int i = 0; i < this->mCloudScanned.size(); i++) { //go over the map points
+        if (*this->mCloudScanned[i] == this->mResultPoint) { //if its mResultPoint remove it from the cloud
+            this->mCloudScanned.erase(this->mCloudScanned.begin() + i); 
             break;
         }
     }
-    for(int i = 0; i < this->mCloudScanned.size(); i++) {
-        if (*this->mCloudScanned[i] == this->mRealResultPoint) {
+    for(int i = 0; i < this->mCloudScanned.size(); i++) { //go over the map points
+        if (*this->mCloudScanned[i] == this->mRealResultPoint) { //if its mRealResultPoint remove it from the cloud
             this->mCloudScanned.erase(this->mCloudScanned.begin() + i);
             break;
         }
@@ -793,10 +811,10 @@ void Simulator::CheckResults() {
     pangolin::DestroyWindow(this->mResultsWindowTitle);
 }
 
-Simulator::~Simulator() {
-    for (auto ptr : this->mPoints) {
+Simulator::~Simulator() { 
+    for (auto ptr : this->mPoints) { //free all the points
         free(ptr);
     }
-    if (this->mSystem != nullptr)
+    if (this->mSystem != nullptr) //free the system
         free(this->mSystem);
 }
