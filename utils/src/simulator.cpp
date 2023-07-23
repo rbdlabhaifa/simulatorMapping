@@ -4,6 +4,7 @@
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
+//returns the descriptors of the scanned Map Points from the file
 std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
 {
     std::ifstream file(filename);
@@ -35,6 +36,7 @@ std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
     return descs;
 }
 
+//returns the Key Points of the scanned Map Points from the file
 std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::string filename) {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -79,7 +81,7 @@ void Simulator::createSimulatorSettings() {
 
 void Simulator::initPoints() {
     std::ifstream pointData;
-    std::ifstream descData;
+    std::ifstream descData; // unused
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
@@ -92,7 +94,7 @@ void Simulator::initPoints() {
     OfflineMapPoint *offlineMapPoint;
     pointData.open(this->mCloudPointPath, std::ios::in);
 
-    while (!pointData.eof()) {
+    while (!pointData.eof()) { // we read from the file until the end and saves all of the Map Points
         row.clear();
 
         std::getline(pointData, line);
@@ -182,7 +184,7 @@ Simulator::Simulator() {
     this->mSystem = nullptr;
     if (this->mUseOrbSlam) {
         this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,
-                                          this->mLoadMap, this->mLoadMapPath, false);
+                                          this->mLoadMap, this->mLoadMapPath, false); //creating an ORB SLAM instance if we want to combine
     }
 
     this->mFollowCamera = true;
@@ -214,6 +216,7 @@ Simulator::Simulator() {
     this->reset();
 }
 
+//build a window to ready to display
 void Simulator::build_window(std::string title) {
     pangolin::CreateWindowAndBind(title, 1024, 768);
 
@@ -234,6 +237,7 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         exit(-1);
     }
 
+    //camera settings
     double fx = fsSettings["Camera.fx"];
     double fy = fsSettings["Camera.fy"];
     double cx = fsSettings["Camera.cx"];
@@ -271,9 +275,9 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         }
     }
 
-    std::vector<OfflineMapPoint*> seen_points;
+    std::vector<OfflineMapPoint*> seen_points; // initialize a vector for senn points
 
-    for(OfflineMapPoint*  point : this->mPoints)
+    for(OfflineMapPoint*  point : this->mPoints) // we go over each Map Point that we have and check which Map Points we can see from the current camera position and angle
     {
         cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
         worldPos.at<double>(0) = point->point.x;
@@ -331,6 +335,7 @@ void Simulator::reset() {
     this->mFollowCamera = true;
     this->mReset = false;
 
+    //reset the camera postion and spins
     this->mCurrentPosition = this->mStartPosition;
     this->mCurrentYaw = this->mStartYaw;
     this->mCurrentPitch = this->mStartPitch;
@@ -352,9 +357,9 @@ void Simulator::reset() {
         }
     }
 
-    this->mNewPointsSeen = this->getPointsFromTcw();
+    this->mNewPointsSeen = this->getPointsFromTcw(); // get the Points we can see from our new postion
 
-    this->mPointsSeen = std::vector<OfflineMapPoint*>();
+    this->mPointsSeen = std::vector<OfflineMapPoint*>(); // reset the seen Map Points
 }
 
 void Simulator::ToggleFollowCamera() {
@@ -484,6 +489,7 @@ void Simulator::applyPitchRotationToModelCam(double value) {
 
 void Simulator::drawMapPoints()
 {
+    // we want to show the current frame Map Points in a different color so we erase duplicates from the seen Map Points
     std::vector<OfflineMapPoint*> pointsExceptThisFrame = this->mPointsSeen;
     std::vector<OfflineMapPoint*>::iterator it;
     for (it = pointsExceptThisFrame.begin(); it != pointsExceptThisFrame.end();)
@@ -497,7 +503,7 @@ void Simulator::drawMapPoints()
             ++it;
         }
     }
-
+    // we want to show the new Map Points in the current frame in a different color so we erase duplicates from the current frame Map Points
     std::vector<OfflineMapPoint*> oldPointsFromFrame = this->mCurrentFramePoints;
     for (it = oldPointsFromFrame.begin(); it != oldPointsFromFrame.end();)
     {
@@ -515,7 +521,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
-    for(auto point : pointsExceptThisFrame)
+    for(auto point : pointsExceptThisFrame)  // we color the seen points from other frames in a certain color
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
     }
@@ -525,7 +531,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(auto point : oldPointsFromFrame)
+    for(auto point : oldPointsFromFrame) // we color the seen points from the current frame in a certain color
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
@@ -536,7 +542,7 @@ void Simulator::drawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
 
-    for(auto point : this->mNewPointsSeen)
+    for(auto point : this->mNewPointsSeen) // we color the new points from the current frame in a certain color
     {
         glVertex3f((float)point->point.x, (float)point->point.y, (float)point->point.z);
 
@@ -544,6 +550,7 @@ void Simulator::drawMapPoints()
     glEnd();
 }
 
+//checks wether two matrixes are equal
 bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
     for (int i = 0; i < 16; i++) {
         if (matrix1.m[i] != matrix2.m[i])
@@ -555,9 +562,9 @@ bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::Ope
 void Simulator::saveOnlyNewPoints() {
     this->mNewPointsSeen = this->mCurrentFramePoints;
     std::vector<OfflineMapPoint*>::iterator it;
-    for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();)
+    for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();) // we run on the new Map Point vector
     {
-        if (std::find(this->mPointsSeen.begin(), this->mPointsSeen.end(), *it) != this->mPointsSeen.end())
+        if (std::find(this->mPointsSeen.begin(), this->mPointsSeen.end(), *it) != this->mPointsSeen.end()) // if we have already seen a Map Point, then we erase it
         {
             it = this->mNewPointsSeen.erase(it);
         }
@@ -568,6 +575,7 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
+//update the fitst matrix using the second matrix values
 void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
     for (int i = 0; i < 16; i++) {
         matrix1.m[i] = matrix2.m[i];
@@ -582,8 +590,8 @@ void Simulator::trackOrbSlam() {
     double timestamp = value.count() / 1000.0;
 
     // TODO: Create std::vector<cv::KeyPoint> of all projections of the this->mCurrentFramePoints
-    std::vector<cv::KeyPoint> keyPoints;
-    for (auto point : this->mCurrentFramePoints) {
+    std::vector<cv::KeyPoint> keyPoints; 
+    for (auto point : this->mCurrentFramePoints) {  // saves the Key Points
         for (auto keyPoint : point->keyPoints) {
             keyPoints.push_back(keyPoint.second);
         }
@@ -591,21 +599,22 @@ void Simulator::trackOrbSlam() {
 
     // TODO: Create cv::Mat of all the descriptors
     cv::Mat descriptors;
-    for (auto point : this->mCurrentFramePoints) {
+    for (auto point : this->mCurrentFramePoints) { // saves the descriptors
         for (auto descriptor : point->descriptors) {
             descriptors.push_back(descriptor);
         }
     }
 
-    this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
+    this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp); // find the Map Points
 }
 
 void Simulator::Run() {
     pangolin::OpenGlMatrix previousTwc;
 
-    while (!this->mFinishScan) {
+    while (!this->mFinishScan) { // we continue until the scan is over(press 'S')
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        //follow or unfollow according to the state
         if (this->mFollowCamera && this->mFollow) {
             this->mS_cam.Follow(this->mTwc);
         } else if (this->mFollowCamera && !this->mFollow) {
@@ -617,12 +626,12 @@ void Simulator::Run() {
             this->mFollow = false;
         }
 
-        this->mCurrentFramePoints = this->getPointsFromTcw();
+        this->mCurrentFramePoints = this->getPointsFromTcw(); // gets the Map Points which we see can see in the current frame
         // If running with orb-slam move this points to orb-slam
-        if (this->mUseOrbSlam)
-            this->trackOrbSlam();
+        if (this->mUseOrbSlam) // we can update our SLAM instance with the KeyPoints and descriptors(he will find the Map Points)
+            this->trackOrbSlam(); 
 
-        if (!areMatricesEqual(previousTwc, this->mTwc)) {
+        if (!areMatricesEqual(previousTwc, this->mTwc)) { // if the camera states has changed then we save the new Map Points and update the seen Map Point to include this frame
             this->saveOnlyNewPoints();
             this->mPointsSeen.insert(this->mPointsSeen.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
         }
@@ -630,14 +639,16 @@ void Simulator::Run() {
         this->mD_cam.Activate(this->mS_cam);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        if (this->mShowPoints) {
+        if (this->mShowPoints) { // we can see the Map Points cloud of the Scan until now
             this->drawMapPoints();
         }
 
         pangolin::FinishFrame();
 
-        assignPreviousTwc(previousTwc, this->mTwc);
+        assignPreviousTwc(previousTwc, this->mTwc); // update the last camera states
 
+
+        //check which updates we need to perform on the camera and do them
         if (this->mMoveLeft)
         {
             this->applyRightToModelCam(-this->mMovingScale);
@@ -700,15 +711,17 @@ void Simulator::Run() {
             this->mRotateUp = false;
         }
 
+        //reset the scan
         if (mReset) {
             this->reset();
         }
     }
 
+    //clode old display window and open a new one
     pangolin::DestroyWindow(this->mSimulatorViewerTitle);
     this->build_window(this->mResultsWindowTitle);
 
-    this->BuildCloudScanned();
+    this->BuildCloudScanned(); // we save the Map Points that we have scanned
 }
 
 std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
@@ -726,7 +739,7 @@ void Simulator::SetResultPoint(const cv::Point3d resultPoint) {
 }
 
 void Simulator::drawResultPoints() {
-    // Remove result point and real result point from cloud scanned if exist
+    // Remove result point and real result point from cloud scanned if existmCloudScanned
     for(int i = 0; i < this->mCloudScanned.size(); i++) {
         if (*this->mCloudScanned[i] == this->mResultPoint) {
             this->mCloudScanned.erase(this->mCloudScanned.begin() + i);
@@ -775,7 +788,7 @@ void Simulator::updateTwcByResultPoint() {
 void Simulator::CheckResults() {
     this->mCloseResults = false;
 
-    while (!this->mCloseResults) {
+    while (!this->mCloseResults) { // runs untill we stop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         this->updateTwcByResultPoint();

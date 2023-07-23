@@ -25,7 +25,9 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
 
+//draw an image of the keyPoints, the new keyPoints will appear in a different color
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
+    //getting general settings
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -38,8 +40,8 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
 
-    for (auto point: seen_points) {
-        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
+    for (auto point: seen_points) { 
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z)); // color the old keyPoints in one color
     }
     glEnd();
 
@@ -48,13 +50,15 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glColor3f(1.0, 0.0, 0.0);
 
     for (auto point: new_points_seen) {
-        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z)); // color the new keyPoints in a different color
     }
     std::cout << new_points_seen.size() << std::endl;
 
     glEnd();
 }
 
+// convert keypoints from their 2d representation to 3d in regard to the position of the camera
+// no use of K
 cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, const pangolin::OpenGlRenderState& cam_state) {
     GLint viewport[4];
     GLdouble modelview[16];
@@ -73,11 +77,12 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     y = (float)viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
     z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
-    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ); // calculates the position of the keyPoint
 
     return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
 }
 
+// this function get a vector of 3d key points and save them in the given path
 void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {
     std::ofstream csv_file(filename);
 
@@ -89,15 +94,18 @@ void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::st
 }
 
 int main(int argc, char **argv) {
+    //getting the general settings
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
 
+    //extract the camera settings file
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
 
+    //camera settings
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
@@ -106,19 +114,22 @@ int main(int argc, char **argv) {
     float viewpointY = fSettings["RunModel.ViewpointY"];
     float viewpointZ = fSettings["RunModel.ViewpointZ"];
 
+    // we initialize the camera matrix
     Eigen::Matrix3d K;
-    K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
+    K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0; 
     cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
-    Eigen::Vector2i viewport_desired_size(640, 480);
+    Eigen::Vector2i viewport_desired_size(640, 480);  // resolution of image
 
     cv::Mat img;
 
+    // get the parameters for the Key Points extractor
     int nFeatures = fSettings["ORBextractor.nFeatures"];
     float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
+    //creating an orbExtractior in order to get the key points and descriptors from our image
     ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     // Options
@@ -176,6 +187,7 @@ int main(int argc, char **argv) {
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
 
+    //entering the main loop of the function, we wont stop until we would like to 
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
             Pick_w = handler.Selected_P_w();
@@ -220,11 +232,11 @@ int main(int argc, char **argv) {
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
             cv::Mat descriptors;
-            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
+            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors); // gets an image and save the keypoints and their descriptors inside the atguments
 
-            // Draw keypoints on the image
+            // Draw keypoints on the image 
             cv::Mat image_keypoints;
-            cv::drawKeypoints(img, keypoints, image_keypoints);
+            cv::drawKeypoints(img, keypoints, image_keypoints); // save a new image with the keypoints in it inside the atguments
 
             cv::imshow("image_keypoints", image_keypoints);
             cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
@@ -252,13 +264,13 @@ int main(int argc, char **argv) {
             int frame_to_check = data["frameNumber"];
             std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
 
-            saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
+            saveKeypointsToCSV(keypoint_points, keypoints_csv_path); // we save our key points in 3d
 
             s_cam.Apply();
 
             glDisable(GL_CULL_FACE);
 
-            drawPoints(std::vector<cv::Point3d>(), keypoint_points);
+            drawPoints(std::vector<cv::Point3d>() , keypoint_points); // draws an image of the key points in 3d, can be altered inorder to get "new seen point" and "old points"
         }
 
         pangolin::FinishFrame();

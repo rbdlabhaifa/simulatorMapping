@@ -20,6 +20,8 @@
 
 #include "include/simulator.h"
 
+
+//set behavior of the keyboard controls during the scan
 void handleKeyboardEventsScan(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('l', [&simulator]() { simulator->ToggleFollowCamera(); });
     pangolin::RegisterKeyPressCallback('\t', [&simulator]() { simulator->ToggleShowPoints(); });
@@ -37,21 +39,22 @@ void handleKeyboardEventsScan(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
+//set behavior of the keyboard controls after the scan
 void handleKeyboardEventsResult(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
 int main(int argc, char **argv) {
-    Simulator simulator = Simulator();
+    Simulator simulator = Simulator(); // create a simulator
 
-    handleKeyboardEventsScan(&simulator);
-    simulator.Run();
+    handleKeyboardEventsScan(&simulator); // set the controls for the simulator
+    simulator.Run(); // start the scan
 
     // Process cloud point generated
     std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
     std::cout << "Number of points: " << cloudPoints.size() << std::endl;
 
-    handleKeyboardEventsResult(&simulator);
+    handleKeyboardEventsResult(&simulator); // set the controls for the simulator when showing the result Points
 
     simulator.SetResultPoint(cv::Point3d(0.3, 0.2, 0.1));
     simulator.CheckResults();

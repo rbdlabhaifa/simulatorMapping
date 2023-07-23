@@ -591,7 +591,7 @@ void MapPoint::UpdateNormalAndDepth()
         KeyFrame* pKF = mit->first;
         cv::Mat Owi = pKF->GetCameraCenter();
         cv::Mat normali = mWorldPos - Owi;
-        normal = normal + normali/cv::norm(normali);
+        normal = normal + normali/cv::norm(normali);   // we compute the sum of each vector pos - camera_pos as a unit vector 
         n++;
     } 
 
@@ -612,7 +612,7 @@ void MapPoint::UpdateNormalAndDepth()
         unique_lock<mutex> lock3(mMutexPos);
         mfMaxDistance = dist*levelScaleFactor;
         mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1];
-        mNormalVector = normal/n;
+        mNormalVector = normal/n;  // average devitaion of the camera from the point
     }
 }
 

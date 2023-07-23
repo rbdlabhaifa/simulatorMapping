@@ -265,7 +265,7 @@ namespace ORB_SLAM2 {
     cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp) {
         mImGray = im;
 
-        if (mImGray.channels() == 3) {
+        if (mImGray.channels() == 3) { //cnn
             if (mbRGB)
                 cvtColor(mImGray, mImGray, CV_RGB2GRAY);
             else

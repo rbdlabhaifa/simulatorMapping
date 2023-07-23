@@ -7,10 +7,16 @@
 
 class OfflineMapPoint {
 public:
+    //recieves a different instance of offlineMapPoint
+    //create a new instance with the same member values as the one it got
     OfflineMapPoint(const OfflineMapPoint &offlineMapPoint);
 
+    //recieves a value for each memeber
+    //create a new instance with the arguments values
     OfflineMapPoint(cv::Point3d point, double minDistanceInvariance, double maxDistanceInvariance, cv::Point3d normal, std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints, std::vector<cv::Mat> descriptors);
 
+    //recieves an ostringstream instance
+    //returns a string of information about this Map Point
     std::string to_string() const {
         std::ostringstream ss;
         ss << "(" << this->point << ", " << this->minDistanceInvariance << ", " << this->maxDistanceInvariance << ", " << this->normal;
@@ -19,11 +25,15 @@ public:
         return ss.str();
     }
 
-    bool compare(OfflineMapPoint offlineMapPoint);
+    //recieves an offlineMapPoint
+    //returns wether they represents the same Map Point or not
+    bool compare(OfflineMapPoint offlineMapPoint); // can be const + get a reference
 
     OfflineMapPoint &operator=(const OfflineMapPoint &offlineMapPoint) = default;
 
-    bool operator==(const cv::Point3d& anotherPoint);
+    //receive a 3d Point
+    //returns wether the given Point is the Map Point of this instance
+    bool operator==(const cv::Point3d& anotherPoint); // can be const
 
     cv::Point3d point;
     double minDistanceInvariance;
