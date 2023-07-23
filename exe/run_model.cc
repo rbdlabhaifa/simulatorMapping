@@ -261,14 +261,14 @@ int main(int argc, char **argv) {
                 keypoint_points.push_back(point);
             }
 
-            int frame_to_check = data["frameNumber"];
-            std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
+            int frame_to_check = data["frameNumber"];   //retrieve the value of "frameNumber" from the data 
+            std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv"; //  creating a file path for the keypoints CSV file
 
             saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
 
-            s_cam.Apply();
+            s_cam.Apply(); //applies transformations to the camera 
 
-            glDisable(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE); //disabling back face culling in OpenGL
 
             drawPoints(std::vector<cv::Point3d>(), keypoint_points);
         }
