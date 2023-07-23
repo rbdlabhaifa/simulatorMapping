@@ -1,43 +1,48 @@
-#include "include/simulator.h"
+/*********** add-comments , task1 ***********/
+
+#include "include/simulator.h"  
 
 #define RESULT_POINT_X 0.1
 #define RESULT_POINT_Y 0.2
 #define RESULT_POINT_Z 0.3
 
+//this function reads values from the descriptor
 std::vector<cv::Mat> readDesc(const std::string& filename, int cols)
 {
-    std::ifstream file(filename);
-    if (!file.is_open())
+    std::ifstream file(filename);   //creating an input file stream object 
+    if (!file.is_open())    //check, if we can open this file or not.
     {
         // Handle file open error
         return cv::Mat();
     }
 
-    std::vector<cv::Mat> descs = std::vector<cv::Mat>();
+    std::vector<cv::Mat> descs = std::vector<cv::Mat>();    // initializes an empty vector of cv::Mat objects, called descs
 
     std::string line;
-    int row = 0;
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
+    int row = 0;    //i think we can delete this. there is no update for it later. and in line 31 we can write 0 instead of row 
+    while (std::getline(file, line)) {  //reading lines from file
+        std::istringstream iss(line);   //creates a string stream from the current line
 
         cv::Mat mat(1, cols, CV_8UC1);
         int col = 0;
         std::string value;
 
-        while (std::getline(iss, value, ',')) {
-            mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value));
-            col++;
+        //the inner loop-> save values for each col
+        while (std::getline(iss, value, ',')) {     //read every value from line, which is separatad by ','
+            mat.at<uchar>(row, col) = static_cast<uchar>(std::stoi(value)); //store value in matrix (after changing it from string to int)
+            col++;  //update num of col(so we can restore the new value in it)
         }
-        descs.push_back(mat);
+        descs.push_back(mat);   //add mat(who contains the values of line) to desc vector
     }
-    file.close();
+    file.close();   
 
-    return descs;
+    return descs;   //contains mat for each line, and mat containes values for line.
 }
 
+//this function reads values and returns keyPoints
 std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::string filename) {
-    std::ifstream file(filename);
-    if (!file.is_open())
+    std::ifstream file(filename); //creating an input file stream object 
+    if (!file.is_open())      //check, if we can open this file or not.
     {
         // Handle file open error
         return std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
@@ -46,41 +51,49 @@ std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::strin
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> keyPoints = std::vector<std::pair<long unsigned int, cv::KeyPoint>>();
 
     std::string line;
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
+    while (std::getline(file, line)) {  //reading lines from file
+        std::istringstream iss(line);   //creates a string stream from the current line
 
         std::string value;
-        std::vector<std::string> row;
+        std::vector<std::string> row;   //row vector that contains values of line
 
-        while (std::getline(iss, value, ',')) {
-            row.push_back(value);
+        while (std::getline(iss, value, ',')) {     //read every value from line, which is separatad by ','
+            row.push_back(value);   //store value in row vector
         }
+
         std::pair<long unsigned int, cv::KeyPoint> currentKeyPoint;
+       //[0]:frameID, [1]->x, [2]->y, [3]->size of the keypoint,
+       //[4]->orientation(angle) of the keypoint, [5]->response of the keypoint
+       //[6]->the octave, from which the keypoint has been extracted
+       //[7]->the ID of a class to which the object can be assigned.
         long unsigned int frameId = stol(row[0]);
         cv::KeyPoint keyPoint(cv::Point2f(stof(row[1]), stof(row[2])), stof(row[3]), stof(row[4]), stof(row[5]), stoi(row[6]), stoi(row[7]));
         currentKeyPoint.first = frameId;
-        currentKeyPoint.second = keyPoint;
-        keyPoints.push_back(currentKeyPoint);
+        currentKeyPoint.second = keyPoint;  
+        keyPoints.push_back(currentKeyPoint);   //add current KeyPoint to the keyPoint vector
     }
     file.close();
 
-    return keyPoints;
+    return keyPoints;   //return all the keyPoints
 }
 
+//this function is used to create and set up the settings for the simulator
 void Simulator::createSimulatorSettings() {
     char currentDirPath[256];
-    getcwd(currentDirPath, 256);
+    getcwd(currentDirPath, 256);    //gets the current working directory path and stores it into the char array
     std::string settingPath = currentDirPath;
-    settingPath += "/../demoSettings.json";
-    std::ifstream programData(settingPath);
+    settingPath += "/../demoSettings.json"; //appends the relative path to the settings file demoSettings.json to the current working directory path
+    std::ifstream programData(settingPath); //opens the settings file for reading
     programData >> this->mData;
-    programData.close();
+    programData.close();    //close the settings file after reading its content
 }
 
+//this function initialize all points
 void Simulator::initPoints() {
-    std::ifstream pointData;
-    std::ifstream descData;
-    std::vector<std::string> row;
+    //definitions
+    std::ifstream pointData;    //creating an input file stream object 
+    std::ifstream descData;   
+    std::vector<std::string> row;   
     std::string line, word, temp;
     int pointIndex;
     std::vector<std::pair<long unsigned int, cv::KeyPoint>> currKeyPoints;
@@ -88,34 +101,35 @@ void Simulator::initPoints() {
     std::vector<cv::Mat> currDesc;
     std::string currDescFilename;
 
-    cv::Vec<double, 8> point;
+    cv::Vec<double, 8> point;   //each point have 8 values to descripe it (x,y,angle...)
     OfflineMapPoint *offlineMapPoint;
     pointData.open(this->mCloudPointPath, std::ios::in);
 
-    while (!pointData.eof()) {
-        row.clear();
+    while (!pointData.eof()) {  //checkk if we got the end of the pointData file stream
+        row.clear();    
 
-        std::getline(pointData, line);
+        std::getline(pointData, line);  //reading lines from file
 
-        std::stringstream words(line);
+        std::stringstream words(line);  //creates a string stream from the current line
 
-        if (line == "") {
+        if (line == "") {   //this line is empty, so check the next line
             continue;
         }
 
-        while (std::getline(words, word, ',')) {
+        while (std::getline(words, word, ',')) {     //read every value from line, which is separatad by ','
             try
             {
-                std::stod(word);
+                std::stod(word);    //string to double
             }
             catch(std::out_of_range)
             {
-                word = "0";
+                word = "0"; //handle error, if word out of range
             }
-            row.push_back(word);
+            row.push_back(word);    //add value to row vector
         }
         point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
 
+        //update all values for the current point
         pointIndex = std::stoi(row[0]);
         currDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
         currDesc = readDesc(currDescFilename, 32);
@@ -124,18 +138,20 @@ void Simulator::initPoints() {
         offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), currKeyPoints, currDesc);
         this->mPoints.emplace_back(offlineMapPoint);
     }
-    pointData.close();
+    pointData.close();  //close file, that containes all cloud points
 }
 
+//this function initialize the Simulator
 Simulator::Simulator() {
-    this->createSimulatorSettings();
+    this->createSimulatorSettings();        //this function is used to create and set up the settings for the simulator
 
+    //defin and initialize all fields
     this->mPoints = std::vector<OfflineMapPoint*>();
 
     this->mSimulatorPath = this->mData["simulatorPointsPath"];
     this->mCloudPointPath = this->mSimulatorPath + "cloud0.csv";
 
-    this->initPoints();
+    this->initPoints(); 
 
     this->mCloudScanned = std::vector<OfflineMapPoint*>();
 
@@ -211,11 +227,12 @@ Simulator::Simulator() {
             .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
             .SetHandler(new pangolin::Handler3D(this->mS_cam));
 
-    this->reset();
+    this->reset();  //reinitialize the simulator to its initial state
 }
 
+//this function creates a new Pangolin window and binds it for OpenGL rendering.
 void Simulator::build_window(std::string title) {
-    pangolin::CreateWindowAndBind(title, 1024, 768);
+    pangolin::CreateWindowAndBind(title, 1024, 768);    //title of the window, width and height 
 
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
@@ -228,12 +245,14 @@ void Simulator::build_window(std::string title) {
 std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
     // Check settings file
     cv::FileStorage fsSettings(this->mConfigPath, cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
+    if(!fsSettings.isOpened())  //check, if we can open this file or not.
     {
+        // Handle file open error
         std::cerr << "Failed to open settings file at: " << this->mConfigPath << std::endl;
         exit(-1);
     }
 
+    //the camera's parameters
     double fx = fsSettings["Camera.fx"];
     double fy = fsSettings["Camera.fy"];
     double cx = fsSettings["Camera.cx"];
@@ -241,11 +260,13 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
     int width = fsSettings["Camera.width"];
     int height = fsSettings["Camera.height"];
 
+    //the range
     double minX = 3.7;
     double maxX = width;
     double minY = 3.7;
     double maxY = height;
 
+    //transform from camera frame to world frame
     cv::Mat Tcw_cv = cv::Mat::eye(4, 4, CV_64FC1);
     for(int i=0;i<4;i++){
         for(int j=0;j<4;j++){
@@ -253,10 +274,11 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         }
     }
 
-    cv::Mat Rcw = Tcw_cv.rowRange(0, 3).colRange(0, 3);
-    cv::Mat Rwc = Rcw.t();
-    cv::Mat tcw = Tcw_cv.rowRange(0, 3).col(3);
-    cv::Mat mOw = -Rcw.t() * tcw;
+    
+    cv::Mat Rcw = Tcw_cv.rowRange(0, 3).colRange(0, 3); //the rotation part of the transformation matrix
+    cv::Mat Rwc = Rcw.t();  //the rotation from the camera frame to the world frame
+    cv::Mat tcw = Tcw_cv.rowRange(0, 3).col(3); //extracts the translation vector
+    cv::Mat mOw = -Rcw.t() * tcw;    //computes the position of the camera center in the world frame
 
     // Save Twc for s_cam
     cv::Mat Twc_cv = cv::Mat::eye(4, 4, CV_64FC1);
@@ -265,21 +287,25 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
     Twc_cv.at<double>(1, 3) = mOw.at<double>(1);
     Twc_cv.at<double>(2, 3) = mOw.at<double>(2);
 
+    //copy values
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            this->mTwc.m[j * 4 + i] = Twc_cv.at<double>(i, j);
+            this->mTwc.m[j * 4 + i] = Twc_cv.at<double>(i, j);  //*4 beacuse pangolin::OpenGlMatrix stores its data in column-major order
         }
     }
 
     std::vector<OfflineMapPoint*> seen_points;
 
+    //iterate through all points
     for(OfflineMapPoint*  point : this->mPoints)
     {
+        //define world position
         cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
         worldPos.at<double>(0) = point->point.x;
         worldPos.at<double>(1) = point->point.y;
         worldPos.at<double>(2) = point->point.z;
 
+        //define camera position
         const cv::Mat Pc = Rcw*worldPos+tcw;
         const double &PcX = Pc.at<double>(0);
         const double &PcY= Pc.at<double>(1);
@@ -294,6 +320,7 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
         const double u=fx*PcX*invz+cx;
         const double v=fy*PcY*invz+cy;
 
+        //check range
         if(u<minX || u>maxX)
             continue;
         if(v<minY || v>maxY)
@@ -316,15 +343,16 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
 
         const double viewCos = PO.dot(Pn)/dist;
 
-        if(viewCos<0.5)
+        if(viewCos<0.5) //check if the point is viewed from a sharp angle and might not be reliably visible,
             continue;
 
-        seen_points.push_back(point);
+        seen_points.push_back(point);   // this point passed all th checks, (it's a good point)
     }
 
-    return seen_points;
+    return seen_points; //return points who passed all the checks
 }
 
+//rhis function restart the state of the simulator
 void Simulator::reset() {
     this->mShowPoints = true;
     this->mFollow = true;
@@ -357,14 +385,15 @@ void Simulator::reset() {
     this->mPointsSeen = std::vector<OfflineMapPoint*>();
 }
 
+//change state of the camera
 void Simulator::ToggleFollowCamera() {
     this->mFollowCamera = !this->mFollowCamera;
 }
-
+//change state of showing the point
 void Simulator::ToggleShowPoints() {
     this->mShowPoints = !this->mShowPoints;
 }
-
+//restart
 void Simulator::DoReset() {
     this->mReset = true;
 }
@@ -412,17 +441,17 @@ void Simulator::RotateUp() {
 void Simulator::FinishScan() {
     this->mFinishScan = true;
 }
-
+//up if values are pos, and down if values are nagative
 void Simulator::applyUpToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 1] -= value;
 }
-
+//right if values are pos, and left if values are nagative
 void Simulator::applyRightToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 0] -= value;
 }
-
+//forward if values are pos, and backward if values are nagative
 void Simulator::applyForwardToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 2] -= value;
@@ -481,11 +510,13 @@ void Simulator::applyPitchRotationToModelCam(double value) {
         }
     }
 }
-
+//this function is responsible for rendering the points of interest in the 3D space of the simulator
 void Simulator::drawMapPoints()
 {
     std::vector<OfflineMapPoint*> pointsExceptThisFrame = this->mPointsSeen;
     std::vector<OfflineMapPoint*>::iterator it;
+    
+    //erase points that are not in the current frame
     for (it = pointsExceptThisFrame.begin(); it != pointsExceptThisFrame.end();)
     {
         if (std::find(this->mCurrentFramePoints.begin(), this->mCurrentFramePoints.end(), *it) != this->mCurrentFramePoints.end())
@@ -498,6 +529,7 @@ void Simulator::drawMapPoints()
         }
     }
 
+    //erase points that in this current frame but not newly seen 
     std::vector<OfflineMapPoint*> oldPointsFromFrame = this->mCurrentFramePoints;
     for (it = oldPointsFromFrame.begin(); it != oldPointsFromFrame.end();)
     {
@@ -511,6 +543,7 @@ void Simulator::drawMapPoints()
         }
     }
 
+    //points in the excepted frame drawn in black
     glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
@@ -521,6 +554,7 @@ void Simulator::drawMapPoints()
     }
     glEnd();
 
+    //old points drawn in red
     glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
@@ -532,6 +566,7 @@ void Simulator::drawMapPoints()
     }
     glEnd();
 
+    //newly seen points drawn in green
     glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
@@ -544,6 +579,7 @@ void Simulator::drawMapPoints()
     glEnd();
 }
 
+//check if matrix1 and matrix 2 are equal.
 bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
     for (int i = 0; i < 16; i++) {
         if (matrix1.m[i] != matrix2.m[i])
@@ -552,6 +588,8 @@ bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::Ope
     return true;
 }
 
+//save only points that were newly seen.
+//if the point already in 'mNewPointsSeen' that mean that it's not new anymore
 void Simulator::saveOnlyNewPoints() {
     this->mNewPointsSeen = this->mCurrentFramePoints;
     std::vector<OfflineMapPoint*>::iterator it;
@@ -568,6 +606,7 @@ void Simulator::saveOnlyNewPoints() {
     }
 }
 
+//matrix1=matrix2
 void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMatrix& matrix2) {
     for (int i = 0; i < 16; i++) {
         matrix1.m[i] = matrix2.m[i];
@@ -600,12 +639,14 @@ void Simulator::trackOrbSlam() {
     this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
 }
 
+//run
 void Simulator::Run() {
     pangolin::OpenGlMatrix previousTwc;
 
-    while (!this->mFinishScan) {
+    while (!this->mFinishScan) {        //loop until finishing scanning
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        //manage the camera state 
         if (this->mFollowCamera && this->mFollow) {
             this->mS_cam.Follow(this->mTwc);
         } else if (this->mFollowCamera && !this->mFollow) {
@@ -638,6 +679,7 @@ void Simulator::Run() {
 
         assignPreviousTwc(previousTwc, this->mTwc);
 
+        //check movement and rotation of camera
         if (this->mMoveLeft)
         {
             this->applyRightToModelCam(-this->mMovingScale);
@@ -700,17 +742,19 @@ void Simulator::Run() {
             this->mRotateUp = false;
         }
 
+        //restart
         if (mReset) {
             this->reset();
         }
     }
 
-    pangolin::DestroyWindow(this->mSimulatorViewerTitle);
-    this->build_window(this->mResultsWindowTitle);
+    pangolin::DestroyWindow(this->mSimulatorViewerTitle);   //destroy prev window
+    this->build_window(this->mResultsWindowTitle);  //build window to show the results
 
-    this->BuildCloudScanned();
+    this->BuildCloudScanned();   // Erased mNewPointsSeen to only new points but not combined yet so insert both
 }
 
+//get function
 std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
     return this->mCloudScanned;
 }
@@ -720,7 +764,7 @@ void Simulator::BuildCloudScanned() {
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
 }
-
+//set function
 void Simulator::SetResultPoint(const cv::Point3d resultPoint) {
     this->mResultPoint = resultPoint;
 }
@@ -740,6 +784,7 @@ void Simulator::drawResultPoints() {
         }
     }
 
+    // Draw the scanned points in black color
     glPointSize((GLfloat)this->mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
@@ -751,6 +796,7 @@ void Simulator::drawResultPoints() {
 
     glEnd();
 
+     // Draw the result point in red color
     glPointSize((GLfloat)this->mResultsPointSize);
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
@@ -759,6 +805,7 @@ void Simulator::drawResultPoints() {
 
     glEnd();
 
+   // Draw the real result point in green color
     glPointSize((GLfloat)this->mResultsPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,1.0,0.0);
@@ -775,24 +822,29 @@ void Simulator::updateTwcByResultPoint() {
 void Simulator::CheckResults() {
     this->mCloseResults = false;
 
+    // Enter a loop that will keep running until the results visualization is to be closed
     while (!this->mCloseResults) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        this->updateTwcByResultPoint();
+        this->updateTwcByResultPoint(); //Change Twc to center the result point when I do check results
 
+        // activate and mange the camera state (according to the world)
         this->mS_cam.Follow(this->mTwc);
         this->mD_cam.Activate(this->mS_cam);
 
+        // Set the background color to white
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         
+        //draw result points
         this->drawResultPoints();
 
         pangolin::FinishFrame();
     }
-
+    // Destroy the window where results are displayed
     pangolin::DestroyWindow(this->mResultsWindowTitle);
 }
 
+//destructor of the Simulator -> free all the resources and the memory that was allocated for the simulator
 Simulator::~Simulator() {
     for (auto ptr : this->mPoints) {
         free(ptr);

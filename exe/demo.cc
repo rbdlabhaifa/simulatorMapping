@@ -1,3 +1,5 @@
+/*********** add-comments , task1 ***********/
+
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -20,6 +22,7 @@
 
 #include "include/simulator.h"
 
+//handling all the possible inputs
 void handleKeyboardEventsScan(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('l', [&simulator]() { simulator->ToggleFollowCamera(); });
     pangolin::RegisterKeyPressCallback('\t', [&simulator]() { simulator->ToggleShowPoints(); });
@@ -37,23 +40,32 @@ void handleKeyboardEventsScan(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
+//pressing s means finish scanning
 void handleKeyboardEventsResult(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
 int main(int argc, char **argv) {
+     //Create a Simulator object named 'simulator'
     Simulator simulator = Simulator();
 
+    //Set up keyboard event handler
     handleKeyboardEventsScan(&simulator);
+    
+    //Run the simulator
     simulator.Run();
 
     // Process cloud point generated
     std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
     std::cout << "Number of points: " << cloudPoints.size() << std::endl;
 
+   //Set up keyboard event handler for result-related tasks
     handleKeyboardEventsResult(&simulator);
 
+    //Set a result point with coordinates (0.3, 0.2, 0.1) in the simulator
     simulator.SetResultPoint(cv::Point3d(0.3, 0.2, 0.1));
+    
+    //Check results of the simulation
     simulator.CheckResults();
 
     return 0;
