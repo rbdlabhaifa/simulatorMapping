@@ -20,7 +20,9 @@
 
 #include "include/simulator.h"
 
+// the function gets a simulator instance and sets it's keybinds befor ending the scan
 void handleKeyboardEventsScan(Simulator *simulator) {
+    // setting the keybinds for the demo
     pangolin::RegisterKeyPressCallback('l', [&simulator]() { simulator->ToggleFollowCamera(); });
     pangolin::RegisterKeyPressCallback('\t', [&simulator]() { simulator->ToggleShowPoints(); });
     pangolin::RegisterKeyPressCallback('i', [&simulator]() { simulator->DoReset(); });
@@ -37,15 +39,17 @@ void handleKeyboardEventsScan(Simulator *simulator) {
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
+// keybinds to simulator after the scan is performed
 void handleKeyboardEventsResult(Simulator *simulator) {
+    // setting the keybinds for the result check
     pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
 }
 
 int main(int argc, char **argv) {
-    Simulator simulator = Simulator();
+    Simulator simulator = Simulator(); // create a simulator instance
 
     handleKeyboardEventsScan(&simulator);
-    simulator.Run();
+    simulator.Run(); // run the simulator
 
     // Process cloud point generated
     std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();

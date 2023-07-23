@@ -37,7 +37,11 @@ void applyUpModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double
 
 void applyPitchRotationToModelCam(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value);
 
+// the function receives both a vector of seen points and new points 
+// and draws them on their own screen (these are the red dots)
+// not currently used.
 void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> &new_points_seen) {
+    // putting the general settings of the project a json file named data
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -46,6 +50,7 @@ void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> 
 
     const int point_size = data["pointSize"];
 
+    // choosing the colour and appearance of the seen_points and drawing them
     glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
@@ -55,6 +60,7 @@ void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> 
     }
     glEnd();
 
+    // choosing the colour and appearance of the new_seen_points and drawing them
     glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(1.0, 0.0, 0.0);
@@ -65,12 +71,16 @@ void drawPoints(std::vector<cv::Point3d> &seen_points, std::vector<cv::Point3d> 
     glEnd();
 }
 
+// this function receives a keypoint, a mat array of depths and the camera state (the K variable is not used)
+// the function returns a 3d point (based on depth and camera position) that represents the 2d point input
+// not currently used
 cv::Point3f convert2Dto3D(cv::Point2f &keypoint, const cv::Mat &K, const cv::Mat &depth,
                           const pangolin::OpenGlRenderState &cam_state) {
     GLint viewport[4];
     GLdouble modelview[16];
     GLdouble projection[16];
 
+    // set the camera position and projection over the model in modelview and projection
     glGetIntegerv(GL_VIEWPORT, viewport);
     for (int i = 0; i < 16; ++i) {
         modelview[i] = cam_state.GetModelViewMatrix().m[i];
@@ -81,37 +91,48 @@ cv::Point3f convert2Dto3D(cv::Point2f &keypoint, const cv::Mat &K, const cv::Mat
     GLdouble worldX, worldY, worldZ;
 
     x = keypoint.x;
-    y = (float) viewport[3] -
-        keypoint.y;                           // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
+    y = (float) viewport[3] - keypoint.y;                          // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
     z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
-    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ); // converts the point to 3d with regard to camera position and other variables
+                                                                                        // and puts the output in &worldX, &worldY, &worldZ
 
     return cv::Point3f((float) worldX, (float) worldY, (float) worldZ);
 }
 
+// filters the 3d points found with orb slam and saves them using mapNumber for the name of the directory
+// the info of the map points and the coordinats of the keypoints are saved to pointData
 void saveMap(int mapNumber, std::string &simulatorOutputDir, ORB_SLAM2::System *SLAM) {
-    std::ofstream pointData;
-    std::unordered_set<int> seen_frames;
+    std::ofstream pointData; // the data of the points will be saved to this object
+    std::unordered_set<int> seen_frames; // useless
 
     pointData.open(simulatorOutputDir + "cloud" + std::to_string(mapNumber) + ".csv");
-    for (auto &p: SLAM->GetMap()->GetAllMapPoints()) {
-        if (p != nullptr && !p->isBad()) {
-            auto point = p->GetWorldPos();
-            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(point);
-            cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F);
+    for (auto &p: SLAM->GetMap()->GetAllMapPoints()) { // go over each point in the map created by SLAM
+        if (p != nullptr && !p->isBad()) { // if point is "bad" (decided by orbSlam) then don't save it
+            auto point = p->GetWorldPos(); // get the position of the point
+            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(point); // convert point to a matrix and put it in vector
+            cv::Mat worldPos = cv::Mat::zeros(3, 1, CV_64F); // fill worldPos with zeros
+            
+            // set worldPose to be the position of the point after conversion
             worldPos.at<double>(0) = vector.x();
             worldPos.at<double>(1) = vector.y();
             worldPos.at<double>(2) = vector.z();
-            p->UpdateNormalAndDepth();
-            cv::Mat Pn = p->GetNormal();
-            Pn.convertTo(Pn, CV_64F);
+
+
+            p->UpdateNormalAndDepth(); // update fields of depth of point in relation to camera and the normal of the point
+            cv::Mat Pn = p->GetNormal(); // the normal is the average of the normalized distance vectors between the camera 
+                                         // (at different positions) and the keypoints relating to the same map point
+            Pn.convertTo(Pn, CV_64F); // convert normal to grayscale
+
+            // add the point and important imformation about it to PointData file (like position in space, normal and more)
             pointData << worldPos.at<double>(0) << "," << worldPos.at<double>(1) << "," << worldPos.at<double>(2);
             pointData << "," << p->GetMinDistanceInvariance() << "," << p->GetMaxDistanceInvariance() << ","
                       << Pn.at<double>(0) << "," << Pn.at<double>(1) << "," << Pn.at<double>(2);
-            std::map<ORB_SLAM2::KeyFrame *, size_t> observations = p->GetObservations();
-            for (auto obs: observations) {
+                
+            std::map<ORB_SLAM2::KeyFrame *, size_t> observations = p->GetObservations(); // observations will contain all the key frames that p was observed in
+            for (auto obs: observations) { // go over each observation (key frame) that p was observed in
                 ORB_SLAM2::KeyFrame *currentFrame = obs.first;
+                // if frame not empty than add the keypoint's coordinats corrosponding to the mappoint to pointData
                 if (!currentFrame->image.empty()) {
                     size_t pointIndex = obs.second;
                     cv::KeyPoint keyPoint = currentFrame->mvKeysUn[pointIndex];
@@ -131,6 +152,9 @@ void saveMap(int mapNumber, std::string &simulatorOutputDir, ORB_SLAM2::System *
 
 }
 
+// this function receives keypoints and a path to a file
+// the function saves the points' coordinates to the file in a csv format
+//currently not used
 void saveKeypointsToCSV(const std::vector<cv::Point3d> &keypoints, const std::string &filename) {
     std::ofstream csv_file(filename);
 
@@ -141,18 +165,23 @@ void saveKeypointsToCSV(const std::vector<cv::Point3d> &keypoints, const std::st
     csv_file.close();
 }
 
+// currently not used
 void HandleKeyboardInput(unsigned char key, int x, int y) {
     // Handle WASD key events
     // Update camera position based on key inputs
 }
 
+// the function receives the path to the settings in generalSettings.json, whether to stop (stopFlag), a camera object and a bool called ready
+// the function runs both the orb slam system and the navigation in the model and the communication between them
 void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_ptr<pangolin::OpenGlRenderState> &s_cam,
                         bool *ready) {
-    std::ifstream programData(settingPath);
+    // putting the general settings into data.json
+    std::ifstream programData(settitngPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
 
+    // storing and extracting the camera and orb slam settings in fSettings
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
 
@@ -161,6 +190,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
 
+    // initializing the position and resolution of the camera
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
@@ -168,12 +198,14 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
     cv::Mat img;
 
+    // setting other characteristics of orb slam (like maximum number of keyPoints)
     int nFeatures = fSettings["ORBextractor.nFeatures"];
     float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
+    // an object from orb slam capable of extracting the keypoints from the video
     ORB_SLAM2::ORBextractor *orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST,
                                                                         fMinThFAST);
 
@@ -185,28 +217,31 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     bool show_z0 = false;
     bool cull_backfaces = false;
 
-    char currentDirPath[256];
+    char currentDirPath[256]; // useless, not used again
     getcwd(currentDirPath, 256);
 
+    // get the current time to put in the directory name
     char time_buf[21];
     time_t now;
     std::time(&now);
     std::strftime(time_buf, 21, "%Y-%m-%d_%H:%S:%MZ", gmtime(&now));
     std::string currentTime(time_buf);
+
+
     std::string vocPath = data["VocabularyPath"];
-    std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
-    std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
-    std::string videoPath = data["offlineVideoTestPath"];
-    bool loadMap = data["loadMap"];
-    double movementFactor = data["movementFactor"];
-    bool isSavingMap = data["saveMap"];
-    std::string loadMapPath = data["loadMapPath"];
-    std::string simulatorOutputDirPath = data["simulatorOutputDir"];
+    std::string droneYamlPathSlam = data["DroneYamlPathSlam"]; // the camera and orb slam paremeters and the camera's intial position
+    std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"]; // align the camera with the floor (parallel to it)
+    std::string videoPath = data["offlineVideoTestPath"]; // path the offline video location, not currently used
+    bool loadMap = data["loadMap"]; // whether to load an existing map created or not
+    double movementFactor = data["movementFactor"]; // adjust the moving speed of the drone
+    bool isSavingMap = data["saveMap"]; // whether to save the map created or not
+    std::string loadMapPath = data["loadMapPath"]; // path to pre-made map in case we don't start from scratch
+    std::string simulatorOutputDirPath = data["simulatorOutputDir"]; // the path to save the points to 
     std::string simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
-    std::filesystem::create_directory(simulatorOutputDir);
+    std::filesystem::create_directory(simulatorOutputDir); // create a directory in the path specified
     ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false, loadMap,
                                                loadMapPath,
-                                               true);
+                                               true); // create an ORB_SLAM2 system instance do to the tracking (finding keyPoints, mapPoints and more)
 
     // Create Window for rendering
     pangolin::CreateWindowAndBind("Main", viewport_desired_size[0], viewport_desired_size[1]);
@@ -302,7 +337,8 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     cv::VideoWriter writer;
     writer.open(simulatorOutputDir + "/scan.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30.0, cv::Size(viewport_desired_size[0], viewport_desired_size[1]), true);
 
-    std::vector<cv::Point3d> seenPoints{};
+    std::vector<cv::Point3d> seenPoints{}; // not used
+
     while (!pangolin::ShouldQuit() && !*stopFlag) {
         *ready = true;
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -353,8 +389,8 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
            // Detect keypoints
            std::vector<cv::KeyPoint> keypoints;
            cv::Mat descriptors;
-           (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
-            SLAM.TrackMonocular(descriptors, keypoints, timestamp);
+           (*orbExtractor)(img, cv::Mat(), keypoints, descriptors); // detect keyPoints and descriptors and save them to keypoints and descriptors
+            SLAM.TrackMonocular(descriptors, keypoints, timestamp); // finds map points accoring to keypoints, descriptors and time stamp
 
             s_cam->Apply();
 
@@ -364,30 +400,37 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
         pangolin::FinishFrame();
     }
     writer.release();
-    saveMap(0, simulatorOutputDir, &SLAM);
+    saveMap(0, simulatorOutputDir, &SLAM); //save the map information in simulatorOutputDir
     SLAM.SaveMap(simulatorOutputDir + "/simulatorCloudPoint.bin");
     SLAM.Shutdown();
 }
 
-
+// the function gets the position of the camera and a value
+// the function moves the camera up by value
 void applyUpModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
     camMatrix(1, 3) += value;
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
+// the function gets the position of the camera and a value
+// the function moves the camera forward by value
 void applyForwardToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
     camMatrix(2, 3) += value;
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
+// the function gets the position of the camera and a value
+// the function moves the camera right by value
 void applyRightToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
     camMatrix(0, 3) += value;
     s_cam->SetModelViewMatrix(camMatrix);
 }
 
+// the function gets the position of the camera and a value
+// the function turns the camera left or right by value (if positive - right, negative - left)
 void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     double rand = double(value) * (M_PI / 180);
     double c = std::cos(rand);
@@ -417,6 +460,8 @@ void applyYawRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, 
     s_cam->SetModelViewMatrix(newModelView);
 }
 
+// the function gets the position of the camera and a value
+// the function turns the camera up or down by value (if positive - up, negative - down)
 void applyPitchRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value) {
     double rand = double(value) * (M_PI / 180);
     double c = std::cos(rand);
@@ -446,20 +491,27 @@ void applyPitchRotationToModelCam(shared_ptr<pangolin::OpenGlRenderState> &s_cam
     s_cam->SetModelViewMatrix(newModelView);
 }
 
-
+// not used
+// the function receives a function (camera movement), the camera's position, a value for the movement,
+// a time interval, the fps and the amount of time the command should take
+// the function makes the camera move/turn by value in the appropriate direction (decided by the given function)
+// over a time period of totalCommandTimeInSeconds at a consistent rate
 void intervalOverCommand(const std::function<void(std::shared_ptr<pangolin::OpenGlRenderState> &, double &)> &func,
                          std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, double value, int intervalUsleep,
                          double fps,
                          int totalCommandTimeInSeconds) {
-    double intervalValue = value / fps * totalCommandTimeInSeconds;
+    double intervalValue = value / fps * totalCommandTimeInSeconds; // how much movement should be done each frame
     int intervalIndex = 0;
-    while (intervalIndex <= fps * totalCommandTimeInSeconds) {
-        usleep(intervalUsleep);
-        func(s_cam, intervalValue);
+    while (intervalIndex <= fps * totalCommandTimeInSeconds) { // run the amount of frames necessary for the action
+        usleep(intervalUsleep); // wait intervalUsleep
+        func(s_cam, intervalValue); // move/turn by intervalValue
         intervalIndex += 1;
     }
 }
 
+// not used
+// this function receives a string describing a command and calls the appropriate function to perform it
+// allows for control over the camera
 void
 applyCommand(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, std::string &command, double value,
              int intervalUsleep,
@@ -488,12 +540,11 @@ applyCommand(std::shared_ptr<pangolin::OpenGlRenderState> &s_cam, std::string &c
 }
 
 int main(int argc, char **argv) {
-
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath(); // the path general settings of the project
     bool stopFlag = false;
     bool ready = false;
     std::shared_ptr<pangolin::OpenGlRenderState> s_cam = std::make_shared<pangolin::OpenGlRenderState>();
-    std::thread t(runModelAndOrbSlam, std::ref(settingPath), &stopFlag, std::ref(s_cam), &ready);
+    std::thread t(runModelAndOrbSlam, std::ref(settingPath), &stopFlag, std::ref(s_cam), &ready); // a thread that calls to runModelAndOrbSlam and initiates the running of the program
 //    int startSleepTime = 3;
 //    std::cout << "wating " << startSleepTime << " to init commands " << std::endl;
     while (!ready) {
@@ -522,7 +573,7 @@ int main(int argc, char **argv) {
 //
 //    }
 //    stopFlag = true;
-    t.join();
+    t.join(); // wait until runModelAndOrbSlam finished running
 
     //    if (isSavingMap) {
     //        SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");

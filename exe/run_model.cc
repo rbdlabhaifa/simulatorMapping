@@ -25,7 +25,11 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
 
+// the function receives both a vector of seen points and new points 
+// and draws them on their own screen (these are the red dots)
+// currently only the new_points_seen are used.
 void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
+    // putting the general settings of the project a json file named data
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -34,6 +38,7 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
 
     const int point_size = data["pointSize"];
 
+    // choosing the colour and appearance of the seen_points and drawing them
     glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(0.0, 0.0, 0.0);
@@ -43,6 +48,7 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     }
     glEnd();
 
+    // choosing the colour and appearance of the new_seen_points and drawing them
     glPointSize(point_size);
     glBegin(GL_POINTS);
     glColor3f(1.0, 0.0, 0.0);
@@ -55,6 +61,9 @@ void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> n
     glEnd();
 }
 
+
+// this function receives a keypoint, a mat array of depths and the camera state (the K variable is not used)
+// the function returns a 3d point (based on depth and camera position) that represents the 2d point input
 cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, const pangolin::OpenGlRenderState& cam_state) {
     GLint viewport[4];
     GLdouble modelview[16];
@@ -73,11 +82,15 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     y = (float)viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
     z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
-    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ); // converts the point to 3d with regard to camera position and other variables
+                                                                                        // and puts the output in &worldX, &worldY, &worldZ
 
     return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
 }
 
+
+// this function receives keypoints and a path to a file
+// the function saves the points' coordinates to the file in a csv format
 void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {
     std::ofstream csv_file(filename);
 
@@ -89,12 +102,14 @@ void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::st
 }
 
 int main(int argc, char **argv) {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    // putting the general settings of the project a json file named data
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath(); // path to the general setting for the project
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
 
+    // storing and extracting the camera and orb slam settings in fSettings
     std::string configPath = data["DroneYamlPathSlam"];
     cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
 
@@ -106,6 +121,7 @@ int main(int argc, char **argv) {
     float viewpointY = fSettings["RunModel.ViewpointY"];
     float viewpointZ = fSettings["RunModel.ViewpointZ"];
 
+    // initializing the position and resolution of the camera
     Eigen::Matrix3d K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
@@ -113,12 +129,14 @@ int main(int argc, char **argv) {
 
     cv::Mat img;
 
+    // setting other characteristics of the model (like maximum number of keyPoints)
     int nFeatures = fSettings["ORBextractor.nFeatures"];
     float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
+    // an object from orb slam capable of extracting the keypoints from the video
     ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     // Options
@@ -220,11 +238,11 @@ int main(int argc, char **argv) {
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
             cv::Mat descriptors;
-            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
+            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors); // extracts and saves keyPoints and descriptors to keypoints and descriptors
 
             // Draw keypoints on the image
             cv::Mat image_keypoints;
-            cv::drawKeypoints(img, keypoints, image_keypoints);
+            cv::drawKeypoints(img, keypoints, image_keypoints); 
 
             cv::imshow("image_keypoints", image_keypoints);
             cv::waitKey(2); // You can replace 2 with 0 if you want the window to wait indefinitely for a key press
@@ -252,7 +270,7 @@ int main(int argc, char **argv) {
             int frame_to_check = data["frameNumber"];
             std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
 
-            saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
+            saveKeypointsToCSV(keypoint_points, keypoints_csv_path); // save the keyPoints
 
             s_cam.Apply();
 
