@@ -32,3 +32,5 @@ I) Run ./mapping
 II) Click Open Simulator button when you want to and now the simulator opens in the first position you defined
 
 III) Move with moving buttons and rotate with rotate buttons
+
+salam
