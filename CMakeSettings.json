@@ -11,7 +11,7 @@
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "intelliSenseMode": "windows-msvc-x64",
-      "cmakeToolchain": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      "cmakeToolchain": "C:/Users/User/vcpkg/scripts/buildsystems/vcpkg.cmake"
     },
     {
       "name": "x64-Release",

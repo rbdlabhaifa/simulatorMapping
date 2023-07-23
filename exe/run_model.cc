@@ -25,44 +25,47 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
 
-void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-    std::ifstream programData(settingPath);
+void drawPoints(std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen) {         /*----  In this function we are drawing the seen points in the black color and the new  */
+                                                                                                         /*   points in red color and in the end it prints the size of new seen points  ----*/
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();  // Loading path for the file
+    std::ifstream programData(settingPath); // inpute file for reading the data from JSON file  
     nlohmann::json data;
     programData >> data;
-    programData.close();
+    programData.close();    // Closing file read 
 
-    const int point_size = data["pointSize"];
+    const int point_size = data["pointSize"];                                              
 
-    glPointSize(point_size);
-    glBegin(GL_POINTS);
-    glColor3f(0.0, 0.0, 0.0);
+    glPointSize(point_size);    // set size for drawing OpenGL points
+    glBegin(GL_POINTS);     // sets the current rendering mode to draw points
+    glColor3f(0.0, 0.0, 0.0);   // set the color to black
 
-    for (auto point: seen_points) {
-        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
+    for (auto point: seen_points) {                                           
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));    // Drawing seen points   
     }
     glEnd();
 
     glPointSize(point_size);
     glBegin(GL_POINTS);
-    glColor3f(1.0, 0.0, 0.0);
+    glColor3f(1.0, 0.0, 0.0); //set the color to red 
 
     for (auto point: new_points_seen) {
-        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));
+        glVertex3f((float) (point.x), (float) (point.y), (float) (point.z));    // Drawing new points
     }
-    std::cout << new_points_seen.size() << std::endl;
+    std::cout << new_points_seen.size() << std::endl; 
 
     glEnd();
 }
 
 cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat& depth, const pangolin::OpenGlRenderState& cam_state) {
-    GLint viewport[4];
+                                                                                                                                        /*---- The fuction convert the keypoint from 2D to 3D ----*/
+    GLint viewport[4]; 
     GLdouble modelview[16];
     GLdouble projection[16];
 
     glGetIntegerv(GL_VIEWPORT, viewport);
     for (int i = 0; i < 16; ++i) {
-        modelview[i] = cam_state.GetModelViewMatrix().m[i];
+        // Copying the modelview and projection matrices from the pangolin cam_state to modelview and projection
+        modelview[i] = cam_state.GetModelViewMatrix().m[i];  
         projection[i] = cam_state.GetProjectionMatrix().m[i];
     }
 
@@ -73,32 +76,32 @@ cv::Point3f convert2Dto3D(cv::Point2f keypoint, const cv::Mat& K, const cv::Mat&
     y = (float)viewport[3] - keypoint.y; // OpenGL has the origin in the lower-left corner, so we need to flip the y-coordinate
     z = depth.at<float>(static_cast<int>(y), static_cast<int>(x)); // Get depth value at the keypoint position
 
-    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+    gluUnProject(x, y, z, modelview, projection, viewport, &worldX, &worldY, &worldZ);  // convert screen coordinates (2D) to world coordinates (3D) and then save in (wordX,wordY,wordZ)  the calculated 3D coordinates 
 
-    return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);
+    return cv::Point3f((float)worldX, (float)worldY, (float)worldZ);    // return the converted keypoint (3D) as an Point3f object 
 }
 
-void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {
+void saveKeypointsToCSV(const std::vector<cv::Point3d>& keypoints, const std::string& filename) {   /*saving vector of 3D keypoints to the CSV file */
     std::ofstream csv_file(filename);
 
     for (const auto& keypoint : keypoints) {
-        csv_file << keypoint.x << "," << keypoint.y << "," << keypoint.z << std::endl;
+        csv_file << keypoint.x << "," << keypoint.y << "," << keypoint.z << std::endl;  // Write the x, y, z  of the keypoints to the CSV file
     }
 
     csv_file.close();
 }
 
 int main(int argc, char **argv) {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
-    std::ifstream programData(settingPath);
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath(); 
+    std::ifstream programData(settingPath); // inpute file for reading the data from JSON file 
     nlohmann::json data;
-    programData >> data;
-    programData.close();
+    programData >> data; 
+    programData.close();   // Closing file read 
 
     std::string configPath = data["DroneYamlPathSlam"];
-    cv::FileStorage fSettings(configPath, cv::FileStorage::READ);
+    cv::FileStorage fSettings(configPath, cv::FileStorage::READ); // it creates an instance of the FileStorage class and opens the file specified by configPath and set it to read mode 
 
-    float fx = fSettings["Camera.fx"];
+    float fx = fSettings["Camera.fx"];  //reading the camera parameters 
     float fy = fSettings["Camera.fy"];
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
@@ -106,21 +109,22 @@ int main(int argc, char **argv) {
     float viewpointY = fSettings["RunModel.ViewpointY"];
     float viewpointZ = fSettings["RunModel.ViewpointZ"];
 
-    Eigen::Matrix3d K;
+    Eigen::Matrix3d K; // Eigen matrix that represent the camera intrinsic matrix
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-    cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
-    Eigen::Vector2i viewport_desired_size(640, 480);
+    cv::Mat K_cv = (cv::Mat_<float>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);  //creating OpenCv matrix 
+    Eigen::Vector2i viewport_desired_size(640, 480);    // creating 2D vector representing the desired size of the viewport (640x480 pixels)
 
-    cv::Mat img;
+    cv::Mat img; // data structure to present image 
 
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
+    // saving the values of fSettings[""] to variables 
+    int nFeatures = fSettings["ORBextractor.nFeatures"];    
     float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
-
+    ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);  // creating pointer ORBextractor object with the features we saved in the variables
+                                                                                                                                      
     // Options
     bool show_bounds = false;
     bool show_axis = false;
@@ -146,15 +150,22 @@ int main(int argc, char **argv) {
             .SetHandler(&handler);
 
     // Load Geometry asynchronously
-    std::string model_path = data["modelPath"];
-    const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path);
-    auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);
+    std::string model_path = data["modelPath"];  // load the model path from the data  
+    const pangolin::Geometry geom_to_load = pangolin::LoadGeometry(model_path); // creat object that represent 3D geometry data by using LoadGeometry which load 3D geometry model from the file path 
+    auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);     // load the computed axis-aligned bounding box of the 3D geometry model to aabb
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY);
-    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE);
+    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY); //   initializing the model viewMatrix using ModelViewLookAt
+                                                                                                                // the firt three par for camera position in 3D space
+                                                                                                                //the second three par to tell where the camera is looking at
+                                                                                                                 // ... indicates the direction that should be considered 
+
+    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE); // initializing the model Projection using ProjectionMatrix function
+
+    // setting the model ViewMatrix and the Projection Matrix
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
+
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     // Render tree for holding object position
     pangolin::GlSlProgram default_prog;
@@ -164,8 +175,8 @@ int main(int argc, char **argv) {
         default_prog.Link();
     };
     LoadProgram();
-    pangolin::RegisterKeyPressCallback('b', [&]() { show_bounds = !show_bounds; });
-    pangolin::RegisterKeyPressCallback('0', [&]() { cull_backfaces = !cull_backfaces; });
+    pangolin::RegisterKeyPressCallback('b', [&]() { show_bounds = !show_bounds; });  // when the user press b the lambda function will be executed and if show_bounds was false it will set it to true ... 
+    pangolin::RegisterKeyPressCallback('0', [&]() { cull_backfaces = !cull_backfaces; });  // when the user press 0 the lambda function will be executed if cull_backfaces was false it will set it to true ... 
 
     // Show axis and axis planes
     pangolin::RegisterKeyPressCallback('a', [&]() { show_axis = !show_axis; });
@@ -174,9 +185,10 @@ int main(int argc, char **argv) {
     pangolin::RegisterKeyPressCallback('z', [&]() { show_z0 = !show_z0; });
 
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
-    std::vector<Eigen::Vector3d> Picks_w;
+    std::vector<Eigen::Vector3d> Picks_w;   // in this we will store multiple collection of 3D vectors representing points in 3D space 
 
-    while (!pangolin::ShouldQuit()) {
+    // rendering updates and checks for user interaction until Pangolin indicates should quit
+    while (!pangolin::ShouldQuit()) {    
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
             Pick_w = handler.Selected_P_w();
             Picks_w.push_back(Pick_w);
