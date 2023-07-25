@@ -95,6 +95,29 @@ int main() {
         SLAM.GetMap()->EraseMapPoint(point);
     }
 
+    // Erase all frames that doesn't contains any point
+    std::vector<ORB_SLAM2::KeyFrame*> keyframes_to_erase;
+    for (size_t i=0; i < SLAM.GetMap()->GetAllKeyFrames().size(); i++) {
+        ORB_SLAM2::KeyFrame* keyframe = SLAM.GetMap()->GetAllKeyFrames()[i];
+        bool to_delete = true;
+        for (auto& point : keyframe->GetMapPoints()) {
+            auto pointValue = point->GetWorldPos();
+            Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(pointValue);
+            cv::Point3d point3D = cv::Point3d(vector.x(), vector.y(), vector.z());
+            if (pointInVec(point3D, points)) {
+                to_delete = false;
+                break;
+            }
+        }
+        if (to_delete) {
+            keyframes_to_erase.push_back(keyframe);
+        }
+    }
+
+    for (auto& keyframe : keyframes_to_erase) {
+        SLAM.GetMap()->EraseKeyFrame(keyframe);
+    }
+
     std::cout << "Points left in map: " << SLAM.GetMap()->GetAllMapPoints().size() << std::endl;
     SLAM.SaveMap("/home/liam/a.bin");
 
