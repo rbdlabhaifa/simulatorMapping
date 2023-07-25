@@ -746,9 +746,6 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
                         continue;
                     if(pRefKF->mnBAGlobalForKF!=nLoopKF)
                         continue;
-                   cout << "RunGlobalBundleAdjustment CP " << pRefKF->mnId 
-                        << " " << pRefKF->mTcwBefGBA.rows 
-                        << " " << pRefKF->mTcwBefGBA.cols << endl;
                     fflush(stdout);
 
                     /* TODO : Stop-Gap for Loop Closure. Size coming as Zero! */

@@ -4,14 +4,7 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF ()
-
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -lncurses")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -lncurses")
-#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Wall   -O3 -lboost_serialization -march=native")
-
-# Check C++17 or C++0x support
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -40,11 +33,12 @@ endif ()
 
 find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
-find_package(Pangolin REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(PCL 1.8 REQUIRED)
+add_subdirectory(Thirdparty)
+find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
 
 include_directories(
 
@@ -103,54 +97,12 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         ${PCL_LIBRARIES}
-        -lpthread ctello spdlog ${PYTHON_LIBRARIES} -lbluetooth
+        -lpthread ${PYTHON_LIBRARIES}
 	    -lboost_serialization
 	    -lboost_system
         )
-add_library(simulator tools/simulator.cpp)
+add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
-
-add_executable(runSimulator exe/runSimulator.cpp)
-target_link_libraries(runSimulator simulator)
-
-add_executable(offline_orb_slam exe/offline_orb_slam.cc)
-target_link_libraries(offline_orb_slam ${PROJECT_NAME})
-
-add_executable(mapping exe/mapping.cc)
-target_link_libraries(mapping ${PROJECT_NAME})
-
-add_executable(run_model exe/run_model.cc)
-target_link_libraries(run_model ${PROJECT_NAME})
-
-add_executable(run_model_with_printed_orbs exe/run_model_with_printed_orbs.cc)
-target_link_libraries(run_model_with_printed_orbs ${PROJECT_NAME})
-
-add_executable(run_model_with_icp exe/run_model_with_icp.cc)
-target_link_libraries(run_model_with_icp ${PROJECT_NAME})
-
-add_executable(run_model_on_orb_slam exe/run_model_on_orb_slam.cc)
-target_link_libraries(run_model_on_orb_slam ${PROJECT_NAME})
-
-add_executable(save_map exe/save_map.cc)
-target_link_libraries(save_map ${PROJECT_NAME})
-
-add_executable(run_model_with_orb_slam_points exe/run_model_with_orb_slam_points.cc)
-target_link_libraries(run_model_with_orb_slam_points ${PROJECT_NAME})
-
-add_executable(csv_to_xyz exe/csv_to_xyz.cc)
-target_link_libraries(csv_to_xyz ${PROJECT_NAME})
-
-add_executable(run_model_with_orbs_and_orb_slam_map exe/run_model_with_orbs_and_orb_slam_map.cc)
-target_link_libraries(run_model_with_orbs_and_orb_slam_map ${PROJECT_NAME})
-
-add_executable(demo exe/demo.cc)
-target_link_libraries(demo ${PROJECT_NAME})
-
-add_executable(navigate_to_point exe/navigate_to_point.cc)
-target_link_libraries(navigate_to_point ${PROJECT_NAME})
-
-add_executable(remove_map_points exe/remove_map_points.cc)
-target_link_libraries(remove_map_points ${PROJECT_NAME})
-
-add_executable(save_first_frame exe/save_first_frame.cc)
-target_link_libraries(save_first_frame ${PROJECT_NAME})
+add_library(exitRoom tools/navigation/roomExit.cpp)
+target_link_libraries(exitRoom ${PROJECT_NAME})
+add_subdirectory(exe)

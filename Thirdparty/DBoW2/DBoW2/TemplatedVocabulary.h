@@ -1300,7 +1300,9 @@ namespace DBoW2 {
             int pid;
             ssnode >> pid;
             m_nodes[nid].parent = pid;
-            m_nodes[pid].children.push_back(nid);
+            m_nodes[pid].children.resize(m_nodes[pid].children.size() +1);
+            int nid_child = m_nodes[pid].children.size();
+            m_nodes[pid].children[nid_child] = nid;
 
             int nIsLeaf;
             ssnode >> nIsLeaf;
