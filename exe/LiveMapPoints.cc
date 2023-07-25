@@ -128,7 +128,7 @@ int main() {
                                                true); // create an ORB_SLAM2 system instance do to the tracking (finding keyPoints, mapPoints and more)
     int amountOfAttepmpts = 0;
     while (amountOfAttepmpts++ < 1) { // run once
-        cv::VideoCapture capture(videoPath); // capture contains the offline video and provides an API for readind and using the video data
+        cv::VideoCapture capture = cv::VideoCapture(0);  // capture contains the offline video and provides an API for readind and using the video data
         if (!capture.isOpened()) { // was a video put into capture? if not the end program
             std::cout << "Error opening video stream or file" << std::endl;
             return 0;
@@ -138,23 +138,29 @@ int main() {
 
         cv::Mat frame; // a mat array to hold each frame
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now(); // get the current time
-        for (int i = 0; i < 170; ++i) { // skip over the 170 first frames of fotage
-            capture >> frame; // go to next frame
-        }
+        // for (int i = 0; i < 170; ++i) { // skip over the 170 first frames of fotage
+        //     capture >> frame; // go to next frame
+        // }
         int amount_of_frames = 1; // not changed at all
 
+        //capture.read(frame);
+        capture >> frame;
+        if (frame.empty()) {
+            cout << "frame is empty" << endl;
+        }
         for (;;) { // analyze using ORB slam each frame
             SLAM->TrackMonocular(frame, capture.get(CV_CAP_PROP_POS_MSEC)); // perform the tracking on the current frame  
                                                                             // and update the SLAM object accordingly 
                                                                             // (find map points, keypoints and descriptors)
 
+            //capture.read(frame);
             capture >> frame;
-
+            //cvWaitKey(30);
             if (frame.empty()) {
                 break;
             }
         }
-        saveMap(amountOfAttepmpts); // save the point map and additional information
+        //saveMap(amountOfAttepmpts); // save the point map and additional information
 
         // measuring the printing the amount of time it took the tracking and saving to run
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -166,9 +172,9 @@ int main() {
     }
 
     // if specified to save the map then the SLAM object will also save the map to simulatorMap.bin
-    if (isSavingMap) {
-        SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
-    }
+    //if (isSavingMap) {
+    //    SLAM->SaveMap(simulatorOutputDir + "simulatorMap.bin");
+    //}
 
     SLAM->Shutdown(); // shut down the SLAM object
     cvDestroyAllWindows(); // close all open windows related to the program
