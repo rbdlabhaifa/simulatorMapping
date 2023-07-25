@@ -11,7 +11,14 @@
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "intelliSenseMode": "windows-msvc-x64",
-      "cmakeToolchain": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      "cmakeToolchain": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "variables": [
+        {
+          "name": "MSVC_USE_STATIC_CRT",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Release",

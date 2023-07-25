@@ -20,8 +20,8 @@ int main(int argc, char **argv)
     bool trackImages = data["trackImages"];
 
     Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, simulatorOutputDir, false, "", movementFactor, vocabulary_path);
-    //auto simulatorThread = simulator.run();
-   simulator.simulatorRunThread();
+   auto simulatorThread = simulator.run();
+   //simulator.simulatorRunThread();
     while (!simulator.isReady())
     { // wait for the 3D model to load
         Sleep(1);
