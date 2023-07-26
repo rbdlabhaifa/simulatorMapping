@@ -103,6 +103,6 @@ target_link_libraries(${PROJECT_NAME}
         )
 add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
-add_library(exitRoom tools/navigation/roomExit.cpp)
+add_library(exitRoom tools/navigation/RoomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})
 add_subdirectory(exe)
