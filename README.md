@@ -1,6 +1,8 @@
 For running simulator:
 
-Start with ./install.sh
+Start with running: "git submodule update --init --recursive"
+
+Then run ./install.sh
 
 After we installed the program we want to run it, this is the flow:
 
