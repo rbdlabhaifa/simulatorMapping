@@ -19,8 +19,6 @@
 
 Camera.width: 640
 Camera.height: 480
-Camera.orig_width: 640
-Camera.orig_height: 480
 
 Camera.fx: 619.6508392029048
 Camera.fy: 618.5264705043031

@@ -164,11 +164,8 @@ void Simulator::simulatorRunThread()
             glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
 
             cv::Mat imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
-            if(!imgBuffer.empty()){
-                cv::cvtColor(imgBuffer, img, cv::COLOR_RGBA2GRAY);
             img.convertTo(img, CV_8UC1);
             cv::flip(img, img, 0);
-            }
             s_cam.Apply();
 
             glDisable(GL_CULL_FACE);

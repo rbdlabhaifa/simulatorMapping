@@ -49,20 +49,10 @@ namespace ORB_SLAM2
         // Load camera parameters from settings file
 
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-        float width = fSettings["Camera.width"];
-        float height = fSettings["Camera.height"];
-
-        float orig_width = fSettings["Camera.orig_width"];
-        float orig_height = fSettings["Camera.orig_height"];
-
         float fx = fSettings["Camera.fx"];
         float fy = fSettings["Camera.fy"];
         float cx = fSettings["Camera.cx"];
         float cy = fSettings["Camera.cy"];
-        fx = fx * width / orig_width;
-        fy = fy * height / orig_height;
-        cx = cx * width / orig_width;
-        cy = cy * height / orig_height;
 
         cv::Mat K = cv::Mat::eye(3, 3, CV_32F);
         K.at<float>(0, 0) = fx;
