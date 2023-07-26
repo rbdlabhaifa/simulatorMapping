@@ -1344,14 +1344,13 @@ namespace ORB_SLAM2
         }
 
         // Include also some not-already-included keyframes that are neighbors to already-included keyframes
-        for (vector<KeyFrame *>::const_iterator itKF = mvpLocalKeyFrames.begin(), itEndKF = mvpLocalKeyFrames.end();
-             itKF != itEndKF; itKF++)
+        for (auto &itKF : mvpLocalKeyFrames)
         {
             // Limit the number of keyframes
             if (mvpLocalKeyFrames.size() > 80)
                 break;
 
-            KeyFrame *pKF = *itKF;
+            KeyFrame *pKF = itKF;
 
             const vector<KeyFrame *> vNeighs = pKF->GetBestCovisibilityKeyFrames(10);
 
