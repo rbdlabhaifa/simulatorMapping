@@ -45,6 +45,8 @@
   "targetPointX": -0.340879,
   "targetPointY": -0.155054,
   "targetPointZ": -0.0128918,
-  "yawMovement": 30.0
+  "yawMovement": 30.0,
+
+  "trackImages": false
 }
 

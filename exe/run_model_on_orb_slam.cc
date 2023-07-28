@@ -176,7 +176,7 @@ void HandleKeyboardInput(unsigned char key, int x, int y) {
 void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_ptr<pangolin::OpenGlRenderState> &s_cam,
                         bool *ready) {
     // putting the general settings into data.json
-    std::ifstream programData(settitngPath);
+    std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
