@@ -107,10 +107,14 @@ target_link_libraries(${PROJECT_NAME}
 	    -lboost_serialization
 	    -lboost_system
         )
-add_library(simulator tools/simulator.cpp)
+add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
+
+add_library(exitRoom tools/navigation/RoomExit.cpp)
+target_link_libraries(exitRoom ${PROJECT_NAME})
+
 add_executable(runSimulator exe/runSimulator.cpp)
-target_link_libraries(runSimulator simulator)
+target_link_libraries(runSimulator simulator exitRoom)
 
 add_executable(offline_orb_slam exe/offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
