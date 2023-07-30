@@ -81,6 +81,7 @@ namespace ORB_SLAM2 {
                mapName = "Slam_latest_Map.bin",
                bool continue_mapping = false,
                bool isPangolinExists = false
+            //    bool reviveFrameDrawer = false // added reviveFrameDrawer
         );
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
@@ -99,8 +100,12 @@ namespace ORB_SLAM2 {
         // Returns the camera pose (empty if tracking fails).
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
+        // cv::Mat
+        // TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
+
         cv::Mat
-        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im = cv::Mat());
+
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

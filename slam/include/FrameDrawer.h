@@ -43,7 +43,7 @@ public:
     FrameDrawer(Map* pMap, bool bReuse);
 
     // Update info from the last processed frame.
-    void Update(Tracking *pTracker);
+    void Update(Tracking *pTracker, const cv::Mat &im = cv::Mat()); // added im for overlay
 
     // Draw last processed frame.
     cv::Mat DrawFrame();
@@ -66,6 +66,8 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+    cv::Mat image_to_show; // added
 };
 
 } //namespace ORB_SLAM
