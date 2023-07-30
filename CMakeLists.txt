@@ -225,3 +225,11 @@ target_link_libraries(demo ${PROJECT_NAME})
 
 add_executable(navigate_to_point exe/navigate_to_point.cc)
 target_link_libraries(navigate_to_point ${PROJECT_NAME})
+
+
+add_executable(test_for_simulator exe/test_for_simulator.cc)
+target_link_libraries(test_for_simulator ${PROJECT_NAME})
+
+
+add_executable(run_model_on_orb_slam_revive_frameDrawer exe/run_model_on_orb_slam_revive_frameDrawer.cc)
+target_link_libraries(run_model_on_orb_slam_revive_frameDrawer ${PROJECT_NAME})

@@ -242,7 +242,6 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false, loadMap,
                                                loadMapPath,
                                                true); // create an ORB_SLAM2 system instance do to the tracking (finding keyPoints, mapPoints and more)
-
     // Create Window for rendering
     pangolin::CreateWindowAndBind("Main", viewport_desired_size[0], viewport_desired_size[1]);
     glEnable(GL_DEPTH_TEST);
