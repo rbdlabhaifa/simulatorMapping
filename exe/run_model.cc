@@ -155,16 +155,16 @@ int main(int argc, char **argv) {
     auto aabb = pangolin::GetAxisAlignedBox(geom_to_load);     // load the computed axis-aligned bounding box of the 3D geometry model to aabb
     Eigen::AlignedBox3f total_aabb;
     total_aabb.extend(aabb);
-    const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY); //   initializing the model viewMatrix using ModelViewLookAt
+  //  const auto mvm = pangolin::ModelViewLookAt(viewpointX, viewpointY, viewpointZ, 0, 0, 0, 0.0, -1.0, pangolin::AxisY); //   initializing the model viewMatrix using ModelViewLookAt
                                                                                                                 // the firt three par for camera position in 3D space
                                                                                                                 //the second three par to tell where the camera is looking at
                                                                                                                  // ... indicates the direction that should be considered 
 
-    const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE); // initializing the model Projection using ProjectionMatrix function
+   // const auto proj = pangolin::ProjectionMatrix(viewport_desired_size(0), viewport_desired_size(1), K(0, 0), K(1, 1), K(0, 2), K(1, 2), NEAR_PLANE, FAR_PLANE); // initializing the model Projection using ProjectionMatrix function
 
     // setting the model ViewMatrix and the Projection Matrix
-    s_cam.SetModelViewMatrix(mvm);
-    s_cam.SetProjectionMatrix(proj);
+  //  s_cam.SetModelViewMatrix(mvm);
+   // s_cam.SetProjectionMatrix(proj);
 
     const pangolin::GlGeometry geomToRender = pangolin::ToGlGeometry(geom_to_load);
     // Render tree for holding object position
