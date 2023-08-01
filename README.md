@@ -4,7 +4,7 @@
 - `git submodule update --init --recursive`
 - `./install.sh`
 
-## II. Using:
+## II. Usage:
 ### 1. Configure the parameters to your machine:
 cd to `Vocabulary/` directory and run: `tar -xf ORBVoc.txt.tar.gz` 
 Open generalSettings.json and change:
