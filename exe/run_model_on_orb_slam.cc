@@ -204,7 +204,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
     std::string simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
-    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false, loadMap,
+    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, loadMap,
                                                loadMapPath,
                                                true);
 
@@ -354,7 +354,7 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
            std::vector<cv::KeyPoint> keypoints;
            cv::Mat descriptors;
            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
-            SLAM.TrackMonocular(descriptors, keypoints, timestamp);
+            SLAM.TrackMonocular(descriptors, keypoints, timestamp, img);
 
             s_cam->Apply();
 
