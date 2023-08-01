@@ -42,7 +42,7 @@ void handleKeyboardEventsResult(Simulator *simulator) {
 }
 
 int main(int argc, char **argv) {
-    Simulator simulator = Simulator(false);
+    Simulator simulator = Simulator(true);
 
     handleKeyboardEventsScan(&simulator);
     simulator.Run();

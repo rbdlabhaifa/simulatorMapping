@@ -1,7 +1,8 @@
 //
 // Created by tzuk on 7/11/23.
 //
-#include <Eigen/Eigen>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <ostream>
 #include <fstream>
 #include <iostream>

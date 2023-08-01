@@ -13,12 +13,12 @@
 #include <signal.h>
 #include <filesystem>
 #include <opencv2/core.hpp>
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 #include <pangolin/pangolin.h>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Geometry>
 #include <pangolin/scene/axis.h>
 #include <pangolin/scene/scenehandler.h>
 

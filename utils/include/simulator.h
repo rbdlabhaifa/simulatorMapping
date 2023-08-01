@@ -16,7 +16,7 @@
 class Simulator {
 public:
     // Methods
-    Simulator();
+    Simulator(bool isPartialMap=false);
     ~Simulator();
 
     void Run();
@@ -74,6 +74,8 @@ private:
 
     // Members
     nlohmann::json mData;
+
+    bool mIsPartialMap;
 
     std::vector<OfflineMapPoint*> mPoints;
 

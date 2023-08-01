@@ -189,8 +189,10 @@ void Simulator::initPoints() {
     pointData.close();
 }
 
-Simulator::Simulator() {
+Simulator::Simulator(bool isPartialMap) {
     this->createSimulatorSettings();
+
+    this->mIsPartialMap = isPartialMap;
 
     this->mPoints = std::vector<OfflineMapPoint*>();
 
@@ -240,8 +242,14 @@ Simulator::Simulator() {
     this->mVocPath = this->mData["VocabularyPath"];
     this->mTrackImages = this->mData["trackImagesClass"];
     this->mLoadMap = this->mData["loadMap"];
-    this->mLoadMapPath = this->mData["loadMapPath"];
-    this->mContinueMapping = this->mData["continueMapping"];
+    if (this->mIsPartialMap) {
+        this->mLoadMapPath = this->mData["loadPartialMapPath"];
+        this->mContinueMapping = this->mData["continuePartialMapping"];
+    }
+    else {
+        this->mLoadMapPath = this->mData["loadMapPath"];
+        this->mContinueMapping = this->mData["continueMapping"];
+    }
     this->mSystem = nullptr;
     if (this->mUseOrbSlam) {
         this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,

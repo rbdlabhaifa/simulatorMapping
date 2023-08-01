@@ -32,3 +32,9 @@ for localize on the orb slam map from the known points on each frame(without mod
 - configure your parameters also on `demoSettings.json`
 - run `./exe/demo` from the `build` folder
 
+
+### 6. Build partial map:
+- run `./exe/save_first_frame` from the `build` folder
+- run `./exe/remove_map_points` from the `build` folder
+- run `./exe/build_new_map_demo` from the `build` folder
+

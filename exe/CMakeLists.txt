@@ -43,5 +43,8 @@ target_link_libraries(demo ${PROJECT_NAME})
 add_executable(csv_to_xyz csv_to_xyz.cc)
 target_link_libraries(csv_to_xyz ${PROJECT_NAME})
 
+add_executable(build_new_map_demo build_new_map_demo.cc)
+target_link_libraries(build_new_map_demo ${PROJECT_NAME})
+
 add_executable(test_exitRoomAlgo test_exitRoomAlgo.cpp)
 target_link_libraries(test_exitRoomAlgo exitRoom)
