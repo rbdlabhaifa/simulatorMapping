@@ -240,7 +240,6 @@ Simulator::Simulator(bool isPartialMap) {
 
     this->mUseOrbSlam = this->mData["useOrbSlam"];
     this->mVocPath = this->mData["VocabularyPath"];
-    this->mTrackImages = this->mData["trackImagesClass"];
     this->mLoadMap = this->mData["loadMap"];
     if (this->mIsPartialMap) {
         this->mLoadMapPath = this->mData["loadPartialMapPath"];
@@ -252,7 +251,7 @@ Simulator::Simulator(bool isPartialMap) {
     }
     this->mSystem = nullptr;
     if (this->mUseOrbSlam) {
-        this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, this->mTrackImages,
+        this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, true,
                                           this->mLoadMap, this->mLoadMapPath, this->mContinueMapping);
     }
 
