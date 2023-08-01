@@ -239,9 +239,11 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
     std::string simulatorOutputDirPath = data["simulatorOutputDir"]; // the path to save the points to 
     std::string simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir); // create a directory in the path specified
-    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, false, loadMap,
+    ORB_SLAM2::System SLAM = ORB_SLAM2::System(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, loadMap,
                                                loadMapPath,
                                                true); // create an ORB_SLAM2 system instance do to the tracking (finding keyPoints, mapPoints and more)
+                                                        // changed the fifth value to true so a FrameDrawer object will be created, added eight and neighth values for isPangolinExist and blackscreen
+                                                        // change blackscreen from boolean to cv::Mat so we can give it a picture and then update it with track monocular
     // Create Window for rendering
     pangolin::CreateWindowAndBind("Main", viewport_desired_size[0], viewport_desired_size[1]);
     glEnable(GL_DEPTH_TEST);
@@ -338,6 +340,9 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
     std::vector<cv::Point3d> seenPoints{}; // not used
 
+    cv::VideoCapture capture(videoPath); // added it to make it show the video on the "current frame" window
+
+
     while (!pangolin::ShouldQuit() && !*stopFlag) {
         *ready = true;
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -389,8 +394,12 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
            std::vector<cv::KeyPoint> keypoints;
            cv::Mat descriptors;
            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors); // detect keyPoints and descriptors and save them to keypoints and descriptors
-            SLAM.TrackMonocular(descriptors, keypoints, timestamp); // finds map points accoring to keypoints, descriptors and time stamp
-
+            
+            cv::Mat newframe;
+            cv::Mat blackscreen(480, 640, CV_8UC3, cv::Scalar(56,3,89)); // blackscreen to show points on
+            capture >> newframe;
+            //SLAM.TrackMonocular(descriptors, keypoints, timestamp, newframe); // finds map points accoring to keypoints, descriptors and time stamp
+            SLAM.TrackMonocular(descriptors, keypoints, timestamp, blackscreen); // finds map points accoring to keypoints, descriptors and time stamp
             s_cam->Apply();
 
             glDisable(GL_CULL_FACE);

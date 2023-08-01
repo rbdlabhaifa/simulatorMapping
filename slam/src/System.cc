@@ -249,7 +249,7 @@ namespace ORB_SLAM2 {
     }
 
     cv::Mat
-    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp,const cv::Mat &im) {
+    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im) {
         cv::Mat Tcw;
         if (mSensor != MONOCULAR) {
             cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
@@ -333,58 +333,6 @@ namespace ORB_SLAM2 {
         return (mpTracker->GrabImageMonocular(im, timestamp));
 
     }
-
-
-// // ----------------- NEW ADDITION TO CODE -------------------------------
-//     cv::Mat
-//     System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im) {
-//         cv::Mat Tcw;
-//         if (mSensor != MONOCULAR) {
-//             cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
-//             exit(-1);
-//         }
-
-//         // Check mode change
-//         {
-//             unique_lock<mutex> lock(mMutexMode);
-//             if (mbActivateLocalizationMode) {
-//                 mpLocalMapper->RequestStop();
-
-//                 // Wait until Local Mapping has effectively stopped
-//                 while (!mpLocalMapper->isStopped()) {
-//                     usleep(1000);
-//                 }
-
-//                 mpTracker->InformOnlyTracking(true);
-//                 mbActivateLocalizationMode = false;
-//             }
-//             if (mbDeactivateLocalizationMode) {
-//                 mpTracker->InformOnlyTracking(false);
-//                 mpLocalMapper->Release();
-//                 mbDeactivateLocalizationMode = false;
-//             }
-//         }
-
-//         // Check reset
-//         {
-//             unique_lock<mutex> lock(mMutexReset);
-//             if (mbReset) {
-//                 mpTracker->Reset();
-//                 mbReset = false;
-//             }
-//         }
-        
-//         //return (mpTracker->GrabImageMonocular(im,timestamp)).clone();
-//         return (mpTracker->GrabImageMonocular(descriptors, keyPoints, mpViewer->GetImageWidth(),
-//                                               mpViewer->GetImageHeight(), timestamp, im)); // USED NEW FUNCION
-
-//     }
-
-
-
-
-// //-----------------------------------------------------------------------
-
 
     void System::ActivateLocalizationMode() {
         unique_lock<mutex> lock(mMutexMode);

@@ -71,11 +71,11 @@ namespace ORB_SLAM2 {
         {
             if (this->image_to_show.empty()) // if we have an no image to overlay do it
             {
-            im = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0,0,0)).clone();
+                im = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0,0,0)).clone();
             }
         else
             {
-            im = this->image_to_show.clone();
+                im = this->image_to_show.clone();
             }
         }
         
