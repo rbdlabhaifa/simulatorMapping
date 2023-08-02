@@ -249,7 +249,7 @@ namespace ORB_SLAM2 {
     }
 
     cv::Mat
-    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp) {
+    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im) {
         cv::Mat Tcw;
         if (mSensor != MONOCULAR) {
             cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
@@ -288,7 +288,7 @@ namespace ORB_SLAM2 {
 
         //return (mpTracker->GrabImageMonocular(im,timestamp)).clone();
         return (mpTracker->GrabImageMonocular(descriptors, keyPoints, mpViewer->GetImageWidth(),
-                                              mpViewer->GetImageHeight(), timestamp));
+                                              mpViewer->GetImageHeight(), timestamp, im));
 
     }
 

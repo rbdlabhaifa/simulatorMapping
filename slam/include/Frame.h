@@ -66,6 +66,7 @@ namespace ORB_SLAM2 {
               ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef,
               const float &bf, const float &thDepth);
 
+
 // Extract ORB on the image. 0 for left image and 1 for right image.
         void ExtractORB(int flag, const cv::Mat &im);
 
