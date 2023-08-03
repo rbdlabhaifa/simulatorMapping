@@ -63,8 +63,10 @@ void Simulator::command(std::string &command, int intervalUsleep, double fps, in
 }
 void Simulator::simulatorRunThread()
 {
-    pangolin::CreateWindowAndBind("Model");
-
+    std::string windowName = "Model";
+    pangolin::CreateWindowAndBind(windowName);
+    //auto context = pangolin::FindContext(windowName);
+    //pangolin::SetCurrentContext(context);
     // we manually need to restore the properties of the context
     glEnable(GL_DEPTH_TEST);
     s_cam = pangolin::OpenGlRenderState(
@@ -112,14 +114,6 @@ void Simulator::simulatorRunThread()
                                        { applyUpModelCam(s_cam, -movementFactor); }); // ORBSLAM y axis is reversed
     pangolin::RegisterKeyPressCallback('f', [&]()
                                        { applyUpModelCam(s_cam, movementFactor); });
-    const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
-    alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
-    geomToRender = pangolin::ToGlGeometry(modelGeometry);
-    for (auto &buffer : geomToRender.buffers)
-    {
-        buffer.second.attributes.erase("normal");
-    }
-
     auto LoadProgram = [&]()
     {
         program.ClearShaders();
@@ -128,19 +122,31 @@ void Simulator::simulatorRunThread()
     };
     LoadProgram();
     pangolin::Handler3D handler(s_cam);
-    pangolin::View &d_cam = pangolin::CreateDisplay()
-                                .SetBounds(0.0, 1.0, 0.0, 1.0, ((float)-viewportDesiredSize[0] / (float)viewportDesiredSize[1]))
-                                .SetHandler(&handler);
+    pangolin::View& d_cam = pangolin::Display("simulator_d_cam")
+        .SetBounds(0.0, 1.0, 0.0, 1.0, ((float)-viewportDesiredSize[0] / (float)viewportDesiredSize[1]))
+        .SetHandler(&handler);
     int numberOfFramesForOrbslam = 0;
+    const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
+    alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
+    geomToRender = pangolin::ToGlGeometry(modelGeometry);
+    for (auto &buffer : geomToRender.buffers)
+    {
+        buffer.second.attributes.erase("normal");
+    }
+    pangolin::ShowFullscreen(pangolin::TrueFalseToggle::True);
+    pangolin::ShowFullscreen(pangolin::TrueFalseToggle::False);
+    pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
+    int width = d_cam.v.w;
+    int height = d_cam.v.h;
     while (!pangolin::ShouldQuit() && !stopFlag)
     {
+        
         cv::Mat img;
         ready = true;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         if (d_cam.IsShown())
         {
-            d_cam.Activate();
-
+            d_cam.Activate(s_cam);
             if (cull_backfaces)
             {
                 glEnable(GL_CULL_FACE);
@@ -152,19 +158,10 @@ void Simulator::simulatorRunThread()
             program.SetUniform("KT_cw", s_cam.GetProjectionMatrix() * s_cam.GetModelViewMatrix());
             pangolin::GlDraw(program, geomToRender, nullptr);
             program.Unbind();
-
-            int viewport_size[4];
-            glGetIntegerv(GL_VIEWPORT, viewport_size);
-
-            pangolin::Image<unsigned char> buffer;
-            pangolin::VideoPixelFormat fmt = pangolin::VideoFormatFromString("RGBA32");
-            buffer.Alloc(viewport_size[2], viewport_size[3], viewport_size[2] * fmt.bpp / 8);
-            glReadBuffer(GL_BACK);
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);
-            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_RGBA, GL_UNSIGNED_BYTE, buffer.ptr);
-
-            cv::Mat imgBuffer = cv::Mat(viewport_size[3], viewport_size[2], CV_8UC4, buffer.ptr);
-            img.convertTo(img, CV_8UC1);
+            std::vector<unsigned char> buffer(4 * width * height);
+            glReadPixels(0,0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+            cv::Mat imgBuffer = cv::Mat(height, width, CV_8UC4, buffer.data());
+            cv::cvtColor(imgBuffer, img, cv::COLOR_RGBA2GRAY);
             cv::flip(img, img, 0);
             s_cam.Apply();
 

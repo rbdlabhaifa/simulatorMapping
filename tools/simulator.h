@@ -12,7 +12,7 @@
 #include <pangolin/gl/glvbo.h>
 #include <functional>
 #include <pangolin/display/display.h>
-
+#include <pangolin/display/pangolin_gl.h>
 #include <pangolin/utils/file_utils.h>
 #include <pangolin/geometry/glgeometry.h>
 #include "ORBextractor.h"
