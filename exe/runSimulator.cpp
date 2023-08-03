@@ -6,8 +6,9 @@
 #include "navigation/RoomExit.h"
 #include "include/Auxiliary.h"
 
-int main(int argc, char **argv) {
-    std::ifstream programData(argv[1]);
+int main(int argc, char **argv) {    
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
@@ -16,9 +17,10 @@ int main(int argc, char **argv) {
     std::string VocabularyPath = data["VocabularyPath"];
     std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
     std::string model_path = data["modelPath"];
+    std::string map_input_dir = data["mapInputDir"];
     bool trackImages = data["trackImages"];
     double movementFactor = data["movementFactor"];
-    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, "../../slamMaps/", false,
+    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, map_input_dir, false,
                         "", movementFactor,VocabularyPath);
     auto simulatorThread = simulator.run();
     while (!simulator.isReady()) { // wait for the 3D model to load

@@ -350,40 +350,15 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
             auto value = now_ms.time_since_epoch();
             double timestamp = value.count() / 1000.0;
 
-            SLAM.TrackMonocular(img, timestamp);
-//            // Detect keypoints
-//            std::vector<cv::KeyPoint> keypoints;
-//            cv::Mat descriptors;
-//            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
-//
-//            // Save the x and y values of the keypoints to a vector
-//            std::vector<cv::Point2f> keypoint_positions;
-//            for (const auto &keypoint: keypoints) {
-//                cv::Point2f position = cv::Point2f((float) keypoint.pt.x, (float) (keypoint.pt.y));
-//                keypoint_positions.push_back(position);
-//            }
-//
-//            cv::Mat depth(viewport_size[3], viewport_size[2], CV_32FC1);
-//            glReadPixels(0, 0, viewport_size[2], viewport_size[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth.data);
-//
-//            // Convert keypoints pixels to keypoints 3d points
-//            std::vector<cv::Point3d> keypoint_points;
-//            for (auto &keypoint: keypoint_positions) {
-//                cv::Point3f point_float = convert2Dto3D(keypoint, K_cv, depth, *s_cam);
-//                cv::Point3d point = cv::Point3d(point_float.x, point_float.y, point_float.z);
-//                keypoint_points.push_back(point);
-//            }
-//
-//             int frame_to_check = data["frameNumber"];
-//             std::string keypoints_csv_path = std::string(data["framesOutput"]) + "frame_" + std::to_string(frame_to_check) + "_orbs.csv";
-//
-//             saveKeypointsToCSV(keypoint_points, keypoints_csv_path);
+           // Detect keypoints
+           std::vector<cv::KeyPoint> keypoints;
+           cv::Mat descriptors;
+           (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
+            SLAM.TrackMonocular(descriptors, keypoints, timestamp, img);
 
             s_cam->Apply();
 
             glDisable(GL_CULL_FACE);
-
-//             drawPoints(seenPoints, keypoint_points);
         }
 
         pangolin::FinishFrame();

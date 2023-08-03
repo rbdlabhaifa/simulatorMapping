@@ -13,24 +13,21 @@
 #include <signal.h>
 #include <filesystem>
 #include <opencv2/core.hpp>
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <nlohmann/json.hpp>
-#include <eigen3/Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 #include <pangolin/pangolin.h>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Geometry>
 #include <pangolin/scene/axis.h>
 #include <pangolin/scene/scenehandler.h>
-
-#include "Point.h"
 
 class Auxiliary {
 public:
     static std::string GetGeneralSettingsPath();
 
-    static double det(const Point &point1, const Point &point2);
-    
+    static std::string GetDemoSettingsPath();
+
     static bool isPointVisible(const cv::Point3f& point, const cv::Point3f& cameraPos, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
 
     static void getPoints(std::string csvPath, std::vector<cv::Point3f> *points, const cv::Point3f &camera_position, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
@@ -39,10 +36,12 @@ public:
 
     static std::vector<cv::Point3d> getPointsFromPos(const std::string cloud_points, const cv::Point3d camera_position, double yaw, double pitch, double roll, cv::Mat &Twc);
 
+    static std::vector<cv::Point3d> getPointsFromTcw(const std::string cloud_points, const pangolin::OpenGlMatrix &Tcw, pangolin::OpenGlMatrix &Twc);
+
     static std::vector<std::string> GetAllFrameDatas();
 
     static std::vector<std::string> GetFrameDatas(double amount=1); // Between 0 to 1
 
     static void add_unique_points(std::vector<cv::Point3d>& target, const std::vector<cv::Point3d>& source);
 };
-#endif //ORB_SLAM2_AUXILIARY_H
+#endif // ORB_SLAM2_AUXILIARY_H

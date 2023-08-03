@@ -41,3 +41,5 @@ simulatorDataSets/
 
 **/**/build/
 slamMaps/
+
+.vscode/

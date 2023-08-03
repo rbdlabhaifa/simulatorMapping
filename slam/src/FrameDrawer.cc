@@ -66,6 +66,19 @@ namespace ORB_SLAM2 {
             }
         } // destroy scoped mutex -> release mutex
 
+        if (im.empty())
+        {
+            if (this->image_to_show.empty()) // if we have an no image to overlay do it
+            {
+                im = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0,0,0)).clone();
+            }
+            else
+            {
+                im = this->image_to_show.clone();
+            }
+        }
+        
+
         if (im.channels() < 3) //this should be always true
             cvtColor(im, im, CV_GRAY2BGR);
 
@@ -146,7 +159,7 @@ namespace ORB_SLAM2 {
 
     }
 
-    void FrameDrawer::Update(Tracking *pTracker) {
+    void FrameDrawer::Update(Tracking *pTracker, const cv::Mat &im) {
         unique_lock<mutex> lock(mMutex);
         pTracker->mImGray.copyTo(mIm);
         mvCurrentKeys = pTracker->mCurrentFrame.mvKeys;
@@ -155,6 +168,10 @@ namespace ORB_SLAM2 {
         mvbMap = vector<bool>(N, false);
         mbOnlyTracking = pTracker->mbOnlyTracking;
 
+        if (!im.empty()) // if we sent an image to overlay on
+        {
+            this->image_to_show = im;
+        }
 
         if (pTracker->mLastProcessedState == Tracking::NOT_INITIALIZED) {
             mvIniKeys = pTracker->mInitialFrame.mvKeys;

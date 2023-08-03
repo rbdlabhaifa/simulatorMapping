@@ -6,7 +6,8 @@
 #define ORB_SLAM2_ROOMEXIT_H
 
 #include <vector>
-#include <Eigen/Eigen>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <cmath>
 #include <unordered_map>
 #include <map>
