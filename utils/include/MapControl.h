@@ -10,14 +10,14 @@
 #include "System.h"
 #include "include/OfflineMapPoint.h"
 
-#ifndef ORB_SLAM2_SIMULATOR_H
-#define ORB_SLAM2_SIMULATOR_H
+#ifndef ORB_SLAM2_MAP_CONTROL_H
+#define ORB_SLAM2_MAP_CONTROL_H
 
-class Simulator {
+class MapControl {
 public:
     // Methods
-    Simulator(bool isPartialMap=false);
-    ~Simulator();
+    MapControl(bool isPartialMap=false);
+    ~MapControl();
 
     void Run();
 
@@ -36,6 +36,8 @@ public:
     void RotateUp();
     void FinishScan();
 
+    nlohmann::json GetData();
+
     std::vector<OfflineMapPoint*> GetCloudPoint();
 
     ORB_SLAM2::System* GetSystem();
@@ -47,7 +49,7 @@ private:
     // Methods
     void initPoints();
 
-    void createSimulatorSettings();
+    void createMapControlSettings();
 
     void build_window(std::string title);
 
@@ -96,7 +98,7 @@ private:
     cv::Point3d mResultPoint;
     cv::Point3d mRealResultPoint;
 
-    std::string mSimulatorViewerTitle;
+    std::string mMapControlViewerTitle;
     std::string mResultsWindowTitle;
 
     double mPointSize;
@@ -144,11 +146,11 @@ private:
     double mStartRoll;
     double mCurrentRoll;
 
-    std::string mSimulatorPath;
+    std::string mMapPath;
     std::string mCloudPointPath;
     std::string mConfigPath;
 
     bool mCloseResults;
 };
 
-#endif //ORB_SLAM2_SIMULATOR_H
+#endif //ORB_SLAM2_MAP_CONTROL_H

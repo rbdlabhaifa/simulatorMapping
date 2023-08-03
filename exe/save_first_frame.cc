@@ -1,37 +1,39 @@
-#include "include/simulator.h"
+#include "include/MapControl.h"
 
-void handleKeyboardEventsScan(Simulator *simulator) {
-    pangolin::RegisterKeyPressCallback('l', [&simulator]() { simulator->ToggleFollowCamera(); });
-    pangolin::RegisterKeyPressCallback('\t', [&simulator]() { simulator->ToggleShowPoints(); });
-    pangolin::RegisterKeyPressCallback('i', [&simulator]() { simulator->DoReset(); });
-    pangolin::RegisterKeyPressCallback('a', [&simulator]() { simulator->MoveLeft(); });
-    pangolin::RegisterKeyPressCallback('d', [&simulator]() { simulator->MoveRight(); });
-    pangolin::RegisterKeyPressCallback('f', [&simulator]() { simulator->MoveDown(); });
-    pangolin::RegisterKeyPressCallback('r', [&simulator]() { simulator->MoveUp(); });
-    pangolin::RegisterKeyPressCallback('s', [&simulator]() { simulator->MoveBackward(); });
-    pangolin::RegisterKeyPressCallback('w', [&simulator]() { simulator->MoveForward(); });
-    pangolin::RegisterKeyPressCallback('q', [&simulator]() { simulator->RotateLeft(); });
-    pangolin::RegisterKeyPressCallback('e', [&simulator]() { simulator->RotateRight(); });
-    pangolin::RegisterKeyPressCallback('t', [&simulator]() { simulator->RotateDown(); });
-    pangolin::RegisterKeyPressCallback('g', [&simulator]() { simulator->RotateUp(); });
-    pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
+void handleKeyboardEventsScan(MapControl *mapControl) {
+    pangolin::RegisterKeyPressCallback('l', [&mapControl]() { mapControl->ToggleFollowCamera(); });
+    pangolin::RegisterKeyPressCallback('\t', [&mapControl]() { mapControl->ToggleShowPoints(); });
+    pangolin::RegisterKeyPressCallback('i', [&mapControl]() { mapControl->DoReset(); });
+    pangolin::RegisterKeyPressCallback('a', [&mapControl]() { mapControl->MoveLeft(); });
+    pangolin::RegisterKeyPressCallback('d', [&mapControl]() { mapControl->MoveRight(); });
+    pangolin::RegisterKeyPressCallback('f', [&mapControl]() { mapControl->MoveDown(); });
+    pangolin::RegisterKeyPressCallback('r', [&mapControl]() { mapControl->MoveUp(); });
+    pangolin::RegisterKeyPressCallback('s', [&mapControl]() { mapControl->MoveBackward(); });
+    pangolin::RegisterKeyPressCallback('w', [&mapControl]() { mapControl->MoveForward(); });
+    pangolin::RegisterKeyPressCallback('q', [&mapControl]() { mapControl->RotateLeft(); });
+    pangolin::RegisterKeyPressCallback('e', [&mapControl]() { mapControl->RotateRight(); });
+    pangolin::RegisterKeyPressCallback('t', [&mapControl]() { mapControl->RotateDown(); });
+    pangolin::RegisterKeyPressCallback('g', [&mapControl]() { mapControl->RotateUp(); });
+    pangolin::RegisterKeyPressCallback('S', [&mapControl]() { mapControl->FinishScan(); });
 }
 
-void handleKeyboardEventsResult(Simulator *simulator) {
-    pangolin::RegisterKeyPressCallback('S', [&simulator]() { simulator->FinishScan(); });
+void handleKeyboardEventsResult(MapControl *mapControl) {
+    pangolin::RegisterKeyPressCallback('S', [&mapControl]() { mapControl->FinishScan(); });
 }
 
 int main(int argc, char **argv) {
-    Simulator simulator = Simulator();
+    MapControl mapControl = MapControl(false);
 
-    handleKeyboardEventsScan(&simulator);
-    simulator.Run();
+    handleKeyboardEventsScan(&mapControl);
+    mapControl.Run();
 
     // Process cloud point generated
-    std::vector<OfflineMapPoint*> cloudPoints = simulator.GetCloudPoint();
+    std::vector<OfflineMapPoint*> cloudPoints = mapControl.GetCloudPoint();
     std::cout << "Number of points: " << cloudPoints.size() << std::endl;
 
-    std::string fileLocation = "/home/liam/firstFramePoints.csv";
+    nlohmann::json data = mapControl.GetData();
+
+    std::string fileLocation = data["savePartialPointsPath"];
 
     std::cout << "Saving points to " << fileLocation << std::endl;
 

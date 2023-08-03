@@ -85,7 +85,7 @@ add_library(${PROJECT_NAME}
         slam/src/LoopClosing.cc
         utils/src/Auxiliary.cpp
         utils/src/OfflineMapPoint.cpp
-        utils/src/simulator.cpp
+        utils/src/MapControl.cpp
         )
 
 

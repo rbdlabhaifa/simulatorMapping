@@ -1,4 +1,4 @@
-#include "include/simulator.h"
+#include "include/MapControl.h"
 
 #define RESULT_POINT_X 0.1
 #define RESULT_POINT_Y 0.2
@@ -121,7 +121,7 @@ std::vector<std::pair<long unsigned int, cv::KeyPoint>> readKeyPoints(std::strin
     return keyPoints;
 }
 
-void Simulator::createSimulatorSettings() {
+void MapControl::createMapControlSettings() {
     char currentDirPath[256];
     getcwd(currentDirPath, 256);
     std::string settingPath = currentDirPath;
@@ -131,7 +131,7 @@ void Simulator::createSimulatorSettings() {
     programData.close();
 }
 
-void Simulator::initPoints() {
+void MapControl::initPoints() {
     std::ifstream pointData;
     std::ifstream descData;
     std::vector<std::string> row;
@@ -175,13 +175,13 @@ void Simulator::initPoints() {
         point = cv::Vec<double, 8>(std::stod(row[1]), std::stod(row[2]), std::stod(row[3]), std::stod(row[4]), std::stod(row[5]), std::stod(row[6]), std::stod(row[7]), std::stod(row[8]));
 
         pointIndex = std::stoi(row[0]);
-        bestDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_bestDescriptor.csv";
+        bestDescFilename = this->mMapPath + "point" + std::to_string(pointIndex) + "_bestDescriptor.csv";
         bestDescriptor = readBestDesc(bestDescFilename, 32);
-        currDescFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
+        currDescFilename = this->mMapPath + "point" + std::to_string(pointIndex) + "_descriptors.csv";
         currDesc = readDesc(currDescFilename, 32);
-        bestKeyPointFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_bestKeyPoint.csv";
+        bestKeyPointFilename = this->mMapPath + "point" + std::to_string(pointIndex) + "_bestKeyPoint.csv";
         bestKeyPoint = readBestKeyPoint(bestKeyPointFilename);
-        currKeyPointsFilename = this->mSimulatorPath + "point" + std::to_string(pointIndex) + "_keypoints.csv";
+        currKeyPointsFilename = this->mMapPath + "point" + std::to_string(pointIndex) + "_keypoints.csv";
         currKeyPoints = readKeyPoints(currKeyPointsFilename);
         offlineMapPoint = new OfflineMapPoint(cv::Point3d(point[0], point[1], point[2]), point[3], point[4], cv::Point3d(point[5], point[6], point[7]), bestKeyPoint, bestDescriptor, currKeyPoints, currDesc);
         this->mPoints.emplace_back(offlineMapPoint);
@@ -189,15 +189,15 @@ void Simulator::initPoints() {
     pointData.close();
 }
 
-Simulator::Simulator(bool isPartialMap) {
-    this->createSimulatorSettings();
+MapControl::MapControl(bool isPartialMap) {
+    this->createMapControlSettings();
 
     this->mIsPartialMap = isPartialMap;
 
     this->mPoints = std::vector<OfflineMapPoint*>();
 
-    this->mSimulatorPath = this->mData["simulatorPointsPath"];
-    this->mCloudPointPath = this->mSimulatorPath + "cloud0.csv";
+    this->mMapPath = this->mData["mapControlPointsPath"];
+    this->mCloudPointPath = this->mMapPath + "cloud0.csv";
 
     this->initPoints();
 
@@ -206,7 +206,7 @@ Simulator::Simulator(bool isPartialMap) {
     this->mRealResultPoint = cv::Point3d(RESULT_POINT_X, RESULT_POINT_Y, RESULT_POINT_Z);
     this->mResultPoint = cv::Point3d();
 
-    this->mSimulatorViewerTitle = "Simulator Viewer";
+    this->mMapControlViewerTitle = "Map Control Viewer";
     this->mResultsWindowTitle = "Results";
 
     this->mConfigPath = this->mData["DroneYamlPathSlam"];
@@ -236,7 +236,7 @@ Simulator::Simulator(bool isPartialMap) {
     this->mMovingScale = this->mData["movingScale"];
     this->mRotateScale = this->mData["rotateScale"];
 
-    this->build_window(this->mSimulatorViewerTitle);
+    this->build_window(this->mMapControlViewerTitle);
 
     this->mUseOrbSlam = this->mData["useOrbSlam"];
     this->mVocPath = this->mData["VocabularyPath"];
@@ -284,7 +284,7 @@ Simulator::Simulator(bool isPartialMap) {
     this->reset();
 }
 
-void Simulator::build_window(std::string title) {
+void MapControl::build_window(std::string title) {
     pangolin::CreateWindowAndBind(title, 1024, 768);
 
     // 3D Mouse handler requires depth testing to be enabled
@@ -295,7 +295,7 @@ void Simulator::build_window(std::string title) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
+std::vector<OfflineMapPoint*> MapControl::getPointsFromTcw() {
     // Check settings file
     cv::FileStorage fsSettings(this->mConfigPath, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
@@ -395,7 +395,7 @@ std::vector<OfflineMapPoint*> Simulator::getPointsFromTcw() {
     return seen_points;
 }
 
-void Simulator::reset() {
+void MapControl::reset() {
     this->mShowPoints = true;
     this->mFollow = true;
     this->mFollowCamera = true;
@@ -427,78 +427,82 @@ void Simulator::reset() {
     this->mPointsSeen = std::vector<OfflineMapPoint*>();
 }
 
-void Simulator::ToggleFollowCamera() {
+nlohmann::json MapControl::GetData() {
+    return this->mData;
+}
+
+void MapControl::ToggleFollowCamera() {
     this->mFollowCamera = !this->mFollowCamera;
 }
 
-void Simulator::ToggleShowPoints() {
+void MapControl::ToggleShowPoints() {
     this->mShowPoints = !this->mShowPoints;
 }
 
-void Simulator::DoReset() {
+void MapControl::DoReset() {
     this->mReset = true;
 }
 
-void Simulator::MoveLeft() {
+void MapControl::MoveLeft() {
     this->mMoveLeft = true;
 }
 
-void Simulator::MoveRight() {
+void MapControl::MoveRight() {
     this->mMoveRight = true;
 }
 
-void Simulator::MoveDown() {
+void MapControl::MoveDown() {
     this->mMoveDown = true;
 }
 
-void Simulator::MoveUp() {
+void MapControl::MoveUp() {
     this->mMoveUp = true;
 }
 
-void Simulator::MoveBackward() {
+void MapControl::MoveBackward() {
     this->mMoveBackward = true;
 }
 
-void Simulator::MoveForward() {
+void MapControl::MoveForward() {
     this->mMoveForward = true;
 }
 
-void Simulator::RotateLeft() {
+void MapControl::RotateLeft() {
     this->mRotateLeft = true;
 }
 
-void Simulator::RotateRight() {
+void MapControl::RotateRight() {
     this->mRotateRight = true;
 }
 
-void Simulator::RotateDown() {
+void MapControl::RotateDown() {
     this->mRotateDown = true;
 }
 
-void Simulator::RotateUp() {
+void MapControl::RotateUp() {
     this->mRotateUp = true;
 }
 
-void Simulator::FinishScan() {
+void MapControl::FinishScan() {
     this->mFinishScan = true;
 }
 
-void Simulator::applyUpToModelCam(double value) {
+void MapControl::applyUpToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 1] -= value;
 }
 
-void Simulator::applyRightToModelCam(double value) {
+void MapControl::applyRightToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 0] -= value;
 }
 
-void Simulator::applyForwardToModelCam(double value) {
+void MapControl::applyForwardToModelCam(double value) {
     // Values are opposite
     this->mTcw.m[3 * 4 + 2] -= value;
 }
 
-void Simulator::applyYawRotationToModelCam(double value) {
+void MapControl::applyYawRotationToModelCam(double value) {
     Eigen::Matrix4d Tcw_eigen = pangolin::ToEigen<double>(this->mTcw);
 
     // Values are opposite
@@ -525,7 +529,7 @@ void Simulator::applyYawRotationToModelCam(double value) {
     }
 }
 
-void Simulator::applyPitchRotationToModelCam(double value) {
+void MapControl::applyPitchRotationToModelCam(double value) {
     Eigen::Matrix4d Tcw_eigen = pangolin::ToEigen<double>(this->mTcw);
 
     // Values are opposite
@@ -552,7 +556,7 @@ void Simulator::applyPitchRotationToModelCam(double value) {
     }
 }
 
-void Simulator::drawMapPoints()
+void MapControl::drawMapPoints()
 {
     std::vector<OfflineMapPoint*> pointsExceptThisFrame = this->mPointsSeen;
     std::vector<OfflineMapPoint*>::iterator it;
@@ -622,7 +626,7 @@ bool areMatricesEqual(const pangolin::OpenGlMatrix& matrix1, const pangolin::Ope
     return true;
 }
 
-void Simulator::saveOnlyNewPoints() {
+void MapControl::saveOnlyNewPoints() {
     this->mNewPointsSeen = this->mCurrentFramePoints;
     std::vector<OfflineMapPoint*>::iterator it;
     for (it = this->mNewPointsSeen.begin(); it != this->mNewPointsSeen.end();)
@@ -644,7 +648,7 @@ void assignPreviousTwc(pangolin::OpenGlMatrix& matrix1, const pangolin::OpenGlMa
     }
 }
 
-void Simulator::trackOrbSlam() {
+void MapControl::trackOrbSlam() {
     // Create timestamp
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
@@ -667,7 +671,7 @@ void Simulator::trackOrbSlam() {
     this->mSystem->TrackMonocular(descriptors, keyPoints, timestamp);
 }
 
-void Simulator::Run() {
+void MapControl::Run() {
     pangolin::OpenGlMatrix previousTwc;
 
     while (!this->mFinishScan) {
@@ -772,31 +776,31 @@ void Simulator::Run() {
         }
     }
 
-    pangolin::DestroyWindow(this->mSimulatorViewerTitle);
+    pangolin::DestroyWindow(this->mMapControlViewerTitle);
     this->build_window(this->mResultsWindowTitle);
 
     this->BuildCloudScanned();
 }
 
-std::vector<OfflineMapPoint*> Simulator::GetCloudPoint() {
+std::vector<OfflineMapPoint*> MapControl::GetCloudPoint() {
     return this->mCloudScanned;
 }
 
-ORB_SLAM2::System* Simulator::GetSystem() {
+ORB_SLAM2::System* MapControl::GetSystem() {
     return this->mSystem;
 }
 
-void Simulator::BuildCloudScanned() {
+void MapControl::BuildCloudScanned() {
     // Erased mNewPointsSeen to only new points but not combined yet so insert both
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mNewPointsSeen.begin(), this->mNewPointsSeen.end());
     this->mCloudScanned.insert(this->mCloudScanned.end(), this->mPointsSeen.begin(), this->mPointsSeen.end());
 }
 
-void Simulator::SetResultPoint(const cv::Point3d resultPoint) {
+void MapControl::SetResultPoint(const cv::Point3d resultPoint) {
     this->mResultPoint = resultPoint;
 }
 
-void Simulator::drawResultPoints() {
+void MapControl::drawResultPoints() {
     // Remove result point and real result point from cloud scanned if exist
     for(int i = 0; i < this->mCloudScanned.size(); i++) {
         if (*this->mCloudScanned[i] == this->mResultPoint) {
@@ -839,11 +843,11 @@ void Simulator::drawResultPoints() {
     glEnd();
 }
 
-void Simulator::updateTwcByResultPoint() {
+void MapControl::updateTwcByResultPoint() {
     // TODO: Change Twc to center the result point when I do check results
 }
 
-void Simulator::CheckResults() {
+void MapControl::CheckResults() {
     this->mCloseResults = false;
 
     while (!this->mCloseResults) {
@@ -864,7 +868,7 @@ void Simulator::CheckResults() {
     pangolin::DestroyWindow(this->mResultsWindowTitle);
 }
 
-Simulator::~Simulator() {
+MapControl::~MapControl() {
     for (auto ptr : this->mPoints) {
         free(ptr);
     }

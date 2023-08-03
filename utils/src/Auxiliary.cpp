@@ -12,6 +12,14 @@ std::string Auxiliary::GetGeneralSettingsPath() {
     return settingPath;
 }
 
+std::string Auxiliary::GetDemoSettingsPath() {
+    char currentDirPath[256];
+    getcwd(currentDirPath, 256);
+    std::string settingPath = currentDirPath;
+    settingPath += "/../demoSettings.json";
+    return settingPath;
+}
+
 bool Auxiliary::isPointVisible(const cv::Point3f& point, const cv::Point3f& cameraPos, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree)
 {
     // Define the position and orientation of the camera

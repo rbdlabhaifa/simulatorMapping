@@ -65,7 +65,7 @@ bool pointInVec(cv::Point3d point, std::vector<cv::Point3d> points) {
 }
 
 int main() {
-    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::string settingPath = Auxiliary::GetDemoSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
@@ -74,11 +74,13 @@ int main() {
     // Run System
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
+    std::string mapLocation = data["fullMapLocation"];
     ORB_SLAM2::System SLAM = ORB_SLAM2::System( vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, true,
-                                               "/home/liam/simulatorMap.bin", false);
+                                               mapLocation, false);
 
     // Read all first frame points
-    std::vector<cv::Point3d> points = readPoints("/home/liam/firstFramePoints.csv");
+    std::string partialMapPath = data["savePartialPointsPath"];
+    std::vector<cv::Point3d> points = readPoints(partialMapPath);
 
     // Erase all points that don't in first frame
     std::vector<ORB_SLAM2::MapPoint*> points_to_erase;
@@ -119,7 +121,8 @@ int main() {
     }
 
     std::cout << "Points left in map: " << SLAM.GetMap()->GetAllMapPoints().size() << std::endl;
-    SLAM.SaveMap("/home/liam/a.bin");
+    std::string saveMapLocation = data["savePartialMapPath"];
+    SLAM.SaveMap(saveMapLocation);
 
     sleep(4);
 
