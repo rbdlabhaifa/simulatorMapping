@@ -83,11 +83,11 @@ namespace ORB_SLAM2
         mbFinished = false;
         if (isPangolinExists)
         {
-            pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+            pangolin::BindToContext("ORB-SLAM2: Map & Camera Viewer");
         }
         else
         {
-            pangolin::CreateWindowAndBind("ORB-SLAM2: Map Viewer", 1024, 768);
+            pangolin::CreateWindowAndBind("ORB-SLAM2: Map & Camera Viewer", 1300, 750);
         }
         // 3D Mouse handler requires depth testing to be enabled
         glEnable(GL_DEPTH_TEST);
@@ -125,15 +125,22 @@ namespace ORB_SLAM2
             pangolin::ProjectionMatrix(1024, 768, mViewpointF, mViewpointF, 512, 389, 0.1, 1000),
             pangolin::ModelViewLookAt(mViewpointX, mViewpointY, mViewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
 
+        pangolin::View& view1 = pangolin::Display("view1")
+            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f);
+
         // Add named OpenGL viewport to window and provide 3D Handler
-        pangolin::View &d_cam = pangolin::CreateDisplay()
+        pangolin::View& d_cam = pangolin::Display("cam")
                                     .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
                                     .SetHandler(new pangolin::Handler3D(s_cam));
 
+        pangolin::Display("multi")
+			.SetBounds(pangolin::Attach::Pix(175), 1.0, 0.0, 1.0)
+			.SetLayout(pangolin::LayoutEqualHorizontal)
+			.AddDisplay(d_cam)
+            .AddDisplay(view1);
+
         pangolin::OpenGlMatrix Twc;
         Twc.SetIdentity();
-
-        // cv::namedWindow("ORB-SLAM2: Current Frame");
 
         bool bFollow = true;
         bool bLocalizationMode = mbReuse;
@@ -204,16 +211,30 @@ namespace ORB_SLAM2
                     mpMapDrawer->DrawMapPoints(true, mPointsSeen, mNewPointsSeen);
                 }
             }
-            pangolin::FinishFrame();
+           
             if (!menuOpenSimulator)
             {
                 if (mpFrameDrawer != nullptr)
                 {
+
                     cv::Mat im = mpFrameDrawer->DrawFrame();
-                    cv::imshow("ORB-SLAM2: Current Frame", im);
-                    cv::waitKey(mT);
+                   /* cv::imshow("ORB-SLAM2: Current Frame", im);
+                    cv::waitKey(mT);*/
+
+                    pangolin::GlTexture imageTexture(im.cols, im.rows, GL_RGB, false, 0, GL_RGB, GL_UNSIGNED_BYTE);
+
+                    imageTexture.Upload(im.data, GL_BGR, GL_UNSIGNED_BYTE);
+
+                   view1.Activate();
+                   glColor3f(1.0f, 1.0f, 1.0f);
+                   imageTexture.RenderToViewportFlipY();
+
+                    
                 }
             }
+
+            pangolin::FinishFrame();
+
 
             if (menuMoveLeft)
             {
