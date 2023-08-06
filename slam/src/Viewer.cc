@@ -225,9 +225,9 @@ namespace ORB_SLAM2
 
                     imageTexture.Upload(im.data, GL_BGR, GL_UNSIGNED_BYTE);
 
-                   view1.Activate();
-                   glColor3f(1.0f, 1.0f, 1.0f);
-                   imageTexture.RenderToViewportFlipY();
+                    view1.Activate();
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                    imageTexture.RenderToViewportFlipY();
 
                     
                 }
