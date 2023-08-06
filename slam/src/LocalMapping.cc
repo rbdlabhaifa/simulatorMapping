@@ -653,19 +653,6 @@ namespace ORB_SLAM2
         for (vector<KeyFrame *>::iterator vit = vpLocalKeyFrames.begin(), vend = vpLocalKeyFrames.end(); vit != vend; vit++)
         {
             KeyFrame *pKF = *vit;
-            // cv::Point3f pkf_pos(pKF->GetCameraCenter());
-
-            // double dist_x = (current_pos.x - pkf_pos.x);
-            // double dist_y = (current_pos.y - pkf_pos.y);
-            // double dist_z = (current_pos.z - pkf_pos.z);
-
-            // double dist = dist_x*dist_x + dist_y*dist_y + dist_z*dist_z;
-            // std::cout << "dist: "<< dist << std::endl;
-            // if(dist < 0.001){
-            //     mpCurrentKeyFrame->SetBadFlag();
-            //     break;
-            // }
-            // continue;
             if (pKF->mnId == 0)
                 continue;
             const vector<MapPoint *> vpMapPoints = pKF->GetMapPointMatches();
