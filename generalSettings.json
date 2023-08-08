@@ -1,5 +1,5 @@
 {
-  "VocabularyPath": "E:\\rbdlabRepo\\simulatorMapping\\Vocabulary\\ORBvoc.bin",
+  "VocabularyPath": "E:\\rbdlabRepo\\simulatorMapping\\Thirdparty\\DBow3\\orbvoc.dbow3",
   "DroneYamlPathSlam": "E:\\rbdlabRepo\\simulatorMapping\\config\\tello_9F5EC2_640.yaml",
   "offlineVideoTestPath": "C:\\Users\\tzuk\\Downloads\\mapping.avi",
   "onlineVideoPath": "udp://0.0.0.0:11111?overrun_nonfatal=1&fifo_size=1000",

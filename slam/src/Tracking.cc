@@ -371,8 +371,6 @@ namespace ORB_SLAM2
             else
             {
                 // Only Tracking: Local Mapping is deactivated
-                // BAR
-                // mState = LOST;
                 if (mState == LOST)
                 {
                     bOK = Relocalization();

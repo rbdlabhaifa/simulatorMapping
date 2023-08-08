@@ -20,8 +20,7 @@
 
 #include "Initializer.h"
 
-#include "DUtils/Random.h"
-
+#include <random>
 #include "Optimizer.h"
 #include "ORBmatcher.h"
 
@@ -77,16 +76,19 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     // Generate sets of 8 points for each RANSAC iteration
     mvSets = vector< vector<size_t> >(mMaxIterations,vector<size_t>(8,0));
 
-    DUtils::Random::SeedRandOnce(0);
-
+    
+    std::random_device rd;
+    std::mt19937 generator(rd());
     for(int it=0; it<mMaxIterations; it++)
     {
         vAvailableIndices = vAllIndices;
-
+       
         // Select a minimum set
         for(size_t j=0; j<8; j++)
         {
-            int randi = DUtils::Random::RandomInt(0,vAvailableIndices.size()-1);
+            
+            std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
+            int randi = distribution(generator);
             int idx = vAvailableIndices[randi];
 
             mvSets[it][j] = idx;

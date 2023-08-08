@@ -70,7 +70,7 @@ namespace ORB_SLAM2
                 ProcessNewKeyFrame();
 
                 // Check recent MapPoints
-                // BAR
+               
                 MapPointCulling();
 
                 // Triangulate new MapPoints
@@ -79,7 +79,7 @@ namespace ORB_SLAM2
                 if (!CheckNewKeyFrames())
                 {
                     // Find more matches in neighbor keyframes and fuse point duplications
-                    // BAR
+                    
                     SearchInNeighbors();
                 }
 
@@ -88,16 +88,9 @@ namespace ORB_SLAM2
                 if (!CheckNewKeyFrames() && !stopRequested())
                 {
                     // Local BA
-
-                    // BAR
-                    auto start = get_time2();
                     if (mpMap->KeyFramesInMap() > 2)
                         Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpMap);
-                    auto end = get_time2();
-                    // std::cout << "Bundle Adjustment time: " << get_time_diff2(start, end) << std::endl;
-
-                    // Check redundant local Keyframes
-                    // BAR
+                    
                     KeyFrameCulling();
                 }
 

@@ -120,14 +120,14 @@ namespace ORB_SLAM2
         // This is the lowest score to a connected keyframe in the covisibility graph
         // We will impose loop candidates to have a higher similarity than this
         const vector<KeyFrame *> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
-        const DBoW2::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
+        const DBoW3::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
         float minScore = 1;
         for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++)
         {
             KeyFrame *pKF = vpConnectedKeyFrames[i];
             if (pKF->isBad())
                 continue;
-            const DBoW2::BowVector &BowVec = pKF->mBowVec;
+            const DBoW3::BowVector &BowVec = pKF->mBowVec;
 
             float score = mpORBVocabulary->score(CurrentBowVec, BowVec);
 
@@ -139,7 +139,6 @@ namespace ORB_SLAM2
         vector<KeyFrame *> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
 
         // If there are no loop candidates, just add new keyframe and return false
-        // BAR
         if (vpCandidateKFs.empty())
         {
             mpKeyFrameDB->add(mpCurrentKF);

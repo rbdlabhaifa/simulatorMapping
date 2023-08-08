@@ -20,12 +20,13 @@ add_subdirectory(Thirdparty)
 find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/Thirdparty/Pangolin")
 
 include_directories(
+${OpenCV_INCLUDE_DIRS}
             ${EIGEN3_INCLUDE_DIR}        
         ${Pangolin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/
-        ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/
+        ${PROJECT_SOURCE_DIR}/Thirdparty/
         ${PROJECT_SOURCE_DIR}/utils
         ${PROJECT_SOURCE_DIR}/slam/include/
         ${PROJECT_SOURCE_DIR}/tools
@@ -63,7 +64,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         ${EIGEN3_LIBS}
         ${Pangolin_LIBRARIES}
         g2o
-        DBoW2
+        DBoW3
         Threads::Threads Boost::boost Boost::serialization Boost::system ${PYTHON_LIBRARIES} nlohmann_json::nlohmann_json
         )
 add_library(simulator tools/simulator.cpp)

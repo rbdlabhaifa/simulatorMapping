@@ -51,12 +51,11 @@
 #include <iostream>
 
 #include "PnPsolver.h"
-
+#include <random>
 #include <vector>
 #include <cmath>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
-#include "DUtils/Random.h"
 #include <algorithm>
 
 using namespace std;
@@ -184,11 +183,13 @@ namespace ORB_SLAM2
       reset_correspondences();
 
       vAvailableIndices = mvAllIndices;
-
+      std::random_device rd;  // Seed for the random number generator
+      std::mt19937 generator(rd()); // Mersenne Twister 19937 random number engine
+      std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
       // Get min set of points
       for (short i = 0; i < mRansacMinSet; ++i)
       {
-        int randi = DUtils::Random::RandomInt(0, vAvailableIndices.size() - 1);
+        int randi = distribution(generator);
 
         int idx = vAvailableIndices[randi];
 
