@@ -183,12 +183,14 @@ namespace ORB_SLAM2
       reset_correspondences();
 
       vAvailableIndices = mvAllIndices;
-      std::random_device rd;  // Seed for the random number generator
-      std::mt19937 generator(rd()); // Mersenne Twister 19937 random number engine
-      std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
+      std::mt19937 generator(rd()); 
+      
       // Get min set of points
       for (short i = 0; i < mRansacMinSet; ++i)
       {
+          std::random_device rd;
+
+        std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
         int randi = distribution(generator);
 
         int idx = vAvailableIndices[randi];
