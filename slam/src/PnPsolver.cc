@@ -183,13 +183,13 @@ namespace ORB_SLAM2
       reset_correspondences();
 
       vAvailableIndices = mvAllIndices;
-      std::mt19937 generator(rd()); 
+     
       
       // Get min set of points
       for (short i = 0; i < mRansacMinSet; ++i)
       {
           std::random_device rd;
-
+          std::mt19937 generator(rd());
         std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
         int randi = distribution(generator);
 
