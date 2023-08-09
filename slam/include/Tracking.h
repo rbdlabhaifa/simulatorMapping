@@ -115,7 +115,7 @@ public:
     bool mbOnlyTracking;
 
     void Reset();
-
+    KeyFrame* getLastKeyFrame() { return mpLastKeyFrame; }
 protected:
 
     // Main tracking function. It is independent of the input sensor.

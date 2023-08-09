@@ -111,7 +111,6 @@ namespace ORB_SLAM2
         void Reset();
 
         Map *GetMap();
-
         inline MapDrawer *GetMapDrawer()
         {
             return mpMapDrawer;
