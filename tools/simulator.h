@@ -117,6 +117,7 @@ public:
     */
    void setTrack(bool value) { track = value; }
  void simulatorRunThread();
+ std::shared_ptr<ORB_SLAM2::System> GetSLAM() { return SLAM; }
 private:
    /**
     * @brief A map for controlling the virtual robot's actions.

@@ -68,15 +68,8 @@ namespace ORB_SLAM2
         mpVocabulary = new ORBVocabulary();
         cout << endl
              << "Loading ORB Vocabulary. This could take a while..." << endl;
-        bool bVocLoad = false; // chose loading method based on file extension
-        if (has_suffix(strVocFile, ".txt")) {
-            bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        }
-        else {
-            bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
-
-        }
-
+        bool bVocLoad = true; // chose loading method based on file extension
+        mpVocabulary->load(strVocFile);
         // bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
         if (!bVocLoad)
         {
@@ -147,7 +140,6 @@ namespace ORB_SLAM2
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor, bReuse);
 
-        // BAR
         if (continue_mapping)
             mpTracker->InformOnlyTracking(false);
 
