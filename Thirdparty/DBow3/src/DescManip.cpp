@@ -137,11 +137,11 @@ std::string DescManip::toString(const cv::Mat &a)
 {
     stringstream ss;
     //introduce a magic value to distinguish from DBOw2
-    ss<<"dbw3 ";
+    //ss<<"dbw3 ";
     //save size and type
 
 
-    ss <<a.type()<<" "<<a.cols<<" ";
+    //ss <<a.type()<<" "<<a.cols<<" ";
 
     if (a.type()==CV_8U){
         const unsigned char *p = a.ptr<unsigned char>();
