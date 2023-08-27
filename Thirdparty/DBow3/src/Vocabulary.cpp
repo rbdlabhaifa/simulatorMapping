@@ -159,10 +159,10 @@ void Vocabulary::create(
   m_words.clear();
 
   // expected_nodes = Sum_{i=0..L} ( k^i )
-    int expected_nodes =
-        (int)((pow((double)m_k, (double)m_L + 1) - 1)/(m_k - 1));
+    //unsigned long expected_nodes =
+        //(unsigned long)((pow((double)m_k, (double)m_L + 1) - 1)/(double(m_k) - 1));
 
-  m_nodes.reserve(expected_nodes); // avoid allocations when creating the tree
+  //m_nodes.reserve(expected_nodes); // avoid allocations when creating the tree
 
 
   std::vector<cv::Mat> features;
@@ -369,10 +369,10 @@ void Vocabulary::HKmeansStep(NodeId parent_id,
     if(current_level < m_L)
     {
         // iterate again with the resulting clusters
-        const std::vector<NodeId> &children_ids = m_nodes[parent_id].children;
+        //const std::vector<NodeId> &children_ids = m_nodes[parent_id].children;
         for(unsigned int i = 0; i < clusters.size(); ++i)
         {
-            NodeId id = children_ids[i];
+            NodeId id = m_nodes[parent_id].children[i];
 
             std::vector<cv::Mat> child_features;
             child_features.reserve(groups[i].size());
@@ -497,17 +497,13 @@ void Vocabulary::createWords()
 
   if(!m_nodes.empty())
   {
-    m_words.reserve( (int)pow((double)m_k, (double)m_L) );
-
-
-    auto  nit = m_nodes.begin(); // ignore root
-    for(++nit; nit != m_nodes.end(); ++nit)
-    {
-      if(nit->isLeaf())
-      {
-        nit->word_id = m_words.size();
-        m_words.push_back( &(*nit) );
-      }
+    //m_words.reserve( (int)pow((double)m_k, (double)m_L) );
+    for (auto& nit : m_nodes) {
+        if (nit.isLeaf())
+        {
+            nit.word_id = m_words.size();
+            m_words.push_back(&(nit));
+        }
     }
   }
 }
@@ -1065,9 +1061,17 @@ void Vocabulary::save(const std::string &filename,  bool binary_compressed) cons
 {
 
     if ( filename.find(".yml")==std::string::npos){
-        std::ofstream file_out(filename,std::ios::binary);
-        if (!file_out) throw std::runtime_error("Vocabulary::saveBinary Could not open file :"+filename+" for writing");
-        toStream(file_out,binary_compressed);
+        if (filename.find(".bin") == std::string::npos)
+        {
+            saveToTextFile(filename);
+
+        }
+        else {
+            std::ofstream file_out(filename, std::ios::binary);
+            if (!file_out) throw std::runtime_error("Vocabulary::saveBinary Could not open file :" + filename + " for writing");
+            toStream(file_out, binary_compressed);
+        }
+        
     }
     else{
         cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
@@ -1078,21 +1082,43 @@ void Vocabulary::save(const std::string &filename,  bool binary_compressed) cons
 
 // --------------------------------------------------------------------------
 
+void Vocabulary::saveToTextFile(const std::string& filename) const{
+    std::fstream f;
+    f.open(filename.c_str(), std::ios_base::out);
+    f << m_k << " " << m_L << " " << " " << m_scoring << " " << m_weighting << std::endl;
 
-void Vocabulary::load(const std::string &filename)
+    for (size_t i = 1; i < m_nodes.size(); i++) {
+        const Node& node = m_nodes[i];
+
+        f << node.parent << " ";
+        if (node.isLeaf())
+            f << 1 << " ";
+        else
+            f << 0 << " ";
+
+        f << DescManip::toString(node.descriptor) << " " << (double)node.weight << std::endl;
+    }
+
+    f.close();
+}
+bool Vocabulary::load(const std::string &filename)
 {
     //check first if it is a binary file
     std::ifstream ifile(filename,std::ios::binary);
-    if (!ifile) throw std::runtime_error("Vocabulary::load Could not open file :"+filename+" for reading");
+    if (!ifile) return false;
     if(!load(ifile)) {
         if ( filename.find(".txt")!=std::string::npos) {
 	    load_fromtxt(filename);
-	} else {
+        }else if(filename.find(".bin") != std::string::npos) {
+            return true;
+        }
+        else {
 	    cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
 	    if(!fs.isOpened()) throw std::string("Could not open file ") + filename;
 	    load(fs);
 	}
     }
+    return true;
 }
 
 
@@ -1288,7 +1314,7 @@ void Vocabulary:: load_fromtxt(const std::string &filename)throw(std::runtime_er
        while(!ifile.eof()){
            std::string snode;
            getline(ifile,snode);
-           if (counter++%100==0)std::cerr<<".";
+           //if (counter++%100==0)std::cerr<<".";
           // std::cout<<snode<<std::endl;
            if (snode.size()==0)break;
            std::stringstream ssnode(snode);

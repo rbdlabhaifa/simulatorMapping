@@ -248,12 +248,12 @@ public:
    * @param filename
    */
   void save(const std::string &filename, bool binary_compressed=true) const;
-
+  void saveToTextFile(const std::string& filename) const;
   /**
    * Loads the vocabulary from a file created with save
    * @param filename.
    */
-  void load(const std::string &filename);
+  bool load(const std::string &filename);
 
   /**
    * Loads the vocabulary from an input stream created with save

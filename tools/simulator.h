@@ -143,6 +143,7 @@ private:
    std::shared_ptr < ORB_SLAM2::ORBextractor> orbExtractor;
    std::string simulatorOutputDir;
    bool stopFlag;
+   bool stopFlagSLAM;
    bool ready;
 
    bool saveMapSignal;
@@ -152,15 +153,20 @@ private:
    std::string modelTextureNameToAlignTo;
    std::vector<Eigen::Vector3d> Picks_w;
    bool isSaveMap;
+   bool isInitalized;
+   bool isLocalized;
    bool trackImages;
    bool cull_backfaces;
    pangolin::GlSlProgram program;
    pangolin::GlGeometry geomToRender;
    Eigen::Vector2i viewportDesiredSize;
    cv::Mat Tcw;
+   cv::Mat currentImg;
    std::mutex locationLock;
+   std::mutex imgLock;
 
-  
+   void SLAMThread();
+   bool feedSLAM(cv::Mat& img);
 
    void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
                        Eigen::MatrixXf &surface);
