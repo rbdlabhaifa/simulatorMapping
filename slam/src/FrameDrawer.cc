@@ -36,7 +36,6 @@ namespace ORB_SLAM2 {
         mIm = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
     }
 
-    // to do: make a void function and use draw arrays from opengl to draw the points (circles and rectangles)
     void FrameDrawer::DrawFrame() {
         cv::Mat im;
         vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
@@ -85,7 +84,6 @@ namespace ORB_SLAM2 {
         glBindTexture(GL_TEXTURE_2D, texture[1]);
         glBindTexture(GL_TEXTURE_2D, texture[0]);
 
-        //make the gl_lines draw on top of imagetexture
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -94,17 +92,14 @@ namespace ORB_SLAM2 {
         glLineWidth(2.0f);
 
         //Draw
-        // make it in GL
         if (state == Tracking::NOT_INITIALIZED) //INITIALIZING
         {
 
-            // lines
             glBegin(GL_LINES);
             glColor3f(0, 1.0f, 0);
             for (unsigned int i = 0; i < vMatches.size(); i++) {
                 if (vMatches[i] >= 0 && !vCurrentKeys.empty() && vCurrentKeys.size() > i) {
 
-                    // draw the lines between the matches
                     float x1 = ((2 * vIniKeys[i].pt.x / imWithInfo.cols) - 1.0f);
                     float y1 = ((2 * vIniKeys[i].pt.y / imWithInfo.rows) - 1.0f);
                     float x2 = ((2 * vCurrentKeys[vMatches[i]].pt.x / imWithInfo.cols) - 1.0f);
@@ -130,7 +125,6 @@ namespace ORB_SLAM2 {
                     // This is a match to a MapPoint in the map
                     if (vbMap[i]) {
 
-                        // draw rectangle
                         glColor3f(0, 1.0f, 0);
                         glBegin(GL_LINE_LOOP);
                         glVertex2f(x1 - width, y1 - width);
