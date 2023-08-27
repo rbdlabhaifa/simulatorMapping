@@ -40,13 +40,27 @@ class Viewer;
 class FrameDrawer
 {
 public:
+
+    vector<int> currVMatches;
+    vector<cv::KeyPoint> currVIniKeys;
+    vector<cv::KeyPoint> currVCurrentKeys;
+    int currState;
+    int currmnTracked = 0;
+    int currmnTrackedVO = 0;
+    vector<bool> currmvbMap, currmvbVO;
+    int currN;
+
     FrameDrawer(Map* pMap, bool bReuse);
 
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame();
+    void DrawFrame();
+
+    void FrameDrawer::DrawFrameGl();
+
+    cv::Mat RetImage();
 
 protected:
 

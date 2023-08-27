@@ -28,9 +28,9 @@
 namespace ORB_SLAM2
 {
 
-    Viewer::Viewer(System *pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Tracking *pTracking,
-                   const string &strSettingPath, bool bReuse, bool isPangolinExists) : mpSystem(pSystem), mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpTracker(pTracking),
-                                                                                       mbFinishRequested(false), mbFinished(true), mbStopped(false), mbStopRequested(false)
+    Viewer::Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking* pTracking,
+        const string& strSettingPath, bool bReuse, bool isPangolinExists) : mpSystem(pSystem), mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpTracker(pTracking),
+        mbFinishRequested(false), mbFinished(true), mbStopped(false), mbStopRequested(false)
     {
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
@@ -130,13 +130,13 @@ namespace ORB_SLAM2
 
         // Add named OpenGL viewport to window and provide 3D Handler
         pangolin::View& d_cam = pangolin::Display("cam")
-                                    .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
-                                    .SetHandler(new pangolin::Handler3D(s_cam));
+            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
+            .SetHandler(new pangolin::Handler3D(s_cam));
 
         pangolin::Display("multi")
-			.SetBounds(pangolin::Attach::Pix(175), 1.0, 0.0, 1.0)
-			.SetLayout(pangolin::LayoutEqualHorizontal)
-			.AddDisplay(d_cam)
+            .SetBounds(pangolin::Attach::Pix(175), 1.0, 0.0, 1.0)
+            .SetLayout(pangolin::LayoutEqualHorizontal)
+            .AddDisplay(d_cam)
             .AddDisplay(view1);
 
         pangolin::OpenGlMatrix Twc;
@@ -211,23 +211,172 @@ namespace ORB_SLAM2
                     mpMapDrawer->DrawMapPoints(true, mPointsSeen, mNewPointsSeen);
                 }
             }
-           
+
             if (!menuOpenSimulator)
             {
                 if (mpFrameDrawer != nullptr)
                 {
-
-                    cv::Mat im = mpFrameDrawer->DrawFrame();
-                   /* cv::imshow("ORB-SLAM2: Current Frame", im);
-                    cv::waitKey(mT);*/
-
-                    pangolin::GlTexture imageTexture(im.cols, im.rows, GL_RGB, false, 0, GL_RGB, GL_UNSIGNED_BYTE);
-
-                    imageTexture.Upload(im.data, GL_BGR, GL_UNSIGNED_BYTE);
-
                     view1.Activate();
+
                     glColor3f(1.0f, 1.0f, 1.0f);
+                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+                    mpFrameDrawer->DrawFrame();
+                    // moved the functions up
+                    cv::Mat rawIm = mpFrameDrawer->RetImage();
+                    pangolin::GlTexture imageTexture(rawIm.cols, rawIm.rows, GL_RGB, false, 0, GL_RGB, GL_UNSIGNED_BYTE);
+                    imageTexture.Upload(rawIm.data, GL_BGR, GL_UNSIGNED_BYTE);
                     imageTexture.RenderToViewportFlipY();
+
+                    GLuint texture[2];
+                    glGenTextures(2, texture);
+                    glBindTexture(GL_TEXTURE_2D, texture[1]);
+                    glBindTexture(GL_TEXTURE_2D, texture[0]);
+
+                    int state = mpFrameDrawer->currState;
+                    cout << "state: " << state << endl;
+                    cout << "currState: " << mpFrameDrawer->currState << endl;
+
+                    //make the gl_lines draw on top of imagetexture
+                    glDisable(GL_DEPTH_TEST);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    glEnable(GL_LINE_SMOOTH);
+                    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+                    glLineWidth(2.0f);
+
+
+                    vector<int> vMatches = mpFrameDrawer->currVMatches;
+                    vector<cv::KeyPoint> vIniKeys = mpFrameDrawer->currVIniKeys;
+                    vector<cv::KeyPoint> vCurrentKeys = mpFrameDrawer->currVCurrentKeys;
+                    int mnTracked = mpFrameDrawer->currmnTracked;
+                    int mnTrackedVO = mpFrameDrawer->currmnTrackedVO;
+                    vector<bool> vbVO = mpFrameDrawer->currmvbVO;
+                    vector<bool> vbMap = mpFrameDrawer->currmvbMap;
+                    int N = mpFrameDrawer->currN;
+
+                    cout << "state is: " << state << endl;
+                    cout << "N is: " << N << endl;
+
+                    if (state == 1) //INITIALIZING
+                    {
+
+                        // lines
+                        glBegin(GL_LINES);
+                        glColor3f(0, 1.0f, 0);
+                        for (unsigned int i = 0; i < vMatches.size(); i++) {
+                            if (vMatches[i] >= 0 && !vCurrentKeys.empty() && vCurrentKeys.size() > i) {
+
+                                // draw the lines between the matches
+                                float x1 = ((2 * vIniKeys[i].pt.x / mImageWidth) - 1.0f);
+								float y1 = ((2 * vIniKeys[i].pt.y / mImageHeight) - 1.0f);
+								float x2 = ((2 * vCurrentKeys[vMatches[i]].pt.x / mImageWidth) - 1.0f);
+								float y2 = ((2 * vCurrentKeys[vMatches[i]].pt.y / mImageHeight) - 1.0f);
+								glVertex3f(x1, y1, 0);
+                                glVertex3f(x2, y2, 0);
+
+                            }
+                        }
+                        glEnd();
+                    }
+                    else if (state == 2){ //TRACKING
+                    
+                        mnTracked = 0;
+                        mnTrackedVO = 0;
+                        const float r = 5;
+                        for (int i = 0; i < N; i++) {
+                            if ((i < vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
+                                float x1 = ((2 * vCurrentKeys[i].pt.x / mImageWidth) - 1.0f);
+                                float y1 = ((2 * vCurrentKeys[i].pt.y / mImageHeight) - 1.0f);
+                                float width = 0.01f;
+                            
+                                // This is a match to a MapPoint in the map
+                                if (vbMap[i]) {
+                                    
+                                    // draw rectangle
+                                    glColor3f(0, 1.0f, 0);
+                                    glBegin(GL_LINE_LOOP);
+                                    glVertex2f(x1 - width, y1 - width);
+                                    glVertex2f(x1 - width, y1 + width);
+                                    glVertex2f(x1 + width, y1 + width);
+                                    glVertex2f(x1 + width, y1 - width);
+                                    glEnd();
+
+                                    glBegin(GL_POINTS);
+                                    glVertex2f(x1, y1);
+                                    glEnd();
+
+         //                           //draw circle around the point
+         //                           glBegin(GL_LINE_LOOP);
+									//glColor3f(1.0f, 0, 0);
+         //                           for (int j = 0; j < 360; j++)
+         //                           {
+         //                               float degInRad = 2 * 3.142 * j / 300;
+         //                               glVertex2f(cos(degInRad)*width + x1, sin(degInRad)*r + y1);
+         //                           }
+         //                           glEnd();
+
+                                    mnTracked++;
+                                }
+                                else // This is match to a "visual odometry" MapPoint created in the last frame
+                                {
+                                    glColor3f(0, 1.0f, 0);
+                                    glBegin(GL_LINE_LOOP);
+                                    glVertex2f(x1 - width, y1 - width);
+                                    glVertex2f(x1 - width, y1 + width);
+                                    glVertex2f(x1 + width, y1 + width);
+                                    glVertex2f(x1 + width, y1 - width);
+                                    glEnd();
+
+                                    glBegin(GL_POINTS);
+                                    glVertex2f(x1, y1);
+                                    glEnd();
+
+
+                                    ////draw circle around the point
+                                    //glBegin(GL_LINE_LOOP);
+                                    //glColor3f(1.0f, 0, 0);
+                                    //for (int j = 0; j < 360; j++)
+                                    //{
+                                    //    float degInRad = 2 * 3.142 * j / 300;
+                                    //    glVertex2f(cos(degInRad) * width + x1, sin(degInRad) * r + y1);
+                                    //}
+                                    //glEnd();
+                                    mnTrackedVO++;
+                                }
+                            }
+                        }
+                        mpFrameDrawer->currmnTracked = mnTracked;
+                        mpFrameDrawer->currmnTrackedVO = mnTrackedVO;
+                    }
+                                       
+                    //// List coordinates of a triangle
+                    //// These vertices will be relative to the coordinates of the window
+                    //// which default in OpenGL to +/- 1.0 in X and Y (first two vertex ordinates)
+                    //const float vertices[] = {
+                    //    -0.5f, -0.5f, 0.0f,
+                    //     0.5f, -0.5f, 0.0f,
+                    //     0.0f,  0.5f, 0.0f
+                    //};
+
+                    //// We want our triangle to be a pleasant shade of blue!
+                    //glColor3f(0.29f, 0.71f, 1.0f);
+
+                    //// Clear the window
+                    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                    //// This buffer contains floating point vertices with 3 dimensions.
+                    //// They starts from the 0th element and are packed without padding.
+                    //glVertexPointer(3, GL_FLOAT, 0, vertices);
+
+                    //// Use Them!
+                    //glEnableClientState(GL_VERTEX_ARRAY);
+
+                    //// Connect the first 3 of these vertices to form a triangle!
+                    //glDrawArrays(GL_TRIANGLES, 0, 3);
+
+                    //// Disable the stuff we enabled...
+                    //glDisableClientState(GL_VERTEX_ARRAY);
 
                     
                 }
