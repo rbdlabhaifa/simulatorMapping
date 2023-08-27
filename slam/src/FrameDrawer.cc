@@ -36,49 +36,6 @@ namespace ORB_SLAM2 {
         mIm = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
     }
 
-    cv::Mat FrameDrawer::RetImage() {
-        cv::Mat im;
-        vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
-        vector<int> vMatches; // Initialization: correspondeces with reference keypoints
-        vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
-        vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
-        int state; // Tracking state
-
-        //Copy variables within scoped mutex
-        {
-            unique_lock<mutex> lock(mMutex);
-            state = mState;
-            if (mState == Tracking::SYSTEM_NOT_READY)
-                mState = Tracking::NO_IMAGES_YET;
-
-            mIm.copyTo(im);
-
-            currState = state;
-
-            if (mState == Tracking::NOT_INITIALIZED) {
-                vCurrentKeys = mvCurrentKeys;
-                vIniKeys = mvIniKeys;
-                vMatches = mvIniMatches;
-            }
-            else if (mState == Tracking::OK) {
-                vCurrentKeys = mvCurrentKeys;
-                vbVO = mvbVO;
-                vbMap = mvbMap;
-            }
-            else if (mState == Tracking::LOST) {
-                vCurrentKeys = mvCurrentKeys;
-            }
-        } // destroy scoped mutex -> release mutex
-
-        if (!im.empty() && im.channels() < 3) //this should be always true
-            cvtColor(im, im, CV_GRAY2BGR);
-
-        cv::Mat imWithInfo;
-        DrawTextInfo(im, state, imWithInfo);
-
-        return imWithInfo;
-	}
-
     // to do: make a void function and use draw arrays from opengl to draw the points (circles and rectangles)
     void FrameDrawer::DrawFrame() {
         cv::Mat im;

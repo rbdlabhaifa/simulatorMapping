@@ -40,7 +40,6 @@ class Viewer;
 class FrameDrawer
 {
 public:
-
     FrameDrawer(Map* pMap, bool bReuse);
 
     // Update info from the last processed frame.
@@ -48,8 +47,6 @@ public:
 
     // Draw last processed frame.
     void DrawFrame();
-
-    cv::Mat RetImage();
 
 protected:
 
