@@ -46,7 +46,7 @@ public:
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame();
+    void DrawFrame();
 
 protected:
 
