@@ -121,9 +121,6 @@ namespace ORB_SLAM2 {
             mnTracked = 0;
             mnTrackedVO = 0;
             const float r = 5;
-            currmvbMap = vbMap;
-            currmvbVO = vbVO;
-            currN = N;
             for (int i = 0; i < N; i++) {
                 if ((i < vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
                     float x1 = ((2 * vCurrentKeys[i].pt.x / imWithInfo.cols) - 1.0f);
