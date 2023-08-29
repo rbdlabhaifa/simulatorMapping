@@ -66,6 +66,7 @@ bool Simulator::feedSLAM(cv::Mat& img) {
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto value = now_ms.time_since_epoch();
     double timestamp = value.count() / 1000.0;
+    locationLock.lock();
     if (trackImages)
     {
         Tcw = SLAM->TrackMonocular(img, timestamp);
@@ -77,6 +78,7 @@ bool Simulator::feedSLAM(cv::Mat& img) {
         orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
         Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
     }
+    locationLock.unlock();
     auto state = SLAM->GetTracker()->mState;
     isInitalized = !(state == SLAM->GetTracker()->NOT_INITIALIZED);
     return state == SLAM->GetTracker()->OK;
@@ -87,9 +89,7 @@ void Simulator::SLAMThread() {
             imgLock.lock();
             cv::Mat img = currentImg.clone();
             imgLock.unlock();
-            locationLock.lock();
             isLocalized = feedSLAM(img);
-            locationLock.unlock();
         }
         else {
             Sleep(1);
@@ -175,6 +175,7 @@ void Simulator::simulatorRunThread()
     int width = d_cam.v.w;
     int height = d_cam.v.h;
     std::thread slamThread;
+    slamThread = std::move(std::thread(&Simulator::SLAMThread, this));
     while (!pangolin::ShouldQuit() && !stopFlag)
     {
         ready = true;
@@ -221,21 +222,7 @@ void Simulator::simulatorRunThread()
                 std::cout << "new map saved to " << simulatorOutputDir + "/simulatorCloudPoint" + currentTime + ".bin"
                     << std::endl;
             }
-            /*if (!isInitalized)
-            {
-                if (feedSLAM(currentImg))
-                {
-                    isInitalized = true;
-                    if (slamThread.joinable())
-                    {
-                        stopFlagSLAM = true;
-                        slamThread.join();
-                        stopFlagSLAM = false;
-                    }
-                  slamThread = std::move(std::thread(&Simulator::SLAMThread, this));
-                }
-            }*/
-            feedSLAM(currentImg);
+            
             //             drawPoints(seenPoints, keypoint_points);
         }
         else {

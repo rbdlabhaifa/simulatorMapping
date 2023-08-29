@@ -644,7 +644,7 @@ namespace ORB_SLAM2
         else
         {
             // Try to initialize
-            if ((int)mCurrentFrame.mvKeys.size() <= 100)
+            if ((int)mCurrentFrame.mvKeys.size() <= 60)
             {
 
                 // cout << __FUNCTION__ << "old.The Key Frame-s points are less: " << mCurrentFrame.mvKeys.size() << endl;
@@ -658,7 +658,7 @@ namespace ORB_SLAM2
             ORBmatcher matcher(0.9, true);
             int nmatches = matcher.SearchForInitialization(mInitialFrame, mCurrentFrame, mvbPrevMatched, mvIniMatches);
             // Check if there are enough correspondences
-            if (nmatches < 100)
+            if (nmatches < 60)
             {
                 cout << __FUNCTION__ << "ORB extraction : No enough correspondesnces(<100) " << nmatches << endl;
                 delete mpInitializer;
@@ -749,9 +749,9 @@ namespace ORB_SLAM2
         float medianDepth = pKFini->ComputeSceneMedianDepth(2);
         float invMedianDepth = 1.0f / medianDepth;
 
-        if (medianDepth < 0 || pKFcur->TrackedMapPoints(1) < 100)
+        if (medianDepth < 0 || pKFcur->TrackedMapPoints(1) < 30)
         {
-            cout << "Wrong initialization, reseting... map points(100):"
+            cout << "Wrong initialization, reseting... map points(30):"
                  << pKFcur->TrackedMapPoints(1)
                  << " medianDepth = " << medianDepth << endl;
             Reset();
