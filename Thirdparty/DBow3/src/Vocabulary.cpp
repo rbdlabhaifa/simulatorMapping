@@ -505,6 +505,7 @@ void Vocabulary::createWords()
             m_words.push_back(&(nit));
         }
     }
+    std::cout << "done creating words" << std::endl;
   }
 }
 
