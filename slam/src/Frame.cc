@@ -331,7 +331,7 @@ namespace ORB_SLAM2 {
         mRcw = mTcw.rowRange(0, 3).colRange(0, 3);
         mRwc = mRcw.t();
         mtcw = mTcw.rowRange(0, 3).col(3);
-        mOw = -mRcw.t() * mtcw;
+        mOw = -mRwc * mtcw;
     }
 
     bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit) {

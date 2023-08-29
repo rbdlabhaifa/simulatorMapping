@@ -1330,110 +1330,111 @@ namespace ORB_SLAM2
             rotHist[i].reserve(500);
         const float factor = 1.0f / HISTO_LENGTH;
 
-        const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0, 3).colRange(0, 3);
-        const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0, 3).col(3);
+        const cv::Mat Rcw = CurrentFrame.mRcw;
+        const cv::Mat tcw = CurrentFrame.mtcw;
 
-        const cv::Mat twc = -Rcw.t() * tcw;
+        const cv::Mat twc = CurrentFrame.mOw;
 
-        const cv::Mat Rlw = LastFrame.mTcw.rowRange(0, 3).colRange(0, 3);
-        const cv::Mat tlw = LastFrame.mTcw.rowRange(0, 3).col(3);
+        const cv::Mat Rlw = LastFrame.mRcw;
+        const cv::Mat tlw = LastFrame.mtcw;
 
         const cv::Mat tlc = Rlw * twc + tlw;
 
         const bool bForward = tlc.at<float>(2) > CurrentFrame.mb && !bMono;
         const bool bBackward = -tlc.at<float>(2) > CurrentFrame.mb && !bMono;
 
-        for (int i = 0; i < LastFrame.N; i++)
+        int lastFrameKeyPoints = LastFrame.N;
+        for (int i = 0; i < lastFrameKeyPoints; i++)
         {
             MapPoint *pMP = LastFrame.mvpMapPoints[i];
 
-            if (pMP)
+            if (pMP && !LastFrame.mvbOutlier[i])
             {
-                if (!LastFrame.mvbOutlier[i])
+                // Project
+                cv::Mat x3Dw = pMP->GetWorldPos();
+                cv::Mat x3Dc = Rcw * x3Dw + tcw;
+
+                const float xc = x3Dc.at<float>(0);
+                const float yc = x3Dc.at<float>(1);
+                const float invzc = 1.0 / x3Dc.at<float>(2);
+
+                if (invzc < 0)
+                    continue;
+
+                float u = CurrentFrame.fx * xc * invzc + CurrentFrame.cx;
+                float v = CurrentFrame.fy * yc * invzc + CurrentFrame.cy;
+
+                if ((u < CurrentFrame.mnMinX || u > CurrentFrame.mnMaxX) ||
+                    (v < CurrentFrame.mnMinY || v > CurrentFrame.mnMaxY))
                 {
-                    // Project
-                    cv::Mat x3Dw = pMP->GetWorldPos();
-                    cv::Mat x3Dc = Rcw * x3Dw + tcw;
+                    continue;
+                }
 
-                    const float xc = x3Dc.at<float>(0);
-                    const float yc = x3Dc.at<float>(1);
-                    const float invzc = 1.0 / x3Dc.at<float>(2);
+                int nLastOctave = LastFrame.mvKeys[i].octave;
 
-                    if (invzc < 0)
-                        continue;
+                // Search in a window. Size depends on scale
+                float radius = th * CurrentFrame.mvScaleFactors[nLastOctave];
 
-                    float u = CurrentFrame.fx * xc * invzc + CurrentFrame.cx;
-                    float v = CurrentFrame.fy * yc * invzc + CurrentFrame.cy;
+                vector<size_t> vIndices2;
 
-                    if (u < CurrentFrame.mnMinX || u > CurrentFrame.mnMaxX)
-                        continue;
-                    if (v < CurrentFrame.mnMinY || v > CurrentFrame.mnMaxY)
-                        continue;
+                if (bForward)
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, nLastOctave);
+                else if (bBackward)
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, 0, nLastOctave);
+                else
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, nLastOctave - 1, nLastOctave + 1);
 
-                    int nLastOctave = LastFrame.mvKeys[i].octave;
+                if (vIndices2.empty())
+                    continue;
 
-                    // Search in a window. Size depends on scale
-                    float radius = th * CurrentFrame.mvScaleFactors[nLastOctave];
+                const cv::Mat dMP = pMP->GetDescriptor();
 
-                    vector<size_t> vIndices2;
+                int bestDist = 256;
+                int bestIdx2 = -1;
 
-                    if (bForward)
-                        vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, nLastOctave);
-                    else if (bBackward)
-                        vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, 0, nLastOctave);
-                    else
-                        vIndices2 = CurrentFrame.GetFeaturesInArea(u, v, radius, nLastOctave - 1, nLastOctave + 1);
-
-                    if (vIndices2.empty())
-                        continue;
-
-                    const cv::Mat dMP = pMP->GetDescriptor();
-
-                    int bestDist = 256;
-                    int bestIdx2 = -1;
-
-                    for (vector<size_t>::const_iterator vit = vIndices2.begin(), vend = vIndices2.end(); vit != vend; vit++)
+                for (vector<size_t>::const_iterator vit = vIndices2.begin(), vend = vIndices2.end(); vit != vend; vit++)
+                {
+                    const size_t i2 = *vit;
+                    if (CurrentFrame.mvpMapPoints[i2] &&
+                        CurrentFrame.mvpMapPoints[i2]->Observations() > 0)
                     {
-                        const size_t i2 = *vit;
-                        if (CurrentFrame.mvpMapPoints[i2])
-                            if (CurrentFrame.mvpMapPoints[i2]->Observations() > 0)
-                                continue;
-
-                        if (CurrentFrame.mvuRight[i2] > 0)
-                        {
-                            const float ur = u - CurrentFrame.mbf * invzc;
-                            const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
-                            if (er > radius)
-                                continue;
-                        }
-
-                        const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
-
-                        const int dist = DescriptorDistance(dMP, d);
-
-                        if (dist < bestDist)
-                        {
-                            bestDist = dist;
-                            bestIdx2 = i2;
-                        }
+                        continue;
                     }
 
-                    if (bestDist <= TH_HIGH)
+                    if (CurrentFrame.mvuRight[i2] > 0)
                     {
-                        CurrentFrame.mvpMapPoints[bestIdx2] = pMP;
-                        nmatches++;
+                        const float ur = u - CurrentFrame.mbf * invzc;
+                        const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
+                        if (er > radius)
+                            continue;
+                    }
 
-                        if (mbCheckOrientation)
-                        {
-                            float rot = LastFrame.mvKeysUn[i].angle - CurrentFrame.mvKeysUn[bestIdx2].angle;
-                            if (rot < 0.0)
-                                rot += 360.0f;
-                            int bin = round(rot * factor);
-                            if (bin == HISTO_LENGTH)
-                                bin = 0;
-                            assert(bin >= 0 && bin < HISTO_LENGTH);
-                            rotHist[bin].push_back(bestIdx2);
-                        }
+                    const cv::Mat& d = CurrentFrame.mDescriptors.row(i2);
+
+                    const int dist = DescriptorDistance(dMP, d);
+
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestIdx2 = i2;
+                    }
+                }
+
+                if (bestDist <= TH_HIGH)
+                {
+                    CurrentFrame.mvpMapPoints[bestIdx2] = pMP;
+                    nmatches++;
+
+                    if (mbCheckOrientation)
+                    {
+                        float rot = LastFrame.mvKeysUn[i].angle - CurrentFrame.mvKeysUn[bestIdx2].angle;
+                        if (rot < 0.0)
+                            rot += 360.0f;
+                        int bin = round(rot * factor);
+                        if (bin == HISTO_LENGTH)
+                            bin = 0;
+                        assert(bin >= 0 && bin < HISTO_LENGTH);
+                        rotHist[bin].push_back(bestIdx2);
                     }
                 }
             }
@@ -1452,7 +1453,8 @@ namespace ORB_SLAM2
             {
                 if (i != ind1 && i != ind2 && i != ind3)
                 {
-                    for (size_t j = 0, jend = rotHist[i].size(); j < jend; j++)
+                    int rotHistSize = rotHist[i].size();
+                    for (size_t j = 0, jend = rotHistSize; j < jend; j++)
                     {
                         CurrentFrame.mvpMapPoints[rotHist[i][j]] = static_cast<MapPoint *>(NULL);
                         nmatches--;
@@ -1468,9 +1470,9 @@ namespace ORB_SLAM2
     {
         int nmatches = 0;
 
-        const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0, 3).colRange(0, 3);
-        const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0, 3).col(3);
-        const cv::Mat Ow = -Rcw.t() * tcw;
+        const cv::Mat Rcw = CurrentFrame.mRcw;
+        const cv::Mat tcw = CurrentFrame.mtcw;
+        const cv::Mat Ow = CurrentFrame.mOw;
 
         // Rotation Histogram (to check rotation consistency)
         vector<int> rotHist[HISTO_LENGTH];
@@ -1580,7 +1582,8 @@ namespace ORB_SLAM2
             {
                 if (i != ind1 && i != ind2 && i != ind3)
                 {
-                    for (size_t j = 0, jend = rotHist[i].size(); j < jend; j++)
+                    int rotHistSize = rotHist[i].size();
+                    for (size_t j = 0, jend = rotHistSize; j < jend; j++)
                     {
                         CurrentFrame.mvpMapPoints[rotHist[i][j]] = NULL;
                         nmatches--;
