@@ -36,13 +36,16 @@ namespace ORB_SLAM2 {
         mIm = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
     }
 
-    cv::Mat FrameDrawer::DrawFrame() {
+    void FrameDrawer::DrawFrame() {
         cv::Mat im;
         vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
         vector<int> vMatches; // Initialization: correspondeces with reference keypoints
         vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
         vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
         int state; // Tracking state
+
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         //Copy variables within scoped mutex
         {
@@ -69,47 +72,92 @@ namespace ORB_SLAM2 {
         if (!im.empty() && im.channels() < 3) //this should be always true
             cvtColor(im, im, CV_GRAY2BGR);
 
+        cv::Mat imWithInfo;
+        DrawTextInfo(im, state, imWithInfo);
+
+        pangolin::GlTexture imageTexture(imWithInfo.cols, imWithInfo.rows, GL_RGB, false, 0, GL_RGB, GL_UNSIGNED_BYTE);
+        imageTexture.Upload(imWithInfo.data, GL_BGR, GL_UNSIGNED_BYTE);
+        imageTexture.RenderToViewportFlipY();
+
+        GLuint texture[2];
+        glGenTextures(2, texture);
+        glBindTexture(GL_TEXTURE_2D, texture[1]);
+        glBindTexture(GL_TEXTURE_2D, texture[0]);
+
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+        glLineWidth(2.0f);
+
         //Draw
         if (state == Tracking::NOT_INITIALIZED) //INITIALIZING
         {
+
+            glBegin(GL_LINES);
+            glColor3f(0, 1.0f, 0);
             for (unsigned int i = 0; i < vMatches.size(); i++) {
                 if (vMatches[i] >= 0 && !vCurrentKeys.empty() && vCurrentKeys.size() > i) {
-                    cv::line(im, vIniKeys[i].pt, vCurrentKeys[vMatches[i]].pt,
-                             cv::Scalar(0, 255, 0));
+
+                    float x1 = ((2 * vIniKeys[i].pt.x / imWithInfo.cols) - 1.0f);
+                    float y1 = ((2 * vIniKeys[i].pt.y / imWithInfo.rows) - 1.0f);
+                    float x2 = ((2 * vCurrentKeys[vMatches[i]].pt.x / imWithInfo.cols) - 1.0f);
+                    float y2 = ((2 * vCurrentKeys[vMatches[i]].pt.y / imWithInfo.rows) - 1.0f);
+                    glVertex3f(x1, y1, 0);
+                    glVertex3f(x2, y2, 0);
+
                 }
             }
+            glEnd();
+
         } else if (state == Tracking::OK) //TRACKING
         {
             mnTracked = 0;
             mnTrackedVO = 0;
             const float r = 5;
             for (int i = 0; i < N; i++) {
-                if ((i<vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
-                    cv::Point2f pt1, pt2;
-                    pt1.x = vCurrentKeys[i].pt.x - r;
-                    pt1.y = vCurrentKeys[i].pt.y - r;
-                    pt2.x = vCurrentKeys[i].pt.x + r;
-                    pt2.y = vCurrentKeys[i].pt.y + r;
+                if ((i < vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
+                    float x1 = ((2 * vCurrentKeys[i].pt.x / imWithInfo.cols) - 1.0f);
+                    float y1 = ((2 * vCurrentKeys[i].pt.y / imWithInfo.rows) - 1.0f);
+                    float width = 0.01f;
 
                     // This is a match to a MapPoint in the map
                     if (vbMap[i]) {
-                        cv::rectangle(im, pt1, pt2, cv::Scalar(0, 255, 0));
-                        cv::circle(im, vCurrentKeys[i].pt, 2, cv::Scalar(0, 255, 0), -1);
+
+                        glColor3f(0, 1.0f, 0);
+                        glBegin(GL_LINE_LOOP);
+                        glVertex2f(x1 - width, y1 - width);
+                        glVertex2f(x1 - width, y1 + width);
+                        glVertex2f(x1 + width, y1 + width);
+                        glVertex2f(x1 + width, y1 - width);
+                        glEnd();
+
+                        glBegin(GL_POINTS);
+                        glVertex2f(x1, y1);
+                        glEnd();
+
                         mnTracked++;
-                    } else // This is match to a "visual odometry" MapPoint created in the last frame
+                    }
+                    else // This is match to a "visual odometry" MapPoint created in the last frame
                     {
-                        cv::rectangle(im, pt1, pt2, cv::Scalar(255, 0, 0));
-                        cv::circle(im, vCurrentKeys[i].pt, 2, cv::Scalar(255, 0, 0), -1);
+                        glColor3f(0, 1.0f, 0);
+                        glBegin(GL_LINE_LOOP);
+                        glVertex2f(x1 - width, y1 - width);
+                        glVertex2f(x1 - width, y1 + width);
+                        glVertex2f(x1 + width, y1 + width);
+                        glVertex2f(x1 + width, y1 - width);
+                        glEnd();
+
+                        glBegin(GL_POINTS);
+                        glVertex2f(x1, y1);
+                        glEnd();
+
                         mnTrackedVO++;
                     }
                 }
             }
         }
-
-        cv::Mat imWithInfo;
-        DrawTextInfo(im, state, imWithInfo);
-
-        return imWithInfo;
     }
 
 
