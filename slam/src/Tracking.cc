@@ -1019,11 +1019,7 @@ namespace ORB_SLAM2
 
     bool Tracking::NeedNewKeyFrame()
     {
-        if (mbOnlyTracking)
-            return false;
-
-        // If Local Mapping is freezed by a Loop Closure do not insert keyframes
-        if (mpLocalMapper->isStopped() || mpLocalMapper->stopRequested())
+        if (mbOnlyTracking || (mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()))
             return false;
 
         const int nKFs = mpMap->KeyFramesInMap();
@@ -1046,7 +1042,8 @@ namespace ORB_SLAM2
         int nTrackedClose = 0;
         if (mSensor != System::MONOCULAR)
         {
-            for (int i = 0; i < mCurrentFrame.N; i++)
+            int mCurrentFrameN = mCurrentFrame.N;
+            for (int i = 0; i < mCurrentFrameN; i++)
             {
                 if (mCurrentFrame.mvDepth[i] > 0 && mCurrentFrame.mvDepth[i] < mThDepth)
                 {
@@ -1061,19 +1058,19 @@ namespace ORB_SLAM2
         bool bNeedToInsertClose = (nTrackedClose < 100) && (nNonTrackedClose > 70);
 
         // Thresholds
-        float thRefRatio = 0.75f;
+        float thRefRatio = 0.85f;
         if (nKFs < 2)
-            thRefRatio = 0.4f;
+            thRefRatio = 0.5f;
 
         if (mSensor == System::MONOCULAR)
-            thRefRatio = 0.9f;
+            thRefRatio = 0.95f;
 
         // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
         const bool c1a = mCurrentFrame.mnId >= mnLastKeyFrameId + mMaxFrames;
         // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
         const bool c1b = (mCurrentFrame.mnId >= mnLastKeyFrameId + mMinFrames && bLocalMappingIdle);
         // Condition 1c: tracking is weak
-        const bool c1c = mSensor != System::MONOCULAR && (mnMatchesInliers < nRefMatches * 0.25 || bNeedToInsertClose);
+        const bool c1c = mSensor != System::MONOCULAR && (mnMatchesInliers < nRefMatches >> 2 || bNeedToInsertClose);
         // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
         const bool c2 = ((mnMatchesInliers < nRefMatches * thRefRatio || bNeedToInsertClose) && mnMatchesInliers > 15);
 
@@ -1088,15 +1085,7 @@ namespace ORB_SLAM2
             else
             {
                 mpLocalMapper->InterruptBA();
-                if (mSensor != System::MONOCULAR)
-                {
-                    if (mpLocalMapper->KeyframesInQueue() < 3)
-                        return true;
-                    else
-                        return false;
-                }
-                else
-                    return false;
+                return false;
             }
         }
         else
