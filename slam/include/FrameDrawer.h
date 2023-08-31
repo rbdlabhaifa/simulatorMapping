@@ -52,6 +52,8 @@ protected:
 
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
 
+    void DrawRectangleAndCircle(float x, float y, float width);
+
     // Info of the frame to be drawn
     cv::Mat mIm;
     int N;

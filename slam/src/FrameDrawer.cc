@@ -124,40 +124,31 @@ namespace ORB_SLAM2 {
 
                     // This is a match to a MapPoint in the map
                     if (vbMap[i]) {
-
-                        glColor3f(0, 1.0f, 0);
-                        glBegin(GL_LINE_LOOP);
-                        glVertex2f(x1 - width, y1 - width);
-                        glVertex2f(x1 - width, y1 + width);
-                        glVertex2f(x1 + width, y1 + width);
-                        glVertex2f(x1 + width, y1 - width);
-                        glEnd();
-
-                        glBegin(GL_POINTS);
-                        glVertex2f(x1, y1);
-                        glEnd();
-
+                        DrawRectangleAndCircle(x1, y1, width);
                         mnTracked++;
                     }
                     else // This is match to a "visual odometry" MapPoint created in the last frame
                     {
-                        glColor3f(0, 1.0f, 0);
-                        glBegin(GL_LINE_LOOP);
-                        glVertex2f(x1 - width, y1 - width);
-                        glVertex2f(x1 - width, y1 + width);
-                        glVertex2f(x1 + width, y1 + width);
-                        glVertex2f(x1 + width, y1 - width);
-                        glEnd();
-
-                        glBegin(GL_POINTS);
-                        glVertex2f(x1, y1);
-                        glEnd();
-
+                        DrawRectangleAndCircle(x1, y1, width);
                         mnTrackedVO++;
                     }
                 }
             }
         }
+    }
+
+    void FrameDrawer::DrawRectangleAndCircle(float x, float y, float width) {
+        glColor3f(0, 1.0f, 0);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(x - width, y - width);
+        glVertex2f(x - width, y + width);
+        glVertex2f(x + width, y + width);
+        glVertex2f(x + width, y - width);
+        glEnd();
+
+        glBegin(GL_POINTS);
+        glVertex2f(x, y);
+        glEnd();
     }
 
 
@@ -191,6 +182,13 @@ namespace ORB_SLAM2 {
         imText.rowRange(im.rows, imText.rows) = cv::Mat::zeros(textSize.height + 10, im.cols, im.type());
         cv::putText(imText, s.str(), cv::Point(5, imText.rows - 5), cv::FONT_HERSHEY_PLAIN, 1,
                     cv::Scalar(255, 255, 255), 1, 8);
+        /*glColor3f(1.0f, 1.0f, 1.0f);
+        glRasterPos2f(5, imText.rows - 5);
+        int len, i;
+        len = s.str().size();
+        for (i = 0; i < len; i++) {
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s.str()[i]);
+        }*/
 
     }
 
