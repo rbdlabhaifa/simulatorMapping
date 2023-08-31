@@ -862,19 +862,17 @@ namespace ORB_SLAM2
     void Tracking::UpdateLastFrame()
     {
         // Update pose according to reference keyframe
-        KeyFrame *pRef = mLastFrame.mpReferenceKF;
-        cv::Mat Tlr = mlRelativeFramePoses.back();
+        mLastFrame.SetPose(mlRelativeFramePoses.back() * mLastFrame.mpReferenceKF->GetPose());
 
-        mLastFrame.SetPose(Tlr * pRef->GetPose());
-
-        if (mnLastKeyFrameId == mLastFrame.mnId || mSensor == System::MONOCULAR || !mbOnlyTracking)
+        if (mnLastKeyFrameId == mLastFrame.mnId || mSensor || !mbOnlyTracking)
             return;
 
         // Create "visual odometry" MapPoints
         // We sort points according to their measured depth by the stereo/RGB-D sensor
         vector<pair<float, int>> vDepthIdx;
-        vDepthIdx.reserve(mLastFrame.N);
-        for (int i = 0; i < mLastFrame.N; i++)
+        int mLastFrameKeyPoints = mLastFrame.N;
+        vDepthIdx.reserve(mLastFrameKeyPoints);
+        for (int i = 0; i < mLastFrameKeyPoints; i++)
         {
             float z = mLastFrame.mvDepth[i];
             if (z > 0)
@@ -891,34 +889,23 @@ namespace ORB_SLAM2
         // We insert all close points (depth<mThDepth)
         // If less than 100 close points, we insert the 100 closest ones.
         int nPoints = 0;
-        for (size_t j = 0; j < vDepthIdx.size(); j++)
+        int vDepthIdxSize = vDepthIdx.size();
+        for (size_t j = 0; j < vDepthIdxSize; j++)
         {
             int i = vDepthIdx[j].second;
 
-            bool bCreateNew = false;
-
             MapPoint *pMP = mLastFrame.mvpMapPoints[i];
-            if (!pMP)
-                bCreateNew = true;
-            else if (pMP->Observations() < 1)
-            {
-                bCreateNew = true;
-            }
-
-            if (bCreateNew)
+            if (!pMP || pMP->Observations() < 1)
             {
                 cv::Mat x3D = mLastFrame.UnprojectStereo(i);
-                MapPoint *pNewMP = new MapPoint(x3D, mpMap, &mLastFrame, i);
+                MapPoint* pNewMP = new MapPoint(x3D, mpMap, &mLastFrame, i);
 
                 mLastFrame.mvpMapPoints[i] = pNewMP;
 
                 mlpTemporalPoints.push_back(pNewMP);
-                nPoints++;
             }
-            else
-            {
-                nPoints++;
-            }
+
+            nPoints++;
 
             if (vDepthIdx[j].first > mThDepth && nPoints > 100)
                 break;
@@ -935,21 +922,17 @@ namespace ORB_SLAM2
 
         mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
 
-        fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
+        fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint*>(NULL));
 
         // Project points seen in previous frame
-        int th;
-        if (mSensor != System::STEREO)
-            th = 15;
-        else
-            th = 7;
-        int nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, th, mSensor == System::MONOCULAR);
+        int nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 15, true);
 
         // If few matches, uses a wider window search
         if (nmatches < 20)
         {
-            fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
-            nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
+            fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint*>(NULL));
+
+            nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 30, true);
         }
 
         if (nmatches < 20)
@@ -960,21 +943,22 @@ namespace ORB_SLAM2
 
         // Discard outliers
         int nmatchesMap = 0;
-        for (int i = 0; i < mCurrentFrame.N; i++)
+
+        int numberOfKeyPoints = mCurrentFrame.N;
+        for (int i = 0; i < numberOfKeyPoints; i++)
         {
-            if (mCurrentFrame.mvpMapPoints[i])
+            MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
+            if (pMP)
             {
                 if (mCurrentFrame.mvbOutlier[i])
                 {
-                    MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
-
-                    mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint *>(NULL);
+                    mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
                     mCurrentFrame.mvbOutlier[i] = false;
                     pMP->mbTrackInView = false;
                     pMP->mnLastFrameSeen = mCurrentFrame.mnId;
                     nmatches--;
                 }
-                else if (mCurrentFrame.mvpMapPoints[i]->Observations() > 0)
+                else if (pMP->Observations() > 0)
                     nmatchesMap++;
             }
         }
@@ -1035,11 +1019,7 @@ namespace ORB_SLAM2
 
     bool Tracking::NeedNewKeyFrame()
     {
-        if (mbOnlyTracking)
-            return false;
-
-        // If Local Mapping is freezed by a Loop Closure do not insert keyframes
-        if (mpLocalMapper->isStopped() || mpLocalMapper->stopRequested())
+        if (mbOnlyTracking || (mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()))
             return false;
 
         const int nKFs = mpMap->KeyFramesInMap();
@@ -1062,7 +1042,8 @@ namespace ORB_SLAM2
         int nTrackedClose = 0;
         if (mSensor != System::MONOCULAR)
         {
-            for (int i = 0; i < mCurrentFrame.N; i++)
+            int mCurrentFrameN = mCurrentFrame.N;
+            for (int i = 0; i < mCurrentFrameN; i++)
             {
                 if (mCurrentFrame.mvDepth[i] > 0 && mCurrentFrame.mvDepth[i] < mThDepth)
                 {
@@ -1077,19 +1058,19 @@ namespace ORB_SLAM2
         bool bNeedToInsertClose = (nTrackedClose < 100) && (nNonTrackedClose > 70);
 
         // Thresholds
-        float thRefRatio = 0.75f;
+        float thRefRatio = 0.85f;
         if (nKFs < 2)
-            thRefRatio = 0.4f;
+            thRefRatio = 0.5f;
 
         if (mSensor == System::MONOCULAR)
-            thRefRatio = 0.9f;
+            thRefRatio = 0.95f;
 
         // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
         const bool c1a = mCurrentFrame.mnId >= mnLastKeyFrameId + mMaxFrames;
         // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
         const bool c1b = (mCurrentFrame.mnId >= mnLastKeyFrameId + mMinFrames && bLocalMappingIdle);
         // Condition 1c: tracking is weak
-        const bool c1c = mSensor != System::MONOCULAR && (mnMatchesInliers < nRefMatches * 0.25 || bNeedToInsertClose);
+        const bool c1c = mSensor != System::MONOCULAR && (mnMatchesInliers < nRefMatches >> 2 || bNeedToInsertClose);
         // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
         const bool c2 = ((mnMatchesInliers < nRefMatches * thRefRatio || bNeedToInsertClose) && mnMatchesInliers > 15);
 
@@ -1104,15 +1085,7 @@ namespace ORB_SLAM2
             else
             {
                 mpLocalMapper->InterruptBA();
-                if (mSensor != System::MONOCULAR)
-                {
-                    if (mpLocalMapper->KeyframesInQueue() < 3)
-                        return true;
-                    else
-                        return false;
-                }
-                else
-                    return false;
+                return false;
             }
         }
         else

@@ -79,7 +79,7 @@ uint get_time_diff2(std::chrono::steady_clock::time_point start, std::chrono::st
 namespace ORB_SLAM2
 {
 
-    const int PATCH_SIZE = 31;
+    const int PATCH_SIZE = 5; // PATCH_SIZE was 31 and we changed it to 5 to perform a shift left
     const int HALF_PATCH_SIZE = 15;
     const int EDGE_THRESHOLD = 19;
 
@@ -95,14 +95,16 @@ namespace ORB_SLAM2
 
         // Go line by line in the circuI853lar patch
         int step = (int)image.step1();
+        int vMulStep = 0;
         for (int v = 1; v <= HALF_PATCH_SIZE; ++v)
         {
             // Proceed over the two lines
             int v_sum = 0;
             int d = u_max[v];
+            vMulStep += step;
             for (int u = -d; u <= d; ++u)
             {
-                int val_plus = center[u + v * step], val_minus = center[u - v * step];
+                int val_plus = center[u + vMulStep], val_minus = center[u - vMulStep];
                 v_sum += (val_plus - val_minus);
                 m_10 += u * (val_plus + val_minus);
             }
@@ -161,7 +163,7 @@ namespace ORB_SLAM2
 #undef GET_VALUE
     }
 
-    static int bit_pattern_31_[256 * 4] =
+    static int bit_pattern_31_[256 << 2] =
         {
             8, -3, 9, 5 /*mean (0), correlation (0)*/,
             4, 2, 7, -12 /*mean (1.12461e-05), correlation (0.0437584)*/,
@@ -552,39 +554,46 @@ namespace ORB_SLAM2
     vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys, const int &minX,
                                                          const int &maxX, const int &minY, const int &maxY, const int &N, const int &level)
     {
-        // Compute how many initial nodes
-        const int nIni = round(static_cast<float>(maxX - minX) / (maxY - minY));
 
-        const float hX = static_cast<float>(maxX - minX) / nIni;
+        float difference1 = maxX - minX;
+        float difference2 = maxY - minY;
+        // Compute how many initial nodes
+        const int nIni = round(difference1 / difference2);
+
+        const float hX = difference2;
 
         list<ExtractorNode> lNodes;
 
         vector<ExtractorNode *> vpIniNodes;
         vpIniNodes.resize(nIni);
 
+        float hXTotal = 0;
+        int vToDistributeKeysSize = vToDistributeKeys.size();
         for (int i = 0; i < nIni; i++)
         {
             ExtractorNode ni;
-            ni.UL = cv::Point2i(hX * static_cast<float>(i), 0);
-            ni.UR = cv::Point2i(hX * static_cast<float>(i + 1), 0);
-            ni.BL = cv::Point2i(ni.UL.x, maxY - minY);
-            ni.BR = cv::Point2i(ni.UR.x, maxY - minY);
-            ni.vKeys.reserve(vToDistributeKeys.size());
+            ni.UL = cv::Point2i(hXTotal, 0);
+            hXTotal += hX;
+            ni.UR = cv::Point2i(hXTotal, 0);
+            ni.BL = cv::Point2i(ni.UL.x, difference2);
+            ni.BR = cv::Point2i(ni.UR.x, difference2);
+            ni.vKeys.reserve(vToDistributeKeysSize);
 
             lNodes.push_back(ni);
             vpIniNodes[i] = &lNodes.back();
         }
 
         // Associate points to childs
-        for (size_t i = 0; i < vToDistributeKeys.size(); i++)
+        for (size_t i = 0; i < vToDistributeKeysSize; i++)
         {
             const cv::KeyPoint &kp = vToDistributeKeys[i];
             vpIniNodes[kp.pt.x / hX]->vKeys.push_back(kp);
         }
 
         list<ExtractorNode>::iterator lit = lNodes.begin();
+        list<ExtractorNode>::iterator litEnd = lNodes.end();
 
-        while (lit != lNodes.end())
+        while (lit != litEnd)
         {
             if (lit->vKeys.size() == 1)
             {
@@ -602,7 +611,7 @@ namespace ORB_SLAM2
         int iteration = 0;
 
         vector<pair<int, ExtractorNode *>> vSizeAndPointerToNode;
-        vSizeAndPointerToNode.reserve(lNodes.size() * 4);
+        vSizeAndPointerToNode.reserve(lNodes.size() << 2);
 
         while (!bFinish)
         {
@@ -631,43 +640,47 @@ namespace ORB_SLAM2
                     lit->DivideNode(n1, n2, n3, n4);
 
                     // Add childs if they contain points
-                    if (n1.vKeys.size() > 0)
+                    int n1vKeysSize = n1.vKeys.size();
+                    if (n1vKeysSize > 0)
                     {
                         lNodes.push_front(n1);
-                        if (n1.vKeys.size() > 1)
+                        if (n1vKeysSize > 1)
                         {
                             nToExpand++;
-                            vSizeAndPointerToNode.push_back(make_pair(n1.vKeys.size(), &lNodes.front()));
+                            vSizeAndPointerToNode.push_back(make_pair(n1vKeysSize, &lNodes.front()));
                             lNodes.front().lit = lNodes.begin();
                         }
                     }
-                    if (n2.vKeys.size() > 0)
+                    int n2vKeysSize = n2.vKeys.size();
+                    if (n2vKeysSize > 0)
                     {
                         lNodes.push_front(n2);
-                        if (n2.vKeys.size() > 1)
+                        if (n2vKeysSize > 1)
                         {
                             nToExpand++;
-                            vSizeAndPointerToNode.push_back(make_pair(n2.vKeys.size(), &lNodes.front()));
+                            vSizeAndPointerToNode.push_back(make_pair(n2vKeysSize, &lNodes.front()));
                             lNodes.front().lit = lNodes.begin();
                         }
                     }
-                    if (n3.vKeys.size() > 0)
+                    int n3vKeysSize = n3.vKeys.size();
+                    if (n3vKeysSize > 0)
                     {
                         lNodes.push_front(n3);
-                        if (n3.vKeys.size() > 1)
+                        if (n3vKeysSize > 1)
                         {
                             nToExpand++;
-                            vSizeAndPointerToNode.push_back(make_pair(n3.vKeys.size(), &lNodes.front()));
+                            vSizeAndPointerToNode.push_back(make_pair(n3vKeysSize, &lNodes.front()));
                             lNodes.front().lit = lNodes.begin();
                         }
                     }
-                    if (n4.vKeys.size() > 0)
+                    int n4vKeysSize = n4.vKeys.size();
+                    if (n4vKeysSize > 0)
                     {
                         lNodes.push_front(n4);
-                        if (n4.vKeys.size() > 1)
+                        if (n4vKeysSize > 1)
                         {
                             nToExpand++;
-                            vSizeAndPointerToNode.push_back(make_pair(n4.vKeys.size(), &lNodes.front()));
+                            vSizeAndPointerToNode.push_back(make_pair(n4vKeysSize, &lNodes.front()));
                             lNodes.front().lit = lNodes.begin();
                         }
                     }
@@ -683,7 +696,7 @@ namespace ORB_SLAM2
             {
                 bFinish = true;
             }
-            else if (((int)lNodes.size() + nToExpand * 3) > N)
+            else if (((int)lNodes.size() + ((nToExpand << 1) + nToExpand)) > N)
             {
 
                 while (!bFinish)
@@ -701,39 +714,43 @@ namespace ORB_SLAM2
                         vPrevSizeAndPointerToNode[j].second->DivideNode(n1, n2, n3, n4);
 
                         // Add childs if they contain points
-                        if (n1.vKeys.size() > 0)
+                        int n1vKeysSize = n1.vKeys.size();
+                        if (n1vKeysSize > 0)
                         {
                             lNodes.push_front(n1);
-                            if (n1.vKeys.size() > 1)
+                            if (n1vKeysSize > 1)
                             {
-                                vSizeAndPointerToNode.push_back(make_pair(n1.vKeys.size(), &lNodes.front()));
+                                vSizeAndPointerToNode.push_back(make_pair(n1vKeysSize, &lNodes.front()));
                                 lNodes.front().lit = lNodes.begin();
                             }
                         }
-                        if (n2.vKeys.size() > 0)
+                        int n2vKeysSize = n2.vKeys.size();
+                        if (n2vKeysSize > 0)
                         {
                             lNodes.push_front(n2);
-                            if (n2.vKeys.size() > 1)
+                            if (n2vKeysSize > 1)
                             {
-                                vSizeAndPointerToNode.push_back(make_pair(n2.vKeys.size(), &lNodes.front()));
+                                vSizeAndPointerToNode.push_back(make_pair(n2vKeysSize, &lNodes.front()));
                                 lNodes.front().lit = lNodes.begin();
                             }
                         }
-                        if (n3.vKeys.size() > 0)
+                        int n3vKeysSize = n3.vKeys.size();
+                        if (n3vKeysSize > 0)
                         {
                             lNodes.push_front(n3);
-                            if (n3.vKeys.size() > 1)
+                            if (n3vKeysSize > 1)
                             {
-                                vSizeAndPointerToNode.push_back(make_pair(n3.vKeys.size(), &lNodes.front()));
+                                vSizeAndPointerToNode.push_back(make_pair(n3vKeysSize, &lNodes.front()));
                                 lNodes.front().lit = lNodes.begin();
                             }
                         }
-                        if (n4.vKeys.size() > 0)
+                        int n4vKeysSize = n4.vKeys.size();
+                        if (n4vKeysSize > 0)
                         {
                             lNodes.push_front(n4);
-                            if (n4.vKeys.size() > 1)
+                            if (n4vKeysSize > 1)
                             {
-                                vSizeAndPointerToNode.push_back(make_pair(n4.vKeys.size(), &lNodes.front()));
+                                vSizeAndPointerToNode.push_back(make_pair(n4vKeysSize, &lNodes.front()));
                                 lNodes.front().lit = lNodes.begin();
                             }
                         }
@@ -759,7 +776,8 @@ namespace ORB_SLAM2
             cv::KeyPoint *pKP = &vNodeKeys[0];
             float maxResponse = pKP->response;
 
-            for (size_t k = 1; k < vNodeKeys.size(); k++)
+            int vNodeKeysSize = vNodeKeys.size();
+            for (size_t k = 1; k < vNodeKeysSize; k++)
             {
                 if (vNodeKeys[k].response > maxResponse)
                 {
@@ -778,7 +796,12 @@ namespace ORB_SLAM2
     {
         allKeypoints.resize(nlevels);
 
-        const float W = 30;
+
+        // No need to keep W as float, int is better
+        const int W = 5; // W must be 32, but we prefered to make it 5 since 2^5 = 32 and then use shift
+        /*Increasing the value of W will result in larger grid cells covering the image. This means fewer keypoints will be extracted, and they will be more spread out across the image.
+          Larger cells can lead to better coverage of the image, but they might also miss smaller details and features.
+          Fewer keypoints can lead to faster processing but might sacrifice fine-grained feature detection.*/
 
         for (int level = 0; level < nlevels; ++level)
         {
@@ -788,18 +811,22 @@ namespace ORB_SLAM2
             const int maxBorderY = mvImagePyramid[level].rows - EDGE_THRESHOLD + 3;
 
             vector<cv::KeyPoint> vToDistributeKeys;
-            vToDistributeKeys.reserve(nfeatures * 10);
+            vToDistributeKeys.reserve((nfeatures << 3) + (nfeatures << 1));
 
-            const float width = (maxBorderX - minBorderX);
-            const float height = (maxBorderY - minBorderY);
+            // No need for width and height to be float too
+            const int width = (maxBorderX - minBorderX);
+            const int height = (maxBorderY - minBorderY);
 
-            const int nCols = width / W;
-            const int nRows = height / W;
-            const int wCell = ceil(width / nCols);
-            const int hCell = ceil(height / nRows);
+            const int nCols = width >> W;
+            const int nRows = height >> W;
+            const int wCell = ceil((float)width / (float)nCols);
+            const int hCell = ceil((float)height / (float)nRows);
+
+            float hCellTotal = 0;
             for (int i = 0; i < nRows; i++)
             {
-                const float iniY = minBorderY + i * hCell;
+                const float iniY = minBorderY + hCellTotal;
+                hCellTotal += hCell;
                 float maxY = iniY + hCell + 6;
 
                 if (iniY >= maxBorderY - 3)
@@ -807,9 +834,11 @@ namespace ORB_SLAM2
                 if (maxY > maxBorderY)
                     maxY = maxBorderY;
 
+                float wCellTotal = 0;
                 for (int j = 0; j < nCols; j++)
                 {
-                    const float iniX = minBorderX + j * wCell;
+                    const float iniX = minBorderX + wCellTotal;
+                    wCellTotal += wCell;
                     float maxX = iniX + wCell + 6;
                     if (iniX >= maxBorderX - 6)
                         continue;
@@ -826,12 +855,12 @@ namespace ORB_SLAM2
                             vKeysCell, minThFAST, true);
                     }
 
-                    if (!vKeysCell.empty())
+                    else
                     {
                         for (vector<cv::KeyPoint>::iterator vit = vKeysCell.begin(); vit != vKeysCell.end(); vit++)
                         {
-                            (*vit).pt.x += j * wCell;
-                            (*vit).pt.y += i * hCell;
+                            (*vit).pt.x += wCellTotal;
+                            (*vit).pt.y += hCellTotal;
                             cv::KeyPoint kp = (*vit);
                             //vToDistributeKeys.push_back(*vit);
                             vToDistributeKeys.emplace_back(kp);
@@ -847,7 +876,7 @@ namespace ORB_SLAM2
             keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
                                           minBorderY, maxBorderY, mnFeaturesPerLevel[level], level);
 
-            const int scaledPatchSize = PATCH_SIZE * mvScaleFactor[level];
+            const int scaledPatchSize = (int)mvScaleFactor[level] << PATCH_SIZE;
 
             // Add border to coordinates and scale information
             const int nkps = keypoints.size();
@@ -1002,7 +1031,7 @@ namespace ORB_SLAM2
             vector<KeyPoint> &keypoints = allKeypoints[level];
             keypoints.reserve(nDesiredFeatures * 2);
 
-            const int scaledPatchSize = PATCH_SIZE * mvScaleFactor[level];
+            const int scaledPatchSize = (int)mvScaleFactor[level] << PATCH_SIZE;
 
             // Retain by score and transform coordinates
             for (int i = 0; i < levelRows; i++)

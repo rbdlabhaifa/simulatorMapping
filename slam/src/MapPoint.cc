@@ -350,19 +350,16 @@ namespace ORB_SLAM2
             if (mObservations.count(pKF))
             {
                 int idx = mObservations[pKF];
+                nObs--;
                 if (pKF->mvuRight[idx] >= 0)
-                    nObs -= 2;
-                else
                     nObs--;
 
                 mObservations.erase(pKF);
 
-                if (mpRefKF == pKF)
-                    mpRefKF = mObservations.begin()->first;
+                mpRefKF = mpRefKF == pKF ? mObservations.begin()->first : mpRefKF;
 
                 // If only 2 observations or less, discard point
-                if (nObs <= 2)
-                    bBad = true;
+                bBad = nObs <= 2 ? true : bBad;
             }
         }
 
