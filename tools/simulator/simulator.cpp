@@ -52,6 +52,160 @@ Simulator::~Simulator() {
     delete(this->orbExtractor);
 }
 
+
+
+
+
+struct Face {
+    std::vector<int> vertexIndices;
+};
+
+//this function check if point inside polygon
+bool Simulator::isPointInsidePolygon(const cv::Point3d &point, const std::vector<cv::Point3d> &polygon) {
+    bool inside = false;
+    for (size_t i = 0; i < polygon.size(); i++) {
+        cv::Point3d p1 = polygon[i];
+        cv::Point3d p2 = polygon[(i + 1) % polygon.size()];  
+        if ((p1.z > point.z) != (p2.z > point.z) && (point.x < (p2.x - p1.x) * (point.z - p1.z) / (p2.z - p1.z) + p1.x))
+            inside = true;
+
+        if ((p1.z > point.z) != (p2.z > point.z) && (point.y < (p2.y - p1.y) * (point.z - p1.z) / (p2.z - p1.z) + p1.y))
+            inside = true;
+
+
+        if ((p1.x > point.x) != (p2.x > point.x) && (point.y < (p2.y - p1.y) * (point.x - p1.x) / (p2.x - p1.x) + p1.y))
+            inside = true;
+    }
+    return (inside);
+}
+
+//this function check if frame is inside polygon
+bool Simulator::isFrameInsidePolygon(const std::vector<cv::Point3d>& _frame, std::vector<cv::Point3d> polygon) {
+    for (const auto& point : _frame) {
+        if (!isPointInsidePolygon(point, polygon)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+//this function send an error message if the drone got stuck
+void Simulator::errorMessage ()
+{
+    std::cout << "drone got stuck!" << std::endl;
+    exit(-1);
+}
+
+//this function update the points seen by frame
+std::vector<cv::Point3d> Simulator::updatePosition ()
+{
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
+    nlohmann::json data;
+    programData >> data;
+    programData.close();
+
+    int frame_to_check = data["frameToCheck"];
+    std::string map_input_dir = data["mapInputDir"];
+
+    std::ifstream pointData;
+    std::vector<std::string> row;
+    std::string line, word, temp;
+
+    pointData.open(map_input_dir + "frameData" + std::to_string(frame_to_check) + ".csv");
+
+    std::getline(pointData, line);
+
+    std::stringstream words(line);
+
+    while (std::getline(words, word, ',')) {
+        row.push_back(word);
+    }
+
+    pointData.close();
+
+    // Extract the camera position
+    double x = stod(row[1]);
+    double y = stod(row[2]);
+    double z = stod(row[3]);
+
+    cv::Point3d camera_position(x, y, z);
+
+    double yaw = stod(row[4]);
+    double pitch = stod(row[5]);
+    double roll = stod(row[6]);
+
+    const std::string cloud_points = map_input_dir + "cloud1.csv";
+
+    cv::Mat Twc;
+
+    std::vector<cv::Point3d> seen_points = Auxiliary::getPointsFromPos(cloud_points, camera_position, yaw, pitch, roll, Twc);
+
+    return (seen_points);
+}
+
+//the main function- 
+//we built a polygon from our obj file, then we checked if we are inside the polygon. if yes, this means that the drone got stuck
+void Simulator::checkStuckObjects() {
+
+    std::ifstream objFile("/home/liam/Documents/aaa/untitled.obj");
+    if (!objFile.is_open()) {
+        std::cerr << "Failed to open .obj file!" << std::endl;
+        return;
+    }
+
+    std::vector<cv::Point3d> vertices;
+    std::vector<Face> faces;
+    std::string line;
+
+    //extract data from obj file
+    while (std::getline(objFile, line)) {
+        std::istringstream lineStream(line);
+        std::string type;
+        lineStream >> type;
+
+        if (type == "v") {
+            cv::Point3d v;
+            lineStream >> v.x >> v.y >> v.z;
+            vertices.push_back(v);
+        } else if (type == "f") {
+            Face f;
+            int idx;
+            while (lineStream >> idx) {
+                f.vertexIndices.push_back(idx - 1);   
+            }
+             if(!f.vertexIndices.empty()) {
+                faces.push_back(f);
+             }
+        }
+    }
+
+    objFile.close();
+
+    std::vector<cv::Point3d>  dronePos;
+    dronePos = updatePosition ();
+    for (const Face &f : faces) {
+        std::vector<cv::Point3d> polygon;
+        for (int idx : f.vertexIndices) {
+            polygon.push_back(vertices[idx]);
+        }
+
+        if (isFrameInsidePolygon(dronePos, polygon)) {
+            errorMessage();
+            return;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
 void Simulator::command(std::string &command, int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
     std::istringstream iss(command);
     std::string c;
@@ -180,12 +334,12 @@ void Simulator::simulatorRunThread() {
 
                 locationLock.unlock();
             }
+            checkStuckObjects();
 
             s_cam.Apply();
 
             glDisable(GL_CULL_FACE);
 
-//             drawPoints(seenPoints, keypoint_points);
         }
 
         pangolin::FinishFrame();
@@ -197,6 +351,7 @@ void Simulator::simulatorRunThread() {
         std::cout << "new map saved to " << simulatorOutputDir + "/finalSimulatorCloudPoint.bin" << std::endl;
 
     }
+    checkStuckObjects();
     SLAM->Shutdown();
 }
 

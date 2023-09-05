@@ -5,6 +5,7 @@ sudo apt-get install -y python3-numpy
 sudo ln -sf /usr/lib/python3/dist-packages/numpy/core/include/numpy /usr/include/numpy
 
 sudo apt-get install -y libncurses5-dev
+sudo apt-get install -y libcgal-dev
 sudo apt-get install -y libglew-dev
 sudo apt-get install -y libglu1-mesa-dev freeglut3-dev mesa-common-dev
 sudo apt-get install -y ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev
