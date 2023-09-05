@@ -66,6 +66,8 @@ public:
               double movementFactor = 0.01,
               std::string vocPath = "../Vocabulary/ORBvoc.txt");
 
+     ~Simulator();
+
 /**
  *Starts the 3D model viewer (pangolin), and wait for the user or code signal to start sending the view to the ORBSLAM2 object
  * */

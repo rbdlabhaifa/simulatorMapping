@@ -13,8 +13,6 @@
 #include "include/run_model/TextureShader.h"
 #include "include/Auxiliary.h"
 
-#include "ORBextractor.h"
-
 #include <Eigen/SVD>
 #include <Eigen/Geometry>
 
@@ -49,14 +47,6 @@ int main(int argc, char **argv) {
     Eigen::Vector2i viewport_desired_size(640, 480);
 
     cv::Mat img;
-
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
-    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
-    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
-
-    ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     // Options
     bool show_bounds = false;

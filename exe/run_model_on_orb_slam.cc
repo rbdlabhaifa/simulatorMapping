@@ -363,6 +363,8 @@ void runModelAndOrbSlam(std::string &settingPath, bool *stopFlag, std::shared_pt
 
         pangolin::FinishFrame();
     }
+    delete(orbExtractor);
+
     writer.release();
     saveMap(0, simulatorOutputDir, &SLAM);
     SLAM.SaveMap(simulatorOutputDir + "/simulatorCloudPoint.bin");

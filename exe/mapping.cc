@@ -90,6 +90,11 @@ int main(int argc, char **argv) {
 
     std::cout << "Finished..." << std::endl;
 
+    if(!use_drone)
+        cap.release();
+
+    writer.release();
+
     SLAM.Shutdown();
     SLAM.SaveMap(Slam_lastest_Map_location);
     cvDestroyAllWindows();
