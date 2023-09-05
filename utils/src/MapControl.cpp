@@ -133,7 +133,6 @@ void MapControl::createMapControlSettings() {
 
 void MapControl::initPoints() {
     std::ifstream pointData;
-    std::ifstream descData;
     std::vector<std::string> row;
     std::string line, word, temp;
     int pointIndex;
@@ -310,6 +309,8 @@ std::vector<OfflineMapPoint*> MapControl::getPointsFromTcw() {
     double cy = fsSettings["Camera.cy"];
     int width = fsSettings["Camera.width"];
     int height = fsSettings["Camera.height"];
+
+    fsSettings.release();
 
     double minX = 3.7;
     double maxX = width;
@@ -870,8 +871,8 @@ void MapControl::CheckResults() {
 
 MapControl::~MapControl() {
     for (auto ptr : this->mPoints) {
-        free(ptr);
+        delete(ptr);
     }
     if (this->mSystem != nullptr)
-        free(this->mSystem);
+        delete(this->mSystem);
 }

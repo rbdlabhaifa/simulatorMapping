@@ -48,6 +48,10 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
 
 }
 
+Simulator::~Simulator() {
+    delete(this->orbExtractor);
+}
+
 void Simulator::command(std::string &command, int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
     std::istringstream iss(command);
     std::string c;
