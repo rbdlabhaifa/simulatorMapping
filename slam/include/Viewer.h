@@ -57,6 +57,7 @@ public:
     void Release();
     float GetImageWidth(){ return mImageWidth;};
     float GetImageHeight(){return mImageHeight;}
+
 private:
 
     bool Stop();
@@ -65,9 +66,6 @@ private:
     FrameDrawer* mpFrameDrawer;
     MapDrawer* mpMapDrawer;
     Tracking* mpTracker;
-
-    std::vector<cv::Point3d> seen_points;
-    std::vector<cv::Point3d> new_points_seen;
 
     // 1/fps in ms
     double mT;
@@ -86,14 +84,6 @@ private:
     std::mutex mMutexStop;
 
     bool isPangolinExists;
-
-    std::string mCloudPoints;
-
-    cv::Point3d mCurrentPosition;
-    double mCurrentYaw, mCurrentPitch, mCurrentRoll;
-    std::vector<cv::Point3d> mPointsSeen, mNewPointsSeen;
-    double mMovingScale, mRotateScale;
-    cv::Mat mTwc;
 };
 
 }
