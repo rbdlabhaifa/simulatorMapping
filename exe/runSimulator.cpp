@@ -20,8 +20,9 @@ int main(int argc, char **argv) {
     std::string map_input_dir = data["mapInputDir"];
     bool trackImages = data["trackImages"];
     double movementFactor = data["movementFactor"];
+    double simulatorStartingSpeed = data["simulatorStartingSpeed"];
     Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, map_input_dir, false,
-                        "", movementFactor,VocabularyPath);
+                        "", movementFactor,VocabularyPath, simulatorStartingSpeed);
     auto simulatorThread = simulator.run();
     while (!simulator.isReady()) { // wait for the 3D model to load
         usleep(1000);
