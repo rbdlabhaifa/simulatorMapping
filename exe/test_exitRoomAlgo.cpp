@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <matplotlibcpp.h>
-#include "navigation/RoomExit.h"
+#include "navigation/include/RoomExit.h"
 
 int main(int argc, char **argv) {
     std::string fileName = argv[1];

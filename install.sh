@@ -16,7 +16,7 @@ sudo apt install -y libpcl-dev
 sudo apt -y install libxext-dev libxfixes-dev libxrender-dev libxcb1-dev libx11-xcb-dev libxcb-glx0-dev
 sudo apt -y install libxkbcommon-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync0-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev
 chmod +x opencv3.4.16Install.sh
-bash opencv3.4.16Install.sh
+# bash opencv3.4.16Install.sh
 
 cd ~
 git clone https://gitlab.com/libeigen/eigen.git

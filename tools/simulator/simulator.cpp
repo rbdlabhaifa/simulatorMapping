@@ -36,6 +36,14 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
                                                loadMap,
                                                mapLoadPath,
                                                true);
+    bool isLocalized = true;
+//    cv::Mat lastLocalizedLocation = this->getCurrentLocation();
+//    auto currentLocation = ORB_SLAM2::Converter::toVector3d(simulator.getCurrentLocation().rowRange(0, 2).col(3));
+//
+//    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
+//    double targetAngle = std::atan2(exitPoints.front().second.z(),exitPoints.front().second.x());
+//    int angle_difference = targetAngle;
+
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
     char time_buf[21];
@@ -62,7 +70,9 @@ void Simulator::command(std::string &command, int intervalUsleep, double fps, in
         std::string stringValue;
         iss >> stringValue;
         value = std::stod(stringValue);
+        std::cout << command << std::endl;
         applyCommand(c, value, intervalUsleep, fps, totalCommandTimeInSeconds);
+        lastCommand = command;
     } else {
         std::cout << "the command " << c << " is not supported and will be skipped" << std::endl;
     }
@@ -167,15 +177,28 @@ void Simulator::simulatorRunThread() {
                 std::cout << "new map saved to " << simulatorOutputDir + "/simulatorCloudPoint" + currentTime + ".bin"
                           << std::endl;
             }
+
             if (track) {
                 locationLock.lock();
                 if (trackImages){
                     Tcw = SLAM->TrackMonocular(img, timestamp);
+                    if(Tcw.empty()) {
+                        isLocalized = false;
+                        std::cout << "lost Localization" << std::endl;
+                    }
+                    else
+                        isLocalized = true;
                 }else{
                     std::vector<cv::KeyPoint> pts;
                     cv::Mat mDescriptors;
                     orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
                     Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
+                    if(Tcw.empty()) {
+                        std::cout << "lost Localization" << std::endl;
+                        isLocalized = false;
+                    }
+                    else
+                        isLocalized = true;
                 }
 
                 locationLock.unlock();
@@ -204,6 +227,59 @@ std::thread Simulator::run() {
     std::thread thread(&Simulator::simulatorRunThread, this);
     return thread;
 }
+
+//void Simulator::localization() {
+//    std::thread thread(&Simulator::localizationRunThread, this);
+//}
+//
+//void Simulator::localizationRunThread() {
+//    while(!stopFlag){
+//        if (isLocalized)
+//            continue;
+//        else{
+//            //stop main thread
+//
+//            bool first = true;
+//            // if lose localization, don't continue until it is solved
+//            while(!isLocalized && SLAM->GetTracker()->mState >= 2) {
+//                std::cout << "Lost Localization" << std::endl;
+//                std::cout << lastCommand << std::endl;
+//                // Go back to the last localized location
+//                if (first) {
+//                    std::string new_command;
+//                    std::string c = lastCommand.substr(0, lastCommand.find(" "));
+//                    std::cout << "command because of localization " << c << std::endl;
+//                    if (!c.compare("forward"))
+//                        new_command = "back " + std::to_string(amountForwardBackward);
+//                    if (!c.compare("back"))
+//                        new_command = "forward " + std::to_string(amountForwardBackward);
+//                    if (!c.compare("cw"))
+//                        new_command = "ccw " + std::to_string(amountYaw);
+//                    if (!c.compare("ccw"))
+//                        new_command = "cw " + std::to_string(amountYaw);
+//                    if (!c.compare("up"))
+//                        new_command = "down " + std::to_string(amountUpDown);
+//                    if (!c.compare("down"))
+//                        new_command = "up " + std::to_string(amountUpDown);
+//                    if (!c.compare("left"))
+//                        new_command = "right " + std::to_string(amountUpDown);
+//                    if (!c.compare("right"))
+//                        new_command = "left " + std::to_string(amountUpDown);
+//                    std::cout << new_command << std::endl;
+//                    command(new_command);
+//                }
+////                    std::string com = "left " + std::to_string(amountLeftRight);
+////                    command(com);
+////                    com = "right " + std::to_string(amountLeftRight);
+////                    command(com);
+//                if (isLocalized)
+//                    std::cout << "Found Localization" << std::endl;
+//            }
+//        }
+//    }
+//}
+
+
 
 void Simulator::saveMap(std::string prefix) {
     std::ofstream pointData;
@@ -405,4 +481,8 @@ Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeometry,
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
     applyPitchRotationToModelCam(s_cam, -90);
+}
+
+std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM(){
+    return SLAM;
 }

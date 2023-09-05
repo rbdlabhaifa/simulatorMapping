@@ -10,7 +10,12 @@
 #include <pangolin/geometry/geometry.h>
 #include <pangolin/gl/glsl.h>
 #include <pangolin/gl/glvbo.h>
+
+#include <iostream>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <pangolin/utils/file_utils.h>
 #include <pangolin/geometry/glgeometry.h>
@@ -19,7 +24,10 @@
 #include <Eigen/SVD>
 #include <filesystem>
 #include "include/run_model/TextureShader.h"
-/**
+//#include "navigation/include/AutonomousDrone.h"
+
+/**#include "simulator/simulator.h"
+
  *  @class Simulator
  *  @brief This class provides a simulation environment for virtual robotic navigation and mapping.
  *
@@ -117,6 +125,19 @@ public:
  */
     void setTrack(bool value) { track = value; }
 
+/**
+ * @brief runs the localization thread
+ */
+    void localization();
+
+    std::shared_ptr<ORB_SLAM2::System> getSLAM();
+
+    std::string lastCommand;
+    int amountForwardBackward = 0;
+    int amountYaw = 10;
+    int amountUpDown = 0;
+    int amountLeftRight = 1;
+
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
@@ -158,8 +179,11 @@ private:
     Eigen::Vector2i viewportDesiredSize;
     cv::Mat Tcw;
     std::mutex locationLock;
+    bool isLocalized;
 
     void simulatorRunThread();
+
+    //void localizationRunThread();
 
     void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
                         Eigen::MatrixXf &surface);
@@ -188,6 +212,7 @@ private:
     void static applyUpModelCam(pangolin::OpenGlRenderState &cam, double value);
 
     void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
+
 };
 
 

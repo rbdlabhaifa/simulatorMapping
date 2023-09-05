@@ -3,10 +3,11 @@
 //
 #include <matplotlibcpp.h>
 #include "simulator/simulator.h"
-#include "navigation/RoomExit.h"
+#include "navigation/include/RoomExit.h"
 #include "include/Auxiliary.h"
 
-int main(int argc, char **argv) {    
+
+int main(int argc, char **argv) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -33,11 +34,12 @@ int main(int argc, char **argv) {
     std::cin.get();
     simulator.setTrack(true);
     int currentYaw = 0;
-    int angle = 5;
+    int angle = 10;
     cv::Mat runTimeCurrentLocation;
-    for (int i = 0; i < std::ceil(360 / angle); i++) {
+    for (int i = 0; i < std::ceil(30 / angle); i++) {
         std::string c = "left 0.7";
         simulator.command(c);
+
         //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "right 0.7";
         simulator.command(c);
@@ -46,7 +48,9 @@ int main(int argc, char **argv) {
         simulator.command(c);
         //runTimeCurrentLocation = simulator.getCurrentLocation();
         sleep(1);
+        std::cout << "Finished " << 100 * angle * (i+1) / 360 << "% of scan" << std::endl;
     }
+    std::cout << "Finished scan" << std::endl;
     //simulator.setTrack(false);
     sleep(2);
     auto scanMap = simulator.getCurrentMap();
@@ -62,6 +66,17 @@ int main(int argc, char **argv) {
     std::sort(exitPoints.begin(), exitPoints.end(), [&](auto &p1, auto &p2) {
         return p1.first < p2.first;
     });
+
+
+    for (auto point: exitPoints){
+        std::cout << "There are points" << std::endl;
+        cv::Point3d cvPoint = cv::Point3d (point.second[0], point.second[1], point.second[2]);
+        std::cout << cvPoint << std::endl;
+        simulator.getSLAM()->GetMapDrawer()->navigationPoints.emplace_back(cvPoint);
+        std::cout << simulator.getSLAM()->GetMapDrawer()->navigationPoints.size() << std::endl;
+    }
+
+
     auto currentLocation = ORB_SLAM2::Converter::toVector3d(simulator.getCurrentLocation().rowRange(0, 2).col(3));
 
     double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
@@ -78,8 +93,8 @@ int main(int argc, char **argv) {
     std::cout << rotCommand << std::endl;
     simulator.command(rotCommand);
     double distanceToTarget = (currentLocation-exitPoints.front().second).norm();
-        std::string forwardCommand = "forward " + std::to_string( 3*int(distanceToTarget));
-        std::cout << forwardCommand << std::endl;
-        simulator.command(forwardCommand);
+    std::string forwardCommand = "forward " + std::to_string( 3*int(distanceToTarget));
+    std::cout << forwardCommand << std::endl;
+    simulator.command(forwardCommand);
     simulatorThread.join();
 }
