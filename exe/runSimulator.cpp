@@ -22,12 +22,15 @@ int main(int argc, char **argv) {
     bool trackImages = data["trackImages"];
     double movementFactor = data["movementFactor"];
     double simulatorStartingSpeed = data["simulatorStartingSpeed"];
-    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, map_input_dir, false,
+    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, true, map_input_dir, false,
                         "", movementFactor,VocabularyPath, simulatorStartingSpeed);
     auto simulatorThread = simulator.run();
     while (!simulator.isReady()) { // wait for the 3D model to load
         usleep(1000);
     }
+
+
+
     std::cout << "to stop press k" << std::endl;
     std::cout << "to stop tracking press t" << std::endl;
     std::cout << "to save map point press m" << std::endl;
@@ -35,25 +38,36 @@ int main(int argc, char **argv) {
     std::cin.get();
     simulator.setTrack(true);
     int currentYaw = 0;
-    int angle = 10;
+    int angle = 7;
+
     cv::Mat runTimeCurrentLocation;
-    for (int i = 0; i < std::ceil(30 / angle); i++) {
-        std::string c = "left 0.7";
+    for (int i = 0; i < std::ceil(360 / angle); i++) {
+        std::string c = "left 0.3";
         simulator.command(c);
 
         //runTimeCurrentLocation = simulator.getCurrentLocation();
-        c = "right 0.7";
+        c = "right 0.3";
         simulator.command(c);
         //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "cw " + std::to_string(angle);
         simulator.command(c);
         //runTimeCurrentLocation = simulator.getCurrentLocation();
+        auto currentLocation = simulator.getCurrentLocation();
+        if (!currentLocation.empty()) {
+            auto currentLoc = ORB_SLAM2::Converter::toVector3d(currentLocation.rowRange(0, 2).col(3));
+            double currentAngle = std::atan2(currentLoc.z(), currentLoc.x());
+            std::cout << "Current Angle " << currentAngle << std::endl;
+        }
         sleep(1);
         std::cout << "Finished " << 100 * angle * (i+1) / 360 << "% of scan" << std::endl;
     }
     std::cout << "Finished scan" << std::endl;
     //simulator.setTrack(false);
     sleep(2);
+
+    std::cout << "Saving map after scan" << std::endl;
+    simulator.SaveMap();
+
     auto scanMap = simulator.getCurrentMap();
     std::vector<Eigen::Vector3d> eigenData;
     for (auto &mp: scanMap) {
@@ -70,32 +84,12 @@ int main(int argc, char **argv) {
 
 
     for (auto point: exitPoints){
-        std::cout << "There are points" << std::endl;
         cv::Point3d cvPoint = cv::Point3d (point.second[0], point.second[1], point.second[2]);
         std::cout << cvPoint << std::endl;
         simulator.getSLAM()->GetMapDrawer()->navigationPoints.emplace_back(cvPoint);
         std::cout << simulator.getSLAM()->GetMapDrawer()->navigationPoints.size() << std::endl;
     }
 
-
-    auto currentLocation = ORB_SLAM2::Converter::toVector3d(simulator.getCurrentLocation().rowRange(0, 2).col(3));
-
-    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
-    double targetAngle = std::atan2(exitPoints.front().second.z(),exitPoints.front().second.x());
-    int angle_difference = targetAngle;
-
-    std::string rotCommand;
-    if (angle_difference<0){
-        rotCommand = "ccw " + std::to_string(std::abs(angle_difference));
-
-    }else{
-        rotCommand = "cw "+std::to_string(angle_difference);
-    }
-    std::cout << rotCommand << std::endl;
-    simulator.command(rotCommand);
-    double distanceToTarget = (currentLocation-exitPoints.front().second).norm();
-    std::string forwardCommand = "forward " + std::to_string( 3*int(distanceToTarget));
-    std::cout << forwardCommand << std::endl;
-    simulator.command(forwardCommand);
+    simulator.navigateToPoint(exitPoints.front().second);
     simulatorThread.join();
 }

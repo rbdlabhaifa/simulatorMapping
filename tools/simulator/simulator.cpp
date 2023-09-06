@@ -34,6 +34,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
+
     SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, trackImages,
                                                loadMap,
                                                mapLoadPath,
@@ -116,6 +117,10 @@ void Simulator::simulatorRunThread() {
 
     const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
     alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
+
+    auto mvm = pangolin::ModelViewLookAt(-3.8966, 0.974479 ,4.55261 ,-3.566 ,0.98659, 1.03574, 0, 1.0, 0);
+    s_cam.SetModelViewMatrix(mvm);
+
     geomToRender = pangolin::ToGlGeometry(modelGeometry);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
@@ -191,9 +196,17 @@ void Simulator::simulatorRunThread() {
                     orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
                     Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
                 }
+//                auto current_pos = getCurrentLocation();
+//                if (!current_pos.empty())
+//                {
+//                    auto currentLocation = ORB_SLAM2::Converter::toVector3d(getCurrentLocation().rowRange(0, 2).col(3));
+//                    std::cout << "x = " << currentLocation.x() << " y = " << currentLocation.y() << " z = " << currentLocation.z();
+//                }
 
                 locationLock.unlock();
             }
+
+            //std::cout << s_cam.GetModelViewMatrix() << std::endl;//TODO: remove this before commit
 
             s_cam.Apply();
 
@@ -205,13 +218,15 @@ void Simulator::simulatorRunThread() {
         pangolin::FinishFrame();
     }
     if (isSaveMap) {
-
-        saveMap("final");
-        SLAM->SaveMap(simulatorOutputDir + "/finalSimulatorCloudPoint.bin");
-        std::cout << "new map saved to " << simulatorOutputDir + "/finalSimulatorCloudPoint.bin" << std::endl;
-
+        SaveMap();
     }
     SLAM->Shutdown();
+}
+
+void Simulator::SaveMap(){
+    saveMap("final");
+    SLAM->SaveMap(simulatorOutputDir + "/finalSimulatorCloudPoint.bin");
+    std::cout << "new map saved to " << simulatorOutputDir + "/finalSimulatorCloudPoint.bin" << std::endl;
 }
 
 std::thread Simulator::run() {
@@ -423,6 +438,39 @@ Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeometry,
 
 std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM() {
     return SLAM;
+}
+
+void Simulator::navigateToPoint(const Eigen::Vector3d& point)
+{
+    //TODO:Remember to add localization
+    SLAM->GetMapDrawer()->current_navigtion_point = cv::Point3d (point.x(), point.y(), point.z());
+
+    auto current_loc = getCurrentLocation();
+    while (current_loc.empty())
+        sleep(0.5);
+
+    auto currentLocation = ORB_SLAM2::Converter::toVector3d(getCurrentLocation().rowRange(0, 2).col(3));
+
+    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
+    std::cout << "Current Angle " << currentAngle << std::endl;
+    double targetAngle = std::atan2(point.z(),point.x());
+    int angle_difference = targetAngle - currentAngle;
+
+    std::cout << "Angle difference " << angle_difference << std::endl;
+
+    std::string rotCommand;
+    if (angle_difference<0){
+        rotCommand = "ccw " + std::to_string(std::abs(angle_difference));
+
+    }else{
+        rotCommand = "cw "+std::to_string(angle_difference);
+    }
+    std::cout << rotCommand << std::endl;
+    command(rotCommand);
+    double distanceToTarget = (currentLocation-point).norm();
+    std::string forwardCommand = "forward " + std::to_string( 3*distanceToTarget);
+    std::cout << forwardCommand << std::endl;
+    command(forwardCommand);
 }
 
 void Simulator::setSpeed(double speed)

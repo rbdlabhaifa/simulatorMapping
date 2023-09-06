@@ -143,6 +143,10 @@ public:
 
     double getSpeed() const;
 
+    void SaveMap();
+
+    void navigateToPoint(const Eigen::Vector3d& point);
+
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
