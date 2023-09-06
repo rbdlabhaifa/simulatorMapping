@@ -72,7 +72,8 @@ public:
               bool saveMap = false, std::string simulatorOutputDirPath = "../slamMaps/", bool loadMap = false,
               std::string mapLoadPath = "../slamMaps/example.bin",
               double movementFactor = 0.01,
-              std::string vocPath = "../Vocabulary/ORBvoc.txt");
+              std::string vocPath = "../Vocabulary/ORBvoc.txt",
+              double speedFactor=1.0);
 
      ~Simulator();
 
@@ -138,6 +139,10 @@ public:
     int amountUpDown = 0;
     int amountLeftRight = 1;
 
+    void setSpeed(double speed);
+
+    double getSpeed() const;
+
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
@@ -181,6 +186,8 @@ private:
     std::mutex locationLock;
     bool isLocalized;
 
+    double speedFactor;
+
     void simulatorRunThread();
 
     //void localizationRunThread();
@@ -213,6 +220,9 @@ private:
 
     void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
 
+    void faster();
+
+    void slower();
 };
 
 

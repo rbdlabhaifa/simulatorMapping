@@ -15,12 +15,14 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
                      bool trackImages,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
                      double movementFactor,
-                     std::string vocPath) : stopFlag(false), ready(false), saveMapSignal(false),
+                     std::string vocPath,
+                     double speedFactor) : stopFlag(false), ready(false), saveMapSignal(false),
                                             track(false),
                                             movementFactor(movementFactor), modelPath(model_path), modelTextureNameToAlignTo(modelTextureNameToAlignTo),
                                             isSaveMap(saveMap),
                                             trackImages(trackImages), cull_backfaces(false),
-                                            viewportDesiredSize(640, 480) {
+                                            viewportDesiredSize(640, 480),
+                                            speedFactor(speedFactor) {
     cv::FileStorage fSettings(ORBSLAMConfigFile, cv::FileStorage::READ);
 
     float fx = fSettings["Camera.fx"];
@@ -101,16 +103,17 @@ void Simulator::simulatorRunThread() {
     pangolin::RegisterKeyPressCallback('x', [&]() { show_x0 = !show_x0; });
     pangolin::RegisterKeyPressCallback('y', [&]() { show_y0 = !show_y0; });
     pangolin::RegisterKeyPressCallback('z', [&]() { show_z0 = !show_z0; });
-    pangolin::RegisterKeyPressCallback('w', [&]() { applyForwardToModelCam(s_cam, movementFactor); });
-    pangolin::RegisterKeyPressCallback('a', [&]() { applyRightToModelCam(s_cam, movementFactor); });
-    pangolin::RegisterKeyPressCallback('s', [&]() { applyForwardToModelCam(s_cam, -movementFactor); });
-    pangolin::RegisterKeyPressCallback('d', [&]() { applyRightToModelCam(s_cam, -movementFactor); });
-    pangolin::RegisterKeyPressCallback('e', [&]() { applyYawRotationToModelCam(s_cam, 1); });
-    pangolin::RegisterKeyPressCallback('q', [&]() { applyYawRotationToModelCam(s_cam, -1); });
-    pangolin::RegisterKeyPressCallback('r', [&]() {
-        applyUpModelCam(s_cam, -movementFactor);
-    });// ORBSLAM y axis is reversed
-    pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('w', [&]() { applyForwardToModelCam(s_cam, movementFactor * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('a', [&]() { applyRightToModelCam(s_cam, movementFactor * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('s', [&]() { applyForwardToModelCam(s_cam, -movementFactor * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('d', [&]() { applyRightToModelCam(s_cam, -movementFactor * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('e', [&]() { applyYawRotationToModelCam(s_cam, 1 * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('q', [&]() { applyYawRotationToModelCam(s_cam, -1 * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('r', [&]() { applyUpModelCam(s_cam, -movementFactor * this->speedFactor);});// ORBSLAM y axis is reversed
+    pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(s_cam, movementFactor * this->speedFactor); });
+    pangolin::RegisterKeyPressCallback('1', [&]() { slower(); });
+    pangolin::RegisterKeyPressCallback('2', [&]() { faster(); });
+
     const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
     alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
     geomToRender = pangolin::ToGlGeometry(modelGeometry);
@@ -182,23 +185,11 @@ void Simulator::simulatorRunThread() {
                 locationLock.lock();
                 if (trackImages){
                     Tcw = SLAM->TrackMonocular(img, timestamp);
-                    if(Tcw.empty()) {
-                        isLocalized = false;
-                        std::cout << "lost Localization" << std::endl;
-                    }
-                    else
-                        isLocalized = true;
                 }else{
                     std::vector<cv::KeyPoint> pts;
                     cv::Mat mDescriptors;
                     orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
                     Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
-                    if(Tcw.empty()) {
-                        std::cout << "lost Localization" << std::endl;
-                        isLocalized = false;
-                    }
-                    else
-                        isLocalized = true;
                 }
 
                 locationLock.unlock();
@@ -227,59 +218,6 @@ std::thread Simulator::run() {
     std::thread thread(&Simulator::simulatorRunThread, this);
     return thread;
 }
-
-//void Simulator::localization() {
-//    std::thread thread(&Simulator::localizationRunThread, this);
-//}
-//
-//void Simulator::localizationRunThread() {
-//    while(!stopFlag){
-//        if (isLocalized)
-//            continue;
-//        else{
-//            //stop main thread
-//
-//            bool first = true;
-//            // if lose localization, don't continue until it is solved
-//            while(!isLocalized && SLAM->GetTracker()->mState >= 2) {
-//                std::cout << "Lost Localization" << std::endl;
-//                std::cout << lastCommand << std::endl;
-//                // Go back to the last localized location
-//                if (first) {
-//                    std::string new_command;
-//                    std::string c = lastCommand.substr(0, lastCommand.find(" "));
-//                    std::cout << "command because of localization " << c << std::endl;
-//                    if (!c.compare("forward"))
-//                        new_command = "back " + std::to_string(amountForwardBackward);
-//                    if (!c.compare("back"))
-//                        new_command = "forward " + std::to_string(amountForwardBackward);
-//                    if (!c.compare("cw"))
-//                        new_command = "ccw " + std::to_string(amountYaw);
-//                    if (!c.compare("ccw"))
-//                        new_command = "cw " + std::to_string(amountYaw);
-//                    if (!c.compare("up"))
-//                        new_command = "down " + std::to_string(amountUpDown);
-//                    if (!c.compare("down"))
-//                        new_command = "up " + std::to_string(amountUpDown);
-//                    if (!c.compare("left"))
-//                        new_command = "right " + std::to_string(amountUpDown);
-//                    if (!c.compare("right"))
-//                        new_command = "left " + std::to_string(amountUpDown);
-//                    std::cout << new_command << std::endl;
-//                    command(new_command);
-//                }
-////                    std::string com = "left " + std::to_string(amountLeftRight);
-////                    command(com);
-////                    com = "right " + std::to_string(amountLeftRight);
-////                    command(com);
-//                if (isLocalized)
-//                    std::cout << "Found Localization" << std::endl;
-//            }
-//        }
-//    }
-//}
-
-
 
 void Simulator::saveMap(std::string prefix) {
     std::ofstream pointData;
@@ -379,7 +317,7 @@ void Simulator::applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, d
 void Simulator::intervalOverCommand(
         const std::function<void(pangolin::OpenGlRenderState &, double &)> &func, double value,
         int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
-    double intervalValue = value / (fps * totalCommandTimeInSeconds);
+    double intervalValue = this->speedFactor * value / (fps * totalCommandTimeInSeconds);
     int intervalIndex = 0;
     while (intervalIndex <= fps * totalCommandTimeInSeconds) {
         usleep(intervalUsleep);
@@ -483,6 +421,26 @@ Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeometry,
     applyPitchRotationToModelCam(s_cam, -90);
 }
 
-std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM(){
-    return SLAM;
+void Simulator::setSpeed(double speed)
+{
+    this->speedFactor = speed;
+}
+
+double Simulator::getSpeed() const
+{
+    return this->speedFactor;
+}
+
+void Simulator::faster()
+{
+    if(this->speedFactor < 3.0){
+        this->speedFactor += 0.1;
+    }
+}
+
+void Simulator::slower()
+{
+    if(this->speedFactor > 0.5){
+        this->speedFactor -= 0.1;
+    }
 }
