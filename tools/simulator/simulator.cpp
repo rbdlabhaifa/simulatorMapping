@@ -421,6 +421,10 @@ Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeometry,
     applyPitchRotationToModelCam(s_cam, -90);
 }
 
+std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM() {
+    return SLAM;
+}
+
 void Simulator::setSpeed(double speed)
 {
     this->speedFactor = speed;
