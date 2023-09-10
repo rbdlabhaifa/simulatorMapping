@@ -11,6 +11,7 @@ cv::Mat Simulator::getCurrentLocation() {
     return locationCopy;
 }
 
+
 Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std::string modelTextureNameToAlignTo,
                      bool trackImages,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
@@ -56,6 +57,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     std::string currentTime(time_buf);
     simulatorOutputDir = simulatorOutputDirPath + "/" + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
+
 
 }
 
@@ -138,6 +140,7 @@ void Simulator::simulatorRunThread() {
             .SetBounds(0.0, 1.0, 0.0, 1.0, ((float) -viewportDesiredSize[0] / (float) viewportDesiredSize[1]))
             .SetHandler(&handler);
     int numberOfFramesForOrbslam = 0;
+
     while (!pangolin::ShouldQuit() && !stopFlag) {
         ready = true;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -440,21 +443,28 @@ std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM() {
     return SLAM;
 }
 
-void Simulator::navigateToPoint(const Eigen::Vector3d& point)
+void Simulator::navigateToPoint(const Eigen::Vector3f& point)
 {
     //TODO:Remember to add localization
-    SLAM->GetMapDrawer()->current_navigtion_point = cv::Point3d (point.x(), point.y(), point.z());
+    SLAM->GetMapDrawer()->current_navigtion_point = cv::Point3f (point.x(), point.y(), point.z());
 
     auto current_loc = getCurrentLocation();
     while (current_loc.empty())
         sleep(0.5);
 
-    auto currentLocation = ORB_SLAM2::Converter::toVector3d(getCurrentLocation().rowRange(0, 2).col(3));
+    auto currentLocation = ORB_SLAM2::Converter::toVector3d(current_loc.rowRange(0, 2).col(3));
 
-    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
+    auto align_pose_ = align_pose(current_loc.clone());
+    //TODO: use align_pose
+    auto R = align_pose_.rowRange(0, 3).colRange(0, 3).clone();
+    R = R.t();
+    //auto R = simulator.extract_rotation_matrix_from_pose(currentLocation);
+    auto angles = rotation_matrix_to_euler_angles(R);
+    auto currentAngle = angles.z;
+
     std::cout << "Current Angle " << currentAngle << std::endl;
-    double targetAngle = std::atan2(point.z(),point.x());
-    int angle_difference = targetAngle - currentAngle;
+    float targetAngle = std::atan2(point.y(),point.x()) * 180 / M_PI;
+    float angle_difference = targetAngle - currentAngle;
 
     std::cout << "Angle difference " << angle_difference << std::endl;
 
@@ -467,10 +477,47 @@ void Simulator::navigateToPoint(const Eigen::Vector3d& point)
     }
     std::cout << rotCommand << std::endl;
     command(rotCommand);
-    double distanceToTarget = (currentLocation-point).norm();
-    std::string forwardCommand = "forward " + std::to_string( 3*distanceToTarget);
+    double distanceToTarget = sqrt(pow(currentLocation(0)-point(0), 2) + pow(currentLocation(1)-point(1), 2) + pow(currentLocation(2)-point(2), 2));
+    sleep(1000);
+    std::string forwardCommand = "forward " + std::to_string( 2 * distanceToTarget);
     std::cout << forwardCommand << std::endl;
     command(forwardCommand);
+}
+
+cv::Point3f Simulator::rotation_matrix_to_euler_angles(const cv::Mat &R) {
+    float sy = sqrt(R.at<float>(0, 0) * R.at<float>(0, 0) + R.at<float>(1, 0) * R.at<float>(1, 0));
+
+    bool singular = sy < 1e-6;  // If
+
+    float x, y, z;
+    if (!singular) {
+        x = atan2(R.at<float>(2, 1), R.at<float>(2, 2));
+        y = atan2(-R.at<float>(2, 0), sy);
+        z = atan2(R.at<float>(1, 0), R.at<float>(0, 0));
+    } else {
+        x = atan2(-R.at<float>(1, 2), R.at<float>(1, 1));
+        y = atan2(-R.at<float>(2, 0), sy);
+        z = 0;
+    }
+    //std::cout << "Angle in radians: " << z << std::endl;
+    return cv::Point3f(x * 180 / CV_PI, y * 180 / CV_PI, z * 180 / CV_PI);
+}
+
+cv::Mat Simulator::extract_rotation_matrix_from_pose(const cv::Mat& P)
+{
+    std::cout << "-------------" << std::endl;
+    std::cout << P << std::endl;
+    std::cout << "-------------" << std::endl;
+    auto tmp = P.rowRange(0, 3).colRange(0, 3).clone();
+
+//    Eigen::Vector3d s_x = {P.at<double>(0, 0), P.at<double>(1, 0), P.at<double>(2, 0)};
+//    double norm_s_x = s_x.norm();
+//    Eigen::Vector3d s_y = {P.at<double>(0, 1), P.at<double>(1, 1), P.at<double>(2, 1)};
+//    double norm_s_y = s_y.norm();
+//    Eigen::Vector3d s_z = {P.at<double>(0, 2), P.at<double>(1, 2), P.at<double>(2, 2)};
+//    double norm_s_z = s_z.norm();
+    std::cout << tmp << std::endl;
+    return tmp.t();
 }
 
 void Simulator::setSpeed(double speed)
@@ -495,4 +542,45 @@ void Simulator::slower()
     if(this->speedFactor > 0.5){
         this->speedFactor -= 0.1;
     }
+}
+
+std::pair<cv::Mat, cv::Mat> Simulator::align_to_xy_axis() {
+    auto [R_align, mu_align] = SLAM->GetMap()->align_map();
+    return {R_align, mu_align};
+}
+
+cv::Mat Simulator::align_pose(cv::Mat pose) {
+    cv::Mat Rcw = pose.rowRange(0, 3).colRange(0, 3).clone();
+    cv::Mat tcw = pose.rowRange(0, 3).col(3).clone();
+    cv::Mat Rwc = Rcw.t();
+
+    cv::Mat twc = -Rwc * tcw;
+
+    cv::Mat aligned_Rwc = R_align * Rwc;
+    cv::Mat aligned_twc = R_align * (twc - mu_align);
+    cv::Mat align_pose;
+
+    align_pose = cv::Mat::eye(4, 4, CV_32F);
+
+    cv::Mat aligned_Rcw = aligned_Rwc.t();
+    cv::Mat aligned_tcw = -aligned_Rcw * aligned_twc;
+    aligned_Rcw.copyTo(align_pose.rowRange(0, 3).colRange(0, 3));
+    aligned_tcw.copyTo(align_pose.rowRange(0, 3).col(3));
+
+    return align_pose;
+}
+
+void Simulator::Initialization()
+{
+    //Initialization
+    while (getSLAM()->GetTracker()->mState != ORB_SLAM2::Tracking::OK) {
+        std::string c = "left 0.3";
+        command(c);
+        c = "right 0.3";
+        command(c);
+    }
+
+    auto [R_align, mu_align] = align_to_xy_axis();
+    this->R_align = R_align;
+    this->mu_align = mu_align;
 }

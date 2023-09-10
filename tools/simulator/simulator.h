@@ -145,8 +145,20 @@ public:
 
     void SaveMap();
 
-    void navigateToPoint(const Eigen::Vector3d& point);
+    void navigateToPoint(const Eigen::Vector3f& point);
 
+    cv::Point3f rotation_matrix_to_euler_angles(const cv::Mat &R);
+
+    cv::Mat extract_rotation_matrix_from_pose(const cv::Mat& P);
+
+    std::pair<cv::Mat, cv::Mat> align_to_xy_axis();
+
+    cv::Mat align_pose(cv::Mat pose);
+
+    void Initialization();
+
+    cv::Mat R_align;
+    cv::Mat mu_align;
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
@@ -223,6 +235,8 @@ private:
     void static applyUpModelCam(pangolin::OpenGlRenderState &cam, double value);
 
     void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
+
+//    cv::Point3d rotation_matrix_to_euler_angles(const cv::Mat &R);
 
     void faster();
 

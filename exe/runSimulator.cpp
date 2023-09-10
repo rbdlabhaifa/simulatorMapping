@@ -38,25 +38,29 @@ int main(int argc, char **argv) {
     std::cin.get();
     simulator.setTrack(true);
     int currentYaw = 0;
-    int angle = 7;
+    int angle = 5;
 
     cv::Mat runTimeCurrentLocation;
-    for (int i = 0; i < std::ceil(360 / angle); i++) {
+    simulator.Initialization();
+    //auto [R_align, mu_align] = simulator.align_to_xy_axis();
+
+    for (int i = 0; i < std::ceil(45 / angle); i++) {
         std::string c = "left 0.3";
         simulator.command(c);
-
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "right 0.3";
         simulator.command(c);
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "cw " + std::to_string(angle);
         simulator.command(c);
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
+
         auto currentLocation = simulator.getCurrentLocation();
-        if (!currentLocation.empty()) {
-            auto currentLoc = ORB_SLAM2::Converter::toVector3d(currentLocation.rowRange(0, 2).col(3));
-            double currentAngle = std::atan2(currentLoc.z(), currentLoc.x());
-            std::cout << "Current Angle " << currentAngle << std::endl;
+        if (!currentLocation.empty()){
+            auto align_pose = simulator.align_pose(currentLocation.clone());
+            //TODO: use align_pose
+            auto R = align_pose.rowRange(0, 3).colRange(0, 3).clone();
+            R = R.t();
+            //auto R = simulator.extract_rotation_matrix_from_pose(currentLocation);
+            auto angles = simulator.rotation_matrix_to_euler_angles(R);
+            std::cout << "yaw = " << angles.z << std::endl;
         }
         sleep(1);
         std::cout << "Finished " << 100 * angle * (i+1) / 360 << "% of scan" << std::endl;
@@ -84,12 +88,24 @@ int main(int argc, char **argv) {
 
 
     for (auto point: exitPoints){
-        cv::Point3d cvPoint = cv::Point3d (point.second[0], point.second[1], point.second[2]);
-        std::cout << cvPoint << std::endl;
-        simulator.getSLAM()->GetMapDrawer()->navigationPoints.emplace_back(cvPoint);
+        cv::Point3f cvPoint = cv::Point3d (point.second[0], point.second[1], point.second[2]);
+        simulator.getSLAM()->GetMapDrawer()->navigationPoints.emplace_back();
         std::cout << simulator.getSLAM()->GetMapDrawer()->navigationPoints.size() << std::endl;
     }
 
-    simulator.navigateToPoint(exitPoints.front().second);
+    auto nav_point = simulator.getSLAM()->GetMapDrawer()->navigationPoints[0];
+
+
+    auto navigation_point = exitPoints.front().second;
+
+//    cv::Point3f tmp(navigation_point.coeff(0, 0), navigation_point.coeff(1, 0), navigation_point.coeff(2, 0));
+//    cv::Mat nav_point(tmp);
+
+//    cv::Mat aligned_navigation_point = simulator.R_align * (nav_point - simulator.mu_align);
+
+    std::cout << "We will navigate to " << navigation_point << std::endl;
+
+    Eigen::Vector3f aligned_navigation_point_eigen(navigation_point.x(), navigation_point.y(), navigation_point.z());
+    simulator.navigateToPoint(aligned_navigation_point_eigen);
     simulatorThread.join();
 }
