@@ -46,7 +46,7 @@ public:
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
 
     std::vector<cv::Point3f> navigationPoints = {};
-    cv::Point3d current_navigtion_point;
+    cv::Point3f current_navigtion_point;
 private:
 
     float mKeyFrameSize;

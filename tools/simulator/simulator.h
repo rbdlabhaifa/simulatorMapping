@@ -149,16 +149,20 @@ public:
 
     cv::Point3f rotation_matrix_to_euler_angles(const cv::Mat &R);
 
-    cv::Mat extract_rotation_matrix_from_pose(const cv::Mat& P);
-
-    std::pair<cv::Mat, cv::Mat> align_to_xy_axis();
-
-    cv::Mat align_pose(cv::Mat pose);
+    cv::Mat align(const cv::Mat& pose) const;
 
     void Initialization();
 
+    cv::Mat rotation_matrix_from_pose(const cv::Mat& pose);
+
+    float ExtractYaw();
+
     cv::Mat R_align;
     cv::Mat mu_align;
+
+    Eigen::Vector3f ExtractTranslation();
+
+    Eigen::Vector3f translation_vector_from_pose(const cv::Mat& pose);
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
@@ -235,8 +239,6 @@ private:
     void static applyUpModelCam(pangolin::OpenGlRenderState &cam, double value);
 
     void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
-
-//    cv::Point3d rotation_matrix_to_euler_angles(const cv::Mat &R);
 
     void faster();
 
