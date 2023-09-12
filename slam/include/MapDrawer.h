@@ -45,6 +45,8 @@ public:
     void SetReferenceKeyFrame(KeyFrame *pKF);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
 
+    std::vector<cv::Point3f> navigationPoints = {};
+    cv::Point3f current_navigtion_point;
 private:
 
     float mKeyFrameSize;

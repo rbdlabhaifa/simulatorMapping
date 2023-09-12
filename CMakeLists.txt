@@ -75,7 +75,7 @@ add_library(${PROJECT_NAME}
         slam/src/KeyFrame.cc
         slam/src/Map.cc
         slam/src/MapDrawer.cc
-	    slam/src/CSVReader.cc
+        slam/src/CSVReader.cc
         slam/src/Optimizer.cc
         slam/src/PnPsolver.cc
         slam/src/Frame.cc
@@ -86,7 +86,7 @@ add_library(${PROJECT_NAME}
         utils/src/Auxiliary.cpp
         utils/src/OfflineMapPoint.cpp
         utils/src/MapControl.cpp
-        )
+)
 
 
 target_link_libraries(${PROJECT_NAME}
@@ -98,11 +98,11 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
         ${PCL_LIBRARIES}
         -lpthread ${PYTHON_LIBRARIES}
-	    -lboost_serialization
-	    -lboost_system
-        )
+        -lboost_serialization
+        -lboost_system
+)
 add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
-add_library(exitRoom tools/navigation/RoomExit.cpp)
+add_library(exitRoom tools/navigation/src/RoomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})
 add_subdirectory(exe)

@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "RoomExit.h"
+#include "navigation/include/RoomExit.h"
 
 RoomExit::RoomExit(std::vector<Eigen::Vector3d> &data) : points(data) {
     auto center = findCenter(data);

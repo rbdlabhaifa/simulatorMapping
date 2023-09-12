@@ -78,6 +78,24 @@ void MapDrawer::DrawMapPoints()
     }
 
     glEnd();
+
+    glPointSize(10 * mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(1.0,0.0,0.0);
+    glVertex3f(current_navigtion_point.x, current_navigtion_point.y, current_navigtion_point.z);
+    glEnd();
+
+    glPointSize(10 * mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,1.0,0.0);
+
+    for (auto point: navigationPoints)
+    {
+        glVertex3f(point.x, point.y, point.z);
+    }
+    glEnd();
+
+
 }
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)

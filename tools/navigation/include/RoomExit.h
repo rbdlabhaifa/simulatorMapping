@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <map>
 
+
 class Line {
 public:
     Line(Eigen::Vector2d &point, double slope);
@@ -68,6 +69,7 @@ private:
     std::vector<Eigen::Vector3d> points;
     std::vector<Eigen::Vector3d> normalizedPoints;
     std::vector<Line> lines;
+
 };
 
 

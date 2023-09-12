@@ -34,10 +34,19 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
+
     SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, trackImages,
                                                loadMap,
                                                mapLoadPath,
                                                true);
+    bool isLocalized = true;
+//    cv::Mat lastLocalizedLocation = this->getCurrentLocation();
+//    auto currentLocation = ORB_SLAM2::Converter::toVector3d(simulator.getCurrentLocation().rowRange(0, 2).col(3));
+//
+//    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
+//    double targetAngle = std::atan2(exitPoints.front().second.z(),exitPoints.front().second.x());
+//    int angle_difference = targetAngle;
+
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
     char time_buf[21];
@@ -64,7 +73,9 @@ void Simulator::command(std::string &command, int intervalUsleep, double fps, in
         std::string stringValue;
         iss >> stringValue;
         value = std::stod(stringValue);
+        std::cout << command << std::endl;
         applyCommand(c, value, intervalUsleep, fps, totalCommandTimeInSeconds);
+        lastCommand = command;
     } else {
         std::cout << "the command " << c << " is not supported and will be skipped" << std::endl;
     }
@@ -106,6 +117,10 @@ void Simulator::simulatorRunThread() {
 
     const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
     alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
+
+    auto mvm = pangolin::ModelViewLookAt(-3.8966, 0.974479 ,4.55261 ,-3.566 ,0.98659, 1.03574, 0, 1.0, 0);
+    s_cam.SetModelViewMatrix(mvm);
+
     geomToRender = pangolin::ToGlGeometry(modelGeometry);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
@@ -170,6 +185,7 @@ void Simulator::simulatorRunThread() {
                 std::cout << "new map saved to " << simulatorOutputDir + "/simulatorCloudPoint" + currentTime + ".bin"
                           << std::endl;
             }
+
             if (track) {
                 locationLock.lock();
                 if (trackImages){
@@ -180,9 +196,17 @@ void Simulator::simulatorRunThread() {
                     orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
                     Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
                 }
+//                auto current_pos = getCurrentLocation();
+//                if (!current_pos.empty())
+//                {
+//                    auto currentLocation = ORB_SLAM2::Converter::toVector3d(getCurrentLocation().rowRange(0, 2).col(3));
+//                    std::cout << "x = " << currentLocation.x() << " y = " << currentLocation.y() << " z = " << currentLocation.z();
+//                }
 
                 locationLock.unlock();
             }
+
+            //std::cout << s_cam.GetModelViewMatrix() << std::endl;//TODO: remove this before commit
 
             s_cam.Apply();
 
@@ -194,13 +218,15 @@ void Simulator::simulatorRunThread() {
         pangolin::FinishFrame();
     }
     if (isSaveMap) {
-
-        saveMap("final");
-        SLAM->SaveMap(simulatorOutputDir + "/finalSimulatorCloudPoint.bin");
-        std::cout << "new map saved to " << simulatorOutputDir + "/finalSimulatorCloudPoint.bin" << std::endl;
-
+        SaveMap();
     }
     SLAM->Shutdown();
+}
+
+void Simulator::SaveMap(){
+    saveMap("final");
+    SLAM->SaveMap(simulatorOutputDir + "/finalSimulatorCloudPoint.bin");
+    std::cout << "new map saved to " << simulatorOutputDir + "/finalSimulatorCloudPoint.bin" << std::endl;
 }
 
 std::thread Simulator::run() {
@@ -410,6 +436,51 @@ Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeometry,
     applyPitchRotationToModelCam(s_cam, -90);
 }
 
+std::shared_ptr<ORB_SLAM2::System> Simulator::getSLAM() {
+    return SLAM;
+}
+
+void Simulator::navigateToPoint(const Eigen::Vector3f& point)
+{
+    //TODO:Remember to add localization
+
+    auto current_location = getCurrentLocation();
+    while (current_location.empty())
+        sleep(0.5);
+
+    auto current_angle = ExtractYaw();
+
+    Eigen::Vector3f currentTranslation = ExtractTranslation();
+
+    cv::Point3f dest_direction_vector(point.x() - currentTranslation.x(),  point.y() - currentTranslation.y(), point.z() - currentTranslation.z());
+//    auto currentLocation = ORB_SLAM2::Converter::toVector3d(getCurrentLocation().rowRange(0, 2).col(3));
+
+//    double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());
+
+    std::cout << "Current Angle " << current_angle << std::endl;
+    auto dest_angle = static_cast<float>(std::atan2(dest_direction_vector.y, dest_direction_vector.x) * 180 / M_PI);
+    std::cout << "Dest Angle " << dest_angle << std::endl;
+    float angle_difference = current_angle - dest_angle;
+
+    std::cout << "Angle difference " << angle_difference << std::endl;
+
+    std::string rotCommand;
+    if (angle_difference<0){
+        rotCommand = "ccw " + std::to_string(std::abs(angle_difference));
+
+    }else{
+        rotCommand = "cw " + std::to_string(angle_difference);
+    }
+    std::cout << rotCommand << std::endl;
+    command(rotCommand);
+//    double distanceToTarget = sqrt(std::pow(translation_vector.at<float>(0)-point.x(), 2) + std::pow(translation_vector.at<float>(1)-point.y(), 2) + std::pow(translation_vector.at<float>(2)-point.z(), 2));
+    double distanceToTarget = (currentTranslation - point).norm();
+
+    std::string forwardCommand = "forward " + std::to_string( 3*distanceToTarget);
+    std::cout << forwardCommand << std::endl;
+    command(forwardCommand);
+}
+
 void Simulator::setSpeed(double speed)
 {
     this->speedFactor = speed;
@@ -422,7 +493,7 @@ double Simulator::getSpeed() const
 
 void Simulator::faster()
 {
-    if(this->speedFactor < 3.0){ 
+    if(this->speedFactor < 3.0){
         this->speedFactor += 0.1;
     }
 }
@@ -432,4 +503,104 @@ void Simulator::slower()
     if(this->speedFactor > 0.5){
         this->speedFactor -= 0.1;
     }
+}
+
+
+cv::Point3f Simulator::rotation_matrix_to_euler_angles(const cv::Mat &R) {
+    float sy = sqrt(R.at<float>(0, 0) * R.at<float>(0, 0) + R.at<float>(1, 0) * R.at<float>(1, 0));
+
+    bool singular = sy < 1e-6;  // If
+
+    float x, y, z;
+    if (!singular) {
+        x = atan2(R.at<float>(2, 1), R.at<float>(2, 2));
+        y = atan2(-R.at<float>(2, 0), sy);
+        z = atan2(R.at<float>(1, 0), R.at<float>(0, 0));
+    } else {
+        x = atan2(-R.at<float>(1, 2), R.at<float>(1, 1));
+        y = atan2(-R.at<float>(2, 0), sy);
+        z = 0;
+    }
+    return cv::Point3f(x * 180 / CV_PI, y * 180 / CV_PI, z * 180 / CV_PI);
+}
+
+cv::Mat Simulator::align(const cv::Mat& pose) const
+{
+    cv::Mat Rwc = pose.rowRange(0, 3).colRange(0, 3).clone().t();
+    cv::Mat tcw = pose.rowRange(0, 3).col(3).clone();
+
+    cv::Mat twc = -Rwc*tcw;
+
+    cv::Mat aligned_Rwc = R_align * Rwc;
+    cv::Mat aligned_twc = R_align * (twc - mu_align);
+
+    cv::Mat align_pose;
+
+    align_pose = cv::Mat::eye(4,4,CV_32F);
+
+    cv::Mat aligned_Rcw = aligned_Rwc.t();
+    cv::Mat aligned_tcw = -aligned_Rcw * aligned_twc;
+    aligned_Rcw.copyTo(align_pose.rowRange(0,3).colRange(0,3));
+    aligned_tcw.copyTo(align_pose.rowRange(0,3).col(3));
+
+    return align_pose;
+}
+
+void Simulator::Initialization(){
+    while (SLAM->GetTracker()->mState != ORB_SLAM2::Tracking::OK)
+    {
+        std::string c = "left 0.3";
+        command(c);
+        c = "right 0.3";
+        command(c);
+    }
+    auto [R, mu] = SLAM->GetMap()->calculate_align_matrices();
+    R_align = R;
+    mu_align = mu;
+}
+
+cv::Mat Simulator::rotation_matrix_from_pose(const cv::Mat& pose){
+    return pose.rowRange(0, 3).colRange(0, 3).clone().t();
+
+}
+
+float Simulator::ExtractYaw(){
+    auto current_pose = getCurrentLocation();
+    if (!current_pose.empty()) {
+        auto aligned_pose = align(current_pose);
+//        std::cout << "---------------------" << std::endl;
+//        std::cout << "aligned pose function " << aligned_pose << std::endl;
+//        std::cout << "---------------------" << std::endl;
+        auto Rwc = rotation_matrix_from_pose(aligned_pose);
+//        std::cout << "---------------------" << std::endl;
+//        std::cout << "Rwc function" << Rwc << std::endl;
+//        std::cout << "---------------------" << std::endl;
+        auto angles = rotation_matrix_to_euler_angles(Rwc);
+//        std::cout << "---------------------" << std::endl;
+//        std::cout << "angles function" << angles << std::endl;
+//        std::cout << "---------------------" << std::endl;
+        auto currentAngle = angles.z + 90;
+        return currentAngle;
+    }
+    return 100000;
+}
+
+Eigen::Vector3f Simulator::ExtractTranslation()
+{
+    Eigen::Vector3f translation;
+    auto current_pose = getCurrentLocation();
+    if (!current_pose.empty()) {
+        auto aligned_pose = align(current_pose);
+        translation = translation_vector_from_pose(current_pose);
+    }
+    return translation;
+}
+
+Eigen::Vector3f Simulator::translation_vector_from_pose(const cv::Mat& pose){
+    auto tcw = pose.rowRange(0, 3).col(3);
+    auto Rwc = pose.rowRange(0, 3).colRange(0, 3).clone().t();
+    cv::Mat translation = -Rwc * tcw;
+    cv::Mat translation_wc = R_align * (translation - mu_align);
+    Eigen::Vector3f eigen_translation(translation_wc.at<float>(0), translation_wc.at<float>(1), translation_wc.at<float>(2));
+    return eigen_translation;
 }

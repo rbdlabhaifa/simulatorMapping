@@ -22,6 +22,10 @@
 #include <pangolin/scene/axis.h>
 #include <pangolin/scene/scenehandler.h>
 
+//#include "Point.h"
+//#include "Line.h"
+#include <matplotlibcpp.h>
+
 class Auxiliary {
 public:
     static std::string GetGeneralSettingsPath();
@@ -43,5 +47,27 @@ public:
     static std::vector<std::string> GetFrameDatas(double amount=1); // Between 0 to 1
 
     static void add_unique_points(std::vector<cv::Point3d>& target, const std::vector<cv::Point3d>& source);
+
+//    static void showCloudPoint(const std::vector<Point> &redPoints, const std::vector<Point> &cloud);
+//
+//    static double calculateDistanceXY(const Point &point1, const Point &point2);
+//
+//    static double getDistanceToClosestSegment(const Point &point, const std::vector<Line> &segments);
+//
+//    static double getAngleFromSlope(double slope);
+//
+//    static double distanceBetweenPointAndSegment(const Point &point, Line segment);
+//
+//    static double getAngleBySlopes(Line &line1, Line &line2);
+//
+//    static double radiansToAngle(double radian);
+//
+//    static std::vector<double> getXValues(const std::vector<Point> &points);
+//    static std::vector<double> getYValues(const std::vector<Point> &points);
+//    static std::vector<double> getZValues(const std::vector<Point> &points);
+//
+//    //static double det(const Point &point1, const Point &point2);
+//
+//    static double angleToRadians(int angle);
 };
 #endif // ORB_SLAM2_AUXILIARY_H

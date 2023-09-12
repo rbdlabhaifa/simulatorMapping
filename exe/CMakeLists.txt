@@ -48,3 +48,6 @@ target_link_libraries(build_new_map_demo ${PROJECT_NAME})
 
 add_executable(test_exitRoomAlgo test_exitRoomAlgo.cpp)
 target_link_libraries(test_exitRoomAlgo exitRoom)
+
+add_executable(example example.cc)
+target_link_libraries(example simulator exitRoom autodrone)

@@ -10,7 +10,12 @@
 #include <pangolin/geometry/geometry.h>
 #include <pangolin/gl/glsl.h>
 #include <pangolin/gl/glvbo.h>
+
+#include <iostream>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <pangolin/utils/file_utils.h>
 #include <pangolin/geometry/glgeometry.h>
@@ -19,7 +24,10 @@
 #include <Eigen/SVD>
 #include <filesystem>
 #include "include/run_model/TextureShader.h"
-/**
+//#include "navigation/include/AutonomousDrone.h"
+
+/**#include "simulator/simulator.h"
+
  *  @class Simulator
  *  @brief This class provides a simulation environment for virtual robotic navigation and mapping.
  *
@@ -118,10 +126,43 @@ public:
  */
     void setTrack(bool value) { track = value; }
 
+/**
+ * @brief runs the localization thread
+ */
+    void localization();
+
+    std::shared_ptr<ORB_SLAM2::System> getSLAM();
+
+    std::string lastCommand;
+    int amountForwardBackward = 0;
+    int amountYaw = 10;
+    int amountUpDown = 0;
+    int amountLeftRight = 1;
+
     void setSpeed(double speed);
 
     double getSpeed() const;
 
+    void SaveMap();
+
+    void navigateToPoint(const Eigen::Vector3f& point);
+
+    cv::Point3f rotation_matrix_to_euler_angles(const cv::Mat &R);
+
+    cv::Mat align(const cv::Mat& pose) const;
+
+    void Initialization();
+
+    cv::Mat rotation_matrix_from_pose(const cv::Mat& pose);
+
+    float ExtractYaw();
+
+    cv::Mat R_align;
+    cv::Mat mu_align;
+
+    Eigen::Vector3f ExtractTranslation();
+
+    Eigen::Vector3f translation_vector_from_pose(const cv::Mat& pose);
 private:
     /**
  * @brief A map for controlling the virtual robot's actions.
@@ -163,10 +204,13 @@ private:
     Eigen::Vector2i viewportDesiredSize;
     cv::Mat Tcw;
     std::mutex locationLock;
+    bool isLocalized;
 
     double speedFactor;
 
     void simulatorRunThread();
+
+    //void localizationRunThread();
 
     void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
                         Eigen::MatrixXf &surface);

@@ -5,10 +5,11 @@
 #include "include/Auxiliary.h"
 
 std::string Auxiliary::GetGeneralSettingsPath() {
-    char currentDirPath[256];
-    getcwd(currentDirPath, 256);
-    std::string settingPath = currentDirPath;
-    settingPath += "/../generalSettings.json";
+//    char currentDirPath[256];
+//    getcwd(currentDirPath, 256);
+//    std::string settingPath = currentDirPath;
+//    settingPath += "/home/rbdlab/dev/simulatorMapping/generalSettings.json";
+    std::string settingPath = "/home/rbdlab/dev/simulatorMapping/generalSettings.json";
     return settingPath;
 }
 
@@ -543,3 +544,96 @@ void Auxiliary::add_unique_points(std::vector<cv::Point3d>& target, const std::v
         }
     }
 }
+
+//double Auxiliary::calculateDistanceXY(const Point &point1, const Point &point2) {
+//    return sqrt(pow(point2.x - point1.x, 2) + pow(point2.y - point1.y, 2));
+//}
+//
+//
+//void Auxiliary::showCloudPoint(const std::vector<Point> &redPoints, const std::vector<Point> &cloud) {
+//    matplotlibcpp::clf();
+//    matplotlibcpp::scatter(getXValues(cloud), getYValues(cloud), 2.0);
+//    matplotlibcpp::plot(getXValues(redPoints), getYValues(redPoints), "ro");
+//    matplotlibcpp::show();
+//}
+//
+//double Auxiliary::getDistanceToClosestSegment(const Point &point, const std::vector<Line> &segments) {
+//    double minDistance = 10000;
+//    for (const auto &segment: segments) {
+//        double distance = distanceBetweenPointAndSegment(point, segment);
+//        minDistance = minDistance > distance ? distance : minDistance;
+//    }
+//    return minDistance;
+//}
+//
+//double Auxiliary::getAngleFromSlope(double slope) {
+//    return radiansToAngle(atan(slope));
+//}
+//
+//double Auxiliary::distanceBetweenPointAndSegment(const Point &point, Line segment) {
+//    auto point1 = segment.getPoint1();
+//    auto point2 = segment.getPoint2();
+//    Point segmentDifference(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z);
+//    double dot = (point.x - point1.x) * segmentDifference.x + (point.y - point1.y) * segmentDifference.y;
+//    double segmentLength = pow(segmentDifference.x, 2) + pow(segmentDifference.y, 2);
+//    double param = -1;
+//    Point distancePoint(0, 0, 0);
+//    if (segmentLength != 0) {
+//        param = dot / segmentLength;
+//    }
+//    if (param < 0) {
+//        distancePoint.x = point1.x;
+//        distancePoint.y = point1.y;
+//    } else if (param > 1) {
+//        distancePoint.x = point2.x;
+//        distancePoint.y = point2.y;
+//    } else {
+//        distancePoint.x = point1.x + param * segmentDifference.x;
+//        distancePoint.y = point1.y + param * segmentDifference.y;
+//    }
+//    return calculateDistanceXY(Point(point.x - distancePoint.x, point.y - distancePoint.y, 0), Point(0, 0, 0));
+//}
+//
+//double Auxiliary::getAngleBySlopes(Line &line1, Line &line2) {
+//    Eigen::Vector3d vector1(1, line1.getSlope(), 0);
+//    Eigen::Vector3d vector2(1, line2.getSlope(), 0);
+//    Eigen::Vector3d unitVector1 = vector1 / vector1.norm();
+//    Eigen::Vector3d unitVector2 = vector2 / vector2.norm();
+//    return radiansToAngle(acos(unitVector1.dot(unitVector2)));
+//}
+//
+//double Auxiliary::radiansToAngle(double radian) {
+//    return radian * (180 / M_PI);
+//}
+//
+//std::vector<double> Auxiliary::getXValues(const std::vector<Point> &points) {
+//    std::vector<double> xValues;
+//    for (const Point &point: points) {
+//        xValues.push_back(point.x);
+//    }
+//    return xValues;
+//}
+//
+//std::vector<double> Auxiliary::getYValues(const std::vector<Point> &points) {
+//    std::vector<double> yValues;
+//    for (const Point &point: points) {
+//        yValues.push_back(point.y);
+//    }
+//    return yValues;
+//}
+//
+//std::vector<double> Auxiliary::getZValues(const std::vector<Point> &points) {
+//    std::vector<double> yValues;
+//    for (const Point &point: points) {
+//        yValues.push_back(point.z);
+//    }
+//    return yValues;
+//}
+//
+//double Auxiliary::det(const Point &point1, const Point &point2) {
+//    return point1.x * point2.y - point1.y * point2.x;
+//}
+//
+//double Auxiliary::angleToRadians(int angle) {
+//    return (angle * M_PI) / 180;
+//}
