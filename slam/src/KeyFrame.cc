@@ -97,223 +97,223 @@ namespace ORB_SLAM2
 
 #ifndef _BAR_
     template <class Archive>
-    void KeyFrame::save(Archive &ar, const unsigned int version) const
+    void KeyFrame::save(Archive& ar, const unsigned int version) const
     {
-        ar &const_cast<cv::Mat &>(image);
+        ar& const_cast<cv::Mat&>(image);
 
         int nItems;
         bool is_id;
         bool has_parent = false;
         long unsigned int t_nId;
         // int ordered_weight;
-        ar &nNextId;
+        ar& nNextId;
         int ConKfWeight;
 
         // if (mbToBeErased)
         // return;
         // if (mbBad)
         // return;
-        ar &const_cast<long unsigned int &>(mnId);
-        ar &const_cast<long unsigned int &>(mnFrameId);
-        ar &const_cast<double &>(mTimeStamp);
-        ar &const_cast<int &>(mnGridCols);
-        ar &const_cast<int &>(mnGridRows);
-        ar &const_cast<float &>(mfGridElementWidthInv);
-        ar &const_cast<float &>(mfGridElementHeightInv);
-        ar &const_cast<long unsigned int &>(mnTrackReferenceForFrame);
-        ar &const_cast<long unsigned int &>(mnFuseTargetForKF);
-        ar &const_cast<long unsigned int &>(mnBALocalForKF);
-        ar &const_cast<long unsigned int &>(mnBAFixedForKF);
-        ar &const_cast<long unsigned int &>(mnLoopQuery);
-        ar &const_cast<int &>(mnLoopWords);
-        ar &const_cast<float &>(mLoopScore);
-        ar &const_cast<long unsigned int &>(mnRelocQuery);
-        ar &const_cast<int &>(mnRelocWords);
-        ar &const_cast<float &>(mRelocScore);
-        ar &const_cast<cv::Mat &>(mTcwGBA);
-        ar &const_cast<cv::Mat &>(mTcwBefGBA);
-        ar &const_cast<long unsigned int &>(mnBAGlobalForKF);
-        ar &const_cast<float &>(fx);
-        ar &const_cast<float &>(fy);
-        ar &const_cast<float &>(cx);
-        ar &const_cast<float &>(cy);
-        ar &const_cast<float &>(invfx);
-        ar &const_cast<float &>(invfy);
-        ar &const_cast<float &>(mbf);
-        ar &const_cast<float &>(mb);
-        ar &const_cast<float &>(mThDepth);
-        ar &const_cast<int &>(N);
-        ar &const_cast<std::vector<cv::KeyPoint> &>(mvKeys);
-        ar &const_cast<std::vector<cv::KeyPoint> &>(mvKeysUn);
-        ar &const_cast<std::vector<float> &>(mvuRight);
-        ar &const_cast<std::vector<float> &>(mvDepth);
-        ar &const_cast<cv::Mat &>(mDescriptors);
-        ar &const_cast<cv::Mat &>(mTcp);
-        ar &const_cast<int &>(mnScaleLevels);
-        ar &const_cast<float &>(mfScaleFactor);
-        ar &const_cast<float &>(mfLogScaleFactor);
-        ar &const_cast<std::vector<float> &>(mvScaleFactors);
-        ar &const_cast<std::vector<float> &>(mvLevelSigma2);
-        ar &const_cast<std::vector<float> &>(mvInvLevelSigma2);
+        ar& const_cast<long unsigned int&>(mnId);
+        ar& const_cast<long unsigned int&>(mnFrameId);
+        ar& const_cast<double&>(mTimeStamp);
+        ar& const_cast<int&>(mnGridCols);
+        ar& const_cast<int&>(mnGridRows);
+        ar& const_cast<float&>(mfGridElementWidthInv);
+        ar& const_cast<float&>(mfGridElementHeightInv);
+        ar& const_cast<long unsigned int&>(mnTrackReferenceForFrame);
+        ar& const_cast<long unsigned int&>(mnFuseTargetForKF);
+        ar& const_cast<long unsigned int&>(mnBALocalForKF);
+        ar& const_cast<long unsigned int&>(mnBAFixedForKF);
+        ar& const_cast<long unsigned int&>(mnLoopQuery);
+        ar& const_cast<int&>(mnLoopWords);
+        ar& const_cast<float&>(mLoopScore);
+        ar& const_cast<long unsigned int&>(mnRelocQuery);
+        ar& const_cast<int&>(mnRelocWords);
+        ar& const_cast<float&>(mRelocScore);
+        ar& const_cast<cv::Mat&>(mTcwGBA);
+        ar& const_cast<cv::Mat&>(mTcwBefGBA);
+        ar& const_cast<long unsigned int&>(mnBAGlobalForKF);
+        ar& const_cast<float&>(fx);
+        ar& const_cast<float&>(fy);
+        ar& const_cast<float&>(cx);
+        ar& const_cast<float&>(cy);
+        ar& const_cast<float&>(invfx);
+        ar& const_cast<float&>(invfy);
+        ar& const_cast<float&>(mbf);
+        ar& const_cast<float&>(mb);
+        ar& const_cast<float&>(mThDepth);
+        ar& const_cast<int&>(N);
+        ar& const_cast<std::vector<cv::KeyPoint>&>(mvKeys);
+        ar& const_cast<std::vector<cv::KeyPoint>&>(mvKeysUn);
+        ar& const_cast<std::vector<float>&>(mvuRight);
+        ar& const_cast<std::vector<float>&>(mvDepth);
+        ar& const_cast<cv::Mat&>(mDescriptors);
+        ar& const_cast<cv::Mat&>(mTcp);
+        ar& const_cast<int&>(mnScaleLevels);
+        ar& const_cast<float&>(mfScaleFactor);
+        ar& const_cast<float&>(mfLogScaleFactor);
+        ar& const_cast<std::vector<float>&>(mvScaleFactors);
+        ar& const_cast<std::vector<float>&>(mvLevelSigma2);
+        ar& const_cast<std::vector<float>&>(mvInvLevelSigma2);
 
-        ar &const_cast<int &>(mnMinX);
-        ar &const_cast<int &>(mnMinY);
-        ar &const_cast<int &>(mnMaxX);
-        ar &const_cast<int &>(mnMaxY);
-        ar &const_cast<cv::Mat &>(mK);
-        ar &const_cast<cv::Mat &>(Tcw);
-        ar &const_cast<cv::Mat &>(Twc);
-        ar &const_cast<cv::Mat &>(Ow);
-        ar &const_cast<cv::Mat &>(Cw);
+        ar& const_cast<int&>(mnMinX);
+        ar& const_cast<int&>(mnMinY);
+        ar& const_cast<int&>(mnMaxX);
+        ar& const_cast<int&>(mnMaxY);
+        ar& const_cast<cv::Mat&>(mK);
+        ar& const_cast<cv::Mat&>(Tcw);
+        ar& const_cast<cv::Mat&>(Twc);
+        ar& const_cast<cv::Mat&>(Ow);
+        ar& const_cast<cv::Mat&>(Cw);
         // Save each map point id
         nItems = mvpMapPoints.size();
-        ar &nItems;
+        ar& nItems;
 
         // cout << "{INFO}mvpMapPoints nItems -" << nItems << endl;
-        for (std::vector<MapPoint *>::const_iterator it = mvpMapPoints.begin(); it != mvpMapPoints.end(); ++it)
+        for (auto it = mvpMapPoints.begin(); it != mvpMapPoints.end(); ++it)
         {
             if (*it == NULL)
             {
                 is_id = false;
-                ar &is_id;
+                ar& is_id;
                 continue;
             }
             else
             {
                 is_id = true;
-                ar &is_id;
+                ar& is_id;
                 t_nId = (**it).mnId;
                 // cout << "[" << t_nId <<"]";
 
-                ar &t_nId;
+                ar& t_nId;
             }
         }
 
         // Grid
-        ar &const_cast<std::vector<std::vector<std::vector<size_t>>> &>(mGrid);
+        ar& const_cast<std::vector<std::vector<std::vector<size_t>>>&>(mGrid);
         nItems = mConnectedKeyFrameWeights.size();
-        ar &nItems;
+        ar& nItems;
 
-        for (std::map<KeyFrame *, int>::const_iterator it = mConnectedKeyFrameWeights.begin();
-             it != mConnectedKeyFrameWeights.end();
-             ++it)
+        for (auto it = mConnectedKeyFrameWeights.begin();
+            it != mConnectedKeyFrameWeights.end();
+            ++it)
         {
             if (it->first == NULL)
             {
                 is_id = false;
-                ar &is_id;
+                ar& is_id;
                 continue;
             }
             else
             {
                 is_id = true;
-                ar &is_id;
+                ar& is_id;
                 t_nId = it->first->mnId;
-                ar &t_nId;
+                ar& t_nId;
                 ConKfWeight = it->second;
-                ar &ConKfWeight;
+                ar& ConKfWeight;
             }
         }
         // Save each mvpOrderedConnectedKeyFrames
         nItems = mvpOrderedConnectedKeyFrames.size();
-        ar &nItems;
+        ar& nItems;
 
-        for (std::vector<KeyFrame *>::const_iterator it = mvpOrderedConnectedKeyFrames.begin();
-             it != mvpOrderedConnectedKeyFrames.end();
-             ++it)
+        for (auto it = mvpOrderedConnectedKeyFrames.begin();
+            it != mvpOrderedConnectedKeyFrames.end();
+            ++it)
         {
             if (*it == NULL)
             {
                 is_id = false;
-                ar &is_id;
+                ar& is_id;
                 continue;
             }
             else
             {
                 is_id = true;
-                ar &is_id;
+                ar& is_id;
                 t_nId = (**it).mnId;
-                ar &t_nId;
+                ar& t_nId;
             }
         }
         // Save Each mvOrderedWeights
 #if 0
-        
+
         nItems = mvOrderedWeights.size();
-        
-        ar & nItems;
-        
-        for (std::vector<int>::const_iterator it = mvOrderedWeights.begin(); 
-                it != mvOrderedWeights.end(); 
-                ++it) 
-        {        
-            ordered_weight =  (*it);
-            ar & ordered_weight;
-                    
+
+        ar& nItems;
+
+        for (std::vector<int>::const_iterator it = mvOrderedWeights.begin();
+            it != mvOrderedWeights.end();
+            ++it)
+        {
+            ordered_weight = (*it);
+            ar& ordered_weight;
+
         }
 #endif
-        ar &const_cast<std::vector<int> &>(mvOrderedWeights);
+        ar& const_cast<std::vector<int>&>(mvOrderedWeights);
 
         // Spanning Tree
-        ar &const_cast<bool &>(mbFirstConnection);
+        ar& const_cast<bool&>(mbFirstConnection);
 
         if (mpParent)
         {
             has_parent = true;
-            ar &has_parent;
-            ar & mpParent->mnId;
+            ar& has_parent;
+            ar& mpParent->mnId;
         }
         else
         {
             has_parent = false;
-            ar &has_parent;
+            ar& has_parent;
             // ar & mpParent->mnId;
         }
         // Save each child Frame id
         nItems = mspChildrens.size();
-        ar &nItems;
-        for (std::set<KeyFrame *>::const_iterator it = mspChildrens.begin(); it != mspChildrens.end(); ++it)
+        ar& nItems;
+        for (auto it = mspChildrens.begin(); it != mspChildrens.end(); ++it)
         {
-            if (*it == NULL)
+            if (it->first == nullptr)
             {
                 is_id = false;
-                ar &is_id;
+                ar& is_id;
                 continue;
             }
             else
             {
                 is_id = true;
-                ar &is_id;
-                t_nId = (**it).mnId;
+                ar& is_id;
+                t_nId = (*(it->first)).mnId;
                 // cout << "[" << t_nId <<"]";
-                ar &t_nId;
+                ar& t_nId;
             }
         }
         // Save each Loop Edge id
         nItems = mspLoopEdges.size();
-        ar &nItems;
-        for (std::set<KeyFrame *>::const_iterator it = mspLoopEdges.begin(); it != mspLoopEdges.end(); ++it)
+        ar& nItems;
+        for (auto it = mspLoopEdges.begin(); it != mspLoopEdges.end(); ++it)
         {
-            if (*it == NULL)
+            if (it->first == nullptr)
             {
                 is_id = false;
-                ar &is_id;
+                ar& is_id;
                 continue;
             }
             else
             {
                 is_id = true;
-                ar &is_id;
-                t_nId = (**it).mnId;
+                ar& is_id;
+                t_nId = (*(it->first)).mnId;
                 // cout << "[" << t_nId <<"]";
-                ar &t_nId;
+                ar& t_nId;
             }
         }
 
-        ar &const_cast<bool &>(mbNotErase);
-        ar &const_cast<bool &>(mbToBeErased);
-        ar &const_cast<bool &>(mbBad);
-        ar &const_cast<float &>(mHalfBaseline);
+        ar& const_cast<bool&>(mbNotErase);
+        ar& const_cast<bool&>(mbToBeErased);
+        ar& const_cast<bool&>(mbBad);
+        ar& const_cast<float&>(mHalfBaseline);
         // cout << "{INFO}mvpMapPoints nItems fin"<< endl;
         // cout << "Save Map :  KF stat is : " << endl;
         // t_nId = has_parent?mpParent->mnId:0;
@@ -321,84 +321,84 @@ namespace ORB_SLAM2
     }
 
     template <class Archive>
-    void KeyFrame::load(Archive &ar, const unsigned int version)
+    void KeyFrame::load(Archive& ar, const unsigned int version)
     {
-        ar &const_cast<cv::Mat &>(image);
+        ar& const_cast<cv::Mat&>(image);
 
         id_map storer;
         int nItems;
         bool is_id = false;
         bool has_parent = false;
         long unsigned int t_nId;
-        ar &nNextId;
-        ar &const_cast<long unsigned int &>(mnId);
+        ar& nNextId;
+        ar& const_cast<long unsigned int&>(mnId);
         int ConKfWeight = 0;
         // cout << "{INFO}Keyframe Load - " << mnId << endl;
 
-        ar &const_cast<long unsigned int &>(mnFrameId);
-        ar &const_cast<double &>(mTimeStamp);
-        ar &const_cast<int &>(mnGridCols);
-        ar &const_cast<int &>(mnGridRows);
-        ar &const_cast<float &>(mfGridElementWidthInv);
-        ar &const_cast<float &>(mfGridElementHeightInv);
-        ar &const_cast<long unsigned int &>(mnTrackReferenceForFrame);
-        ar &const_cast<long unsigned int &>(mnFuseTargetForKF);
-        ar &const_cast<long unsigned int &>(mnBALocalForKF);
-        ar &const_cast<long unsigned int &>(mnBAFixedForKF);
-        ar &const_cast<long unsigned int &>(mnLoopQuery);
-        ar &const_cast<int &>(mnLoopWords);
-        ar &const_cast<float &>(mLoopScore);
-        ar &const_cast<long unsigned int &>(mnRelocQuery);
-        ar &const_cast<int &>(mnRelocWords);
-        ar &const_cast<float &>(mRelocScore);
-        ar &const_cast<cv::Mat &>(mTcwGBA);
-        ar &const_cast<cv::Mat &>(mTcwBefGBA);
-        ar &const_cast<long unsigned int &>(mnBAGlobalForKF);
-        ar &const_cast<float &>(fx);
-        ar &const_cast<float &>(fy);
-        ar &const_cast<float &>(cx);
-        ar &const_cast<float &>(cy);
-        ar &const_cast<float &>(invfx);
-        ar &const_cast<float &>(invfy);
-        ar &const_cast<float &>(mbf);
-        ar &const_cast<float &>(mb);
-        ar &const_cast<float &>(mThDepth);
-        ar &const_cast<int &>(N);
-        ar &const_cast<std::vector<cv::KeyPoint> &>(mvKeys);
-        ar &const_cast<std::vector<cv::KeyPoint> &>(mvKeysUn);
-        ar &const_cast<std::vector<float> &>(mvuRight);
-        ar &const_cast<std::vector<float> &>(mvDepth);
-        ar &const_cast<cv::Mat &>(mDescriptors);
-        ar &const_cast<cv::Mat &>(mTcp);
-        ar &const_cast<int &>(mnScaleLevels);
-        ar &const_cast<float &>(mfScaleFactor);
-        ar &const_cast<float &>(mfLogScaleFactor);
-        ar &const_cast<std::vector<float> &>(mvScaleFactors);
-        ar &const_cast<std::vector<float> &>(mvLevelSigma2);
-        ar &const_cast<std::vector<float> &>(mvInvLevelSigma2);
+        ar& const_cast<long unsigned int&>(mnFrameId);
+        ar& const_cast<double&>(mTimeStamp);
+        ar& const_cast<int&>(mnGridCols);
+        ar& const_cast<int&>(mnGridRows);
+        ar& const_cast<float&>(mfGridElementWidthInv);
+        ar& const_cast<float&>(mfGridElementHeightInv);
+        ar& const_cast<long unsigned int&>(mnTrackReferenceForFrame);
+        ar& const_cast<long unsigned int&>(mnFuseTargetForKF);
+        ar& const_cast<long unsigned int&>(mnBALocalForKF);
+        ar& const_cast<long unsigned int&>(mnBAFixedForKF);
+        ar& const_cast<long unsigned int&>(mnLoopQuery);
+        ar& const_cast<int&>(mnLoopWords);
+        ar& const_cast<float&>(mLoopScore);
+        ar& const_cast<long unsigned int&>(mnRelocQuery);
+        ar& const_cast<int&>(mnRelocWords);
+        ar& const_cast<float&>(mRelocScore);
+        ar& const_cast<cv::Mat&>(mTcwGBA);
+        ar& const_cast<cv::Mat&>(mTcwBefGBA);
+        ar& const_cast<long unsigned int&>(mnBAGlobalForKF);
+        ar& const_cast<float&>(fx);
+        ar& const_cast<float&>(fy);
+        ar& const_cast<float&>(cx);
+        ar& const_cast<float&>(cy);
+        ar& const_cast<float&>(invfx);
+        ar& const_cast<float&>(invfy);
+        ar& const_cast<float&>(mbf);
+        ar& const_cast<float&>(mb);
+        ar& const_cast<float&>(mThDepth);
+        ar& const_cast<int&>(N);
+        ar& const_cast<std::vector<cv::KeyPoint>&>(mvKeys);
+        ar& const_cast<std::vector<cv::KeyPoint>&>(mvKeysUn);
+        ar& const_cast<std::vector<float>&>(mvuRight);
+        ar& const_cast<std::vector<float>&>(mvDepth);
+        ar& const_cast<cv::Mat&>(mDescriptors);
+        ar& const_cast<cv::Mat&>(mTcp);
+        ar& const_cast<int&>(mnScaleLevels);
+        ar& const_cast<float&>(mfScaleFactor);
+        ar& const_cast<float&>(mfLogScaleFactor);
+        ar& const_cast<std::vector<float>&>(mvScaleFactors);
+        ar& const_cast<std::vector<float>&>(mvLevelSigma2);
+        ar& const_cast<std::vector<float>&>(mvInvLevelSigma2);
 
-        ar &const_cast<int &>(mnMinX);
-        ar &const_cast<int &>(mnMinY);
-        ar &const_cast<int &>(mnMaxX);
-        ar &const_cast<int &>(mnMaxY);
-        ar &const_cast<cv::Mat &>(mK);
-        ar &const_cast<cv::Mat &>(Tcw);
-        ar &const_cast<cv::Mat &>(Twc);
-        ar &const_cast<cv::Mat &>(Ow);
-        ar &const_cast<cv::Mat &>(Cw);
+        ar& const_cast<int&>(mnMinX);
+        ar& const_cast<int&>(mnMinY);
+        ar& const_cast<int&>(mnMaxX);
+        ar& const_cast<int&>(mnMaxY);
+        ar& const_cast<cv::Mat&>(mK);
+        ar& const_cast<cv::Mat&>(Tcw);
+        ar& const_cast<cv::Mat&>(Twc);
+        ar& const_cast<cv::Mat&>(Ow);
+        ar& const_cast<cv::Mat&>(Cw);
         // Load each map point id
-        ar &nItems;
+        ar& nItems;
         mvpMapPoints.resize(nItems);
         // mmMapPoints_nId.resize(nItems);
         int j = 0;
         for (int i = 0; i < nItems; ++i)
         {
 
-            ar &is_id;
+            ar& is_id;
             if (is_id)
             {
                 j++;
-                ar &t_nId;
+                ar& t_nId;
                 storer.is_valid = true;
                 storer.id = t_nId;
                 mmMapPoints_nId[i] = storer;
@@ -413,19 +413,19 @@ namespace ORB_SLAM2
 
         // cout << "KF " << mnId <<" valid points = " << j << "invalid points = " << (nItems - j) << endl;
         //  Grid
-        ar &const_cast<std::vector<std::vector<std::vector<size_t>>> &>(mGrid);
+        ar& const_cast<std::vector<std::vector<std::vector<size_t>>>&>(mGrid);
 
-        ar &nItems;
+        ar& nItems;
         // mConnectedKeyFrameWeights_nId.resize(nItems);
         // mConnectedKeyFrameWeights.resize(nItems);
         for (int i = 0; i < nItems; ++i)
         {
 
-            ar &is_id;
+            ar& is_id;
             if (is_id)
             {
-                ar &t_nId;
-                ar &ConKfWeight;
+                ar& t_nId;
+                ar& ConKfWeight;
                 mConnectedKeyFrameWeights_nId[t_nId] = ConKfWeight;
             }
             else
@@ -434,17 +434,17 @@ namespace ORB_SLAM2
         }
 
         // Load each mvpOrderedConnectedKeyFrames id
-        ar &nItems;
+        ar& nItems;
         j = 0;
         // mvpOrderedConnectedKeyFrames.resize(nItems);
         // mvpOrderedConnectedKeyFrames_nId.resize(nItems);
         for (int i = 0; i < nItems; ++i)
         {
-            ar &is_id;
+            ar& is_id;
             if (is_id)
             {
                 j++;
-                ar &t_nId;
+                ar& t_nId;
                 storer.is_valid = true;
                 storer.id = t_nId;
                 mvpOrderedConnectedKeyFrames_nId[i] = storer;
@@ -457,16 +457,16 @@ namespace ORB_SLAM2
             }
         }
         // Load each mvOrderedWeights
-        ar &const_cast<std::vector<int> &>(mvOrderedWeights);
+        ar& const_cast<std::vector<int>&>(mvOrderedWeights);
 
-        ar &const_cast<bool &>(mbFirstConnection);
+        ar& const_cast<bool&>(mbFirstConnection);
 
         // Spanning Tree
-        ar &has_parent;
+        ar& has_parent;
         if (has_parent)
         {
             mparent_KfId_map.is_valid = true;
-            ar &mparent_KfId_map.id;
+            ar& mparent_KfId_map.id;
         }
         else
         {
@@ -474,17 +474,17 @@ namespace ORB_SLAM2
             mparent_KfId_map.id = 0;
         }
         // load each child Frame id
-        ar &nItems;
+        ar& nItems;
         // mspChildrens.resize(nItems);
         // mmChildrens_nId.resize(nItems);
 
         for (int i = 0; i < nItems; ++i)
         {
 
-            ar &is_id;
+            ar& is_id;
             if (is_id)
             {
-                ar &t_nId;
+                ar& t_nId;
                 storer.is_valid = true;
                 storer.id = t_nId;
                 mmChildrens_nId[i] = storer;
@@ -498,17 +498,17 @@ namespace ORB_SLAM2
         }
 
         // Load each Loop Edge Frame id
-        ar &nItems;
+        ar& nItems;
         // mspLoopEdges.resize(nItems);
         // mmLoopEdges_nId.resize(nItems);
 
         for (int i = 0; i < nItems; ++i)
         {
 
-            ar &is_id;
+            ar& is_id;
             if (is_id)
             {
-                ar &t_nId;
+                ar& t_nId;
                 storer.is_valid = true;
                 storer.id = t_nId;
                 mmLoopEdges_nId[i] = storer;
@@ -521,14 +521,13 @@ namespace ORB_SLAM2
             }
         }
 
-        ar &const_cast<bool &>(mbNotErase);
-        ar &const_cast<bool &>(mbToBeErased);
-        ar &const_cast<bool &>(mbBad);
-        ar &const_cast<float &>(mHalfBaseline);
+        ar& const_cast<bool&>(mbNotErase);
+        ar& const_cast<bool&>(mbToBeErased);
+        ar& const_cast<bool&>(mbBad);
+        ar& const_cast<float&>(mHalfBaseline);
         // cout << "Load Map :  KF stat is : " << endl;
         // cout << "KF mnId = " << mnId << " Parent ID " <<mparent_KfId_map.id <<" mspLoopEdges.size() = " << nItems <<endl;
     }
-
     // Explicit template instantiation
     template void KeyFrame::save<boost::archive::binary_oarchive>(
         boost::archive::binary_oarchive &,
@@ -590,7 +589,7 @@ namespace ORB_SLAM2
         }
     }
 
-    void KeyFrame::SetSpanningTree(std::vector<KeyFrame *> vpKeyFrames)
+    void KeyFrame::SetSpanningTree(std::vector<KeyFrame*> vpKeyFrames)
     {
         // We assume the mvpMapPoints_nId list has been initialized and contains the Map point IDS
         // With nid, Search the KetFrame List and populate mvpMapPoints
@@ -602,9 +601,9 @@ namespace ORB_SLAM2
         // Search Parent
         if (mparent_KfId_map.is_valid)
         {
-            for (std::vector<KeyFrame *>::iterator mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
+            for (auto mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
             {
-                KeyFrame *pKf = *mit;
+                KeyFrame* pKf = *mit;
                 id = pKf->mnId;
                 // if (mnId == 10 && 964 == id)
                 // cout << "[" << pMp->mnId <<"]";
@@ -619,10 +618,10 @@ namespace ORB_SLAM2
             if (kf_found == false)
             {
                 cout << endl
-                     << "Parent KF [" << mparent_KfId_map.id << "] not found for KF " << mnId << endl;
+                    << "Parent KF [" << mparent_KfId_map.id << "] not found for KF " << mnId << endl;
                 // mpParent = new KeyFrame();
                 // mpParent->mbBad = true;
-                mpParent = static_cast<KeyFrame *>(NULL);
+                mpParent = static_cast<KeyFrame*>(NULL);
             }
         }
         // Search Child
@@ -630,9 +629,9 @@ namespace ORB_SLAM2
         j = 0;
         ctr = 0;
         is_valid = false;
-        for (std::map<long unsigned int, id_map>::iterator it = mmChildrens_nId.begin();
-             it != mmChildrens_nId.end();
-             j++, ++it)
+        for (auto it = mmChildrens_nId.begin();
+            it != mmChildrens_nId.end();
+            j++, ++it)
         {
             is_valid = it->second.is_valid;
             if (!is_valid)
@@ -647,22 +646,22 @@ namespace ORB_SLAM2
                 id = it->second.id;
 
                 kf_found = false;
-                for (std::vector<KeyFrame *>::iterator mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
+                for (auto mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
                 {
-                    KeyFrame *pKf = *mit;
+                    KeyFrame* pKf = *mit;
                     // if (mnId == 10 && 964 == id)
                     // cout << "[" << pMp->mnId <<"]";
                     if (id == pKf->mnId)
                     {
                         ctr++;
-                        mspChildrens.insert(pKf);
+                        mspChildrens.insert({ pKf,id });
                         kf_found = true;
                         break;
                     }
                 }
                 if (kf_found == false)
                     cout << endl
-                         << "Child [" << id << "] not found for KF " << mnId << endl;
+                    << "Child [" << id << "] not found for KF " << mnId << endl;
             }
         }
 
@@ -671,9 +670,9 @@ namespace ORB_SLAM2
         j = 0;
         ctr = 0;
         is_valid = false;
-        for (std::map<long unsigned int, id_map>::iterator it = mmLoopEdges_nId.begin();
-             it != mmLoopEdges_nId.end();
-             j++, ++it)
+        for (auto it = mmLoopEdges_nId.begin();
+            it != mmLoopEdges_nId.end();
+            j++, ++it)
         {
             is_valid = it->second.is_valid;
 
@@ -689,25 +688,25 @@ namespace ORB_SLAM2
                 id = it->second.id;
 
                 kf_found = false;
-                for (std::vector<KeyFrame *>::iterator mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
+                for (auto mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
                 {
-                    KeyFrame *pKf = *mit;
+                    KeyFrame* pKf = *mit;
 
                     if (id == pKf->mnId)
                     {
                         ctr++;
-                        mspLoopEdges.insert(pKf);
+                        mspLoopEdges.insert({ pKf ,id });
                         kf_found = true;
                         break;
                     }
                 }
                 if (kf_found == false)
                     cout << endl
-                         << "Loop Edge [" << id << "] not found for KF " << mnId << endl;
+                    << "Loop Edge [" << id << "] not found for KF " << mnId << endl;
             }
         }
     }
-    void KeyFrame::SetGridParams(std::vector<KeyFrame *> vpKeyFrames)
+    void KeyFrame::SetGridParams(std::vector<KeyFrame*> vpKeyFrames)
     {
         long unsigned int id;
         int weight;
@@ -718,17 +717,17 @@ namespace ORB_SLAM2
         bool is_valid = false;
 
         // Set up mConnectedKeyFrameWeights
-        for (map<long unsigned int, int>::iterator it = mConnectedKeyFrameWeights_nId.begin();
-             it != mConnectedKeyFrameWeights_nId.end();
-             j++, ++it)
+        for (auto it = mConnectedKeyFrameWeights_nId.begin();
+            it != mConnectedKeyFrameWeights_nId.end();
+            j++, ++it)
         {
             id = it->first;
             weight = it->second;
             {
 
-                for (std::vector<KeyFrame *>::iterator mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
+                for (auto mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
                 {
-                    KeyFrame *pKf = *mit;
+                    KeyFrame* pKf = *mit;
 
                     if (id == pKf->mnId)
                     {
@@ -741,9 +740,9 @@ namespace ORB_SLAM2
 
         // Set up mvpOrderedConnectedKeyFrames
         j = 0;
-        for (std::map<long unsigned int, id_map>::iterator it = mvpOrderedConnectedKeyFrames_nId.begin();
-             it != mvpOrderedConnectedKeyFrames_nId.end();
-             ++it)
+        for (auto it = mvpOrderedConnectedKeyFrames_nId.begin();
+            it != mvpOrderedConnectedKeyFrames_nId.end();
+            ++it)
         {
             is_valid = it->second.is_valid;
             if (!is_valid)
@@ -756,9 +755,9 @@ namespace ORB_SLAM2
                 id = it->second.id;
 
                 Kf_found = false;
-                for (std::vector<KeyFrame *>::iterator mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
+                for (auto mit = vpKeyFrames.begin(); mit != vpKeyFrames.end(); mit++)
                 {
-                    KeyFrame *pKf = *mit;
+                    KeyFrame* pKf = *mit;
 
                     if (id == pKf->mnId)
                     {
@@ -775,6 +774,7 @@ namespace ORB_SLAM2
             }
         }
     }
+
 
     void KeyFrame::SetMap(Map *map)
     {
@@ -890,13 +890,15 @@ namespace ORB_SLAM2
         mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
     }
 
-    set<KeyFrame *> KeyFrame::GetConnectedKeyFrames()
+    unordered_map<KeyFrame*, int> KeyFrame::GetConnectedKeyFrames()
     {
         unique_lock<mutex> lock(mMutexConnections);
-        set<KeyFrame *> s;
-        for (map<KeyFrame *, int>::iterator mit = mConnectedKeyFrameWeights.begin(); mit != mConnectedKeyFrameWeights.end(); mit++)
-            s.insert(mit->first);
-        return s;
+        unordered_map<KeyFrame*, int> connectedKeyFrames;
+        for (const auto& [key, value] : mConnectedKeyFrameWeights)
+        {
+            connectedKeyFrames.emplace(key, value);
+        }
+        return connectedKeyFrames;
     }
 
     vector<KeyFrame *> KeyFrame::GetVectorCovisibleKeyFrames()
@@ -964,17 +966,17 @@ namespace ORB_SLAM2
         mvpMapPoints[idx] = pMP;
     }
 
-    set<MapPoint *> KeyFrame::GetMapPoints()
+    unordered_map<MapPoint*, int> KeyFrame::GetMapPoints()
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        set<MapPoint *> s;
+        unordered_map<MapPoint*, int> s;
         for (size_t i = 0, iend = mvpMapPoints.size(); i < iend; i++)
         {
             if (!mvpMapPoints[i])
                 continue;
-            MapPoint *pMP = mvpMapPoints[i];
+            MapPoint* pMP = mvpMapPoints[i];
             if (!pMP->isBad())
-                s.insert(pMP);
+                s.insert({ pMP ,0 });
         }
         return s;
     }
@@ -1109,10 +1111,10 @@ namespace ORB_SLAM2
         }
     }
 
-    void KeyFrame::AddChild(KeyFrame *pKF)
+    void KeyFrame::AddChild(KeyFrame* pKF)
     {
         unique_lock<mutex> lockCon(mMutexConnections);
-        mspChildrens.insert(pKF);
+        mspChildrens.insert({ pKF,0 });
     }
 
     void KeyFrame::EraseChild(KeyFrame *pKF)
@@ -1128,32 +1130,32 @@ namespace ORB_SLAM2
         pKF->AddChild(this);
     }
 
-    set<KeyFrame *> KeyFrame::GetChilds()
+    unordered_map<KeyFrame*, int> KeyFrame::GetChilds()
     {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspChildrens;
     }
 
-    KeyFrame *KeyFrame::GetParent()
+    KeyFrame* KeyFrame::GetParent()
     {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mpParent;
     }
 
-    bool KeyFrame::hasChild(KeyFrame *pKF)
+    bool KeyFrame::hasChild(KeyFrame* pKF)
     {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspChildrens.count(pKF);
     }
 
-    void KeyFrame::AddLoopEdge(KeyFrame *pKF)
+    void KeyFrame::AddLoopEdge(KeyFrame* pKF)
     {
         unique_lock<mutex> lockCon(mMutexConnections);
         mbNotErase = true;
-        mspLoopEdges.insert(pKF);
+        mspLoopEdges.insert({ pKF ,0 });
     }
 
-    set<KeyFrame *> KeyFrame::GetLoopEdges()
+    unordered_map<KeyFrame*, int> KeyFrame::GetLoopEdges()
     {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspLoopEdges;
@@ -1195,7 +1197,7 @@ namespace ORB_SLAM2
             }
         }
 
-        for (map<KeyFrame *, int>::iterator mit = mConnectedKeyFrameWeights.begin(), mend = mConnectedKeyFrameWeights.end(); mit != mend; mit++)
+        for (auto mit = mConnectedKeyFrameWeights.begin(), mend = mConnectedKeyFrameWeights.end(); mit != mend; mit++)
             mit->first->EraseConnection(this);
 
         for (size_t i = 0; i < mvpMapPoints.size(); i++)
@@ -1209,9 +1211,9 @@ namespace ORB_SLAM2
             mvpOrderedConnectedKeyFrames.clear();
 
             // Update Spanning Tree
-            set<KeyFrame *> sParentCandidates;
+            unordered_map<KeyFrame*, int> sParentCandidates;
             if (mpParent)
-                sParentCandidates.insert(mpParent);
+                sParentCandidates.insert({ mpParent,0 });
 
             // Assign at each iteration one children with a parent (the pair with highest covisibility weight)
             // Include that children as new parent candidate for the rest
@@ -1220,28 +1222,28 @@ namespace ORB_SLAM2
                 bool bContinue = false;
 
                 int max = -1;
-                KeyFrame *pC;
-                KeyFrame *pP;
+                KeyFrame* pC;
+                KeyFrame* pP;
 
-                for (set<KeyFrame *>::iterator sit = mspChildrens.begin(), send = mspChildrens.end(); sit != send; sit++)
+                for (auto sit = mspChildrens.begin(), send = mspChildrens.end(); sit != send; sit++)
                 {
 
-                    KeyFrame *pKF = *sit;
+                    KeyFrame* pKF = sit->first;
                     if (!pKF)
                         continue;
                     if (pKF->isBad())
                         continue;
 
                     // Check if a parent candidate is connected to the keyframe
-                    vector<KeyFrame *> vpConnected = pKF->GetVectorCovisibleKeyFrames();
+                    vector<KeyFrame*> vpConnected = pKF->GetVectorCovisibleKeyFrames();
 
                     for (size_t i = 0, iend = vpConnected.size(); i < iend; i++)
                     {
 
-                        for (set<KeyFrame *>::iterator spcit = sParentCandidates.begin(), spcend = sParentCandidates.end(); spcit != spcend; spcit++)
+                        for (auto spcit = sParentCandidates.begin(), spcend = sParentCandidates.end(); spcit != spcend; spcit++)
                         {
 
-                            if (vpConnected[i]->mnId == (*spcit)->mnId)
+                            if (vpConnected[i]->mnId == (spcit->first)->mnId)
                             {
 
                                 int w = pKF->GetWeight(vpConnected[i]);
@@ -1252,6 +1254,9 @@ namespace ORB_SLAM2
                                     max = w;
                                     bContinue = true;
                                 }
+
+
+
                             }
                         }
                     }
@@ -1261,7 +1266,7 @@ namespace ORB_SLAM2
                 {
 
                     pC->ChangeParent(pP);
-                    sParentCandidates.insert(pC);
+                    sParentCandidates.insert({ pC,0 });
                     mspChildrens.erase(pC);
                 }
                 else
@@ -1270,11 +1275,11 @@ namespace ORB_SLAM2
 
             // If a children has no covisibility links with any parent candidate, assign to the original parent of this KF
             if (!mspChildrens.empty())
-                for (set<KeyFrame *>::iterator sit = mspChildrens.begin(); sit != mspChildrens.end(); sit++)
+                for (auto sit = mspChildrens.begin(); sit != mspChildrens.end(); sit++)
                 {
 
                     if (mpParent)
-                        (*sit)->ChangeParent(mpParent);
+                        (sit->first)->ChangeParent(mpParent);
                 }
             if (mpParent)
             {

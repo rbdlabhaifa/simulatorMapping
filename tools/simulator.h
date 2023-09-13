@@ -164,7 +164,8 @@ private:
    cv::Mat currentImg;
    std::mutex locationLock;
    std::mutex imgLock;
-
+   int numberOfFeatures;
+   int trackingnFeatures;
    void SLAMThread();
    bool feedSLAM(cv::Mat& img);
 

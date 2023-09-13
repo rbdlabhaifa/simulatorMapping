@@ -817,16 +817,16 @@ namespace ORB_SLAM2
         return nmatches;
     }
 
-    int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const float th)
+    int ORBmatcher::Fuse(KeyFrame* pKF, const vector<MapPoint*>& vpMapPoints, const float th)
     {
         cv::Mat Rcw = pKF->GetRotation();
         cv::Mat tcw = pKF->GetTranslation();
 
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
-        const float &bf = pKF->mbf;
+        const float& fx = pKF->fx;
+        const float& fy = pKF->fy;
+        const float& cx = pKF->cx;
+        const float& cy = pKF->cy;
+        const float& bf = pKF->mbf;
 
         cv::Mat Ow = pKF->GetCameraCenter();
 
@@ -836,7 +836,7 @@ namespace ORB_SLAM2
 
         for (int i = 0; i < nMPs; i++)
         {
-            MapPoint *pMP = vpMapPoints[i];
+            MapPoint* pMP = vpMapPoints[i];
 
             if (!pMP)
                 continue;
@@ -899,9 +899,9 @@ namespace ORB_SLAM2
             {
                 const size_t idx = *vit;
 
-                const cv::KeyPoint &kp = pKF->mvKeysUn[idx];
+                const cv::KeyPoint& kp = pKF->mvKeysUn[idx];
 
-                const int &kpLevel = kp.octave;
+                const int& kpLevel = kp.octave;
 
                 if (kpLevel < nPredictedLevel - 1 || kpLevel > nPredictedLevel)
                     continue;
@@ -909,9 +909,9 @@ namespace ORB_SLAM2
                 if (pKF->mvuRight[idx] >= 0)
                 {
                     // Check reprojection error in stereo
-                    const float &kpx = kp.pt.x;
-                    const float &kpy = kp.pt.y;
-                    const float &kpr = pKF->mvuRight[idx];
+                    const float& kpx = kp.pt.x;
+                    const float& kpy = kp.pt.y;
+                    const float& kpr = pKF->mvuRight[idx];
                     const float ex = u - kpx;
                     const float ey = v - kpy;
                     const float er = ur - kpr;
@@ -922,8 +922,8 @@ namespace ORB_SLAM2
                 }
                 else
                 {
-                    const float &kpx = kp.pt.x;
-                    const float &kpy = kp.pt.y;
+                    const float& kpx = kp.pt.x;
+                    const float& kpy = kp.pt.y;
                     const float ex = u - kpx;
                     const float ey = v - kpy;
                     const float e2 = ex * ex + ey * ey;
@@ -932,7 +932,7 @@ namespace ORB_SLAM2
                         continue;
                 }
 
-                const cv::Mat &dKF = pKF->mDescriptors.row(idx);
+                const cv::Mat& dKF = pKF->mDescriptors.row(idx);
 
                 const int dist = DescriptorDistance(dMP, dKF);
 
@@ -946,7 +946,7 @@ namespace ORB_SLAM2
             // If there is already a MapPoint replace otherwise add new measurement
             if (bestDist <= TH_LOW)
             {
-                MapPoint *pMPinKF = pKF->GetMapPoint(bestIdx);
+                MapPoint* pMPinKF = pKF->GetMapPoint(bestIdx);
                 if (pMPinKF)
                 {
                     if (!pMPinKF->isBad())
@@ -969,13 +969,13 @@ namespace ORB_SLAM2
         return nFused;
     }
 
-    int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
+    int ORBmatcher::Fuse(KeyFrame* pKF, cv::Mat Scw, const vector<MapPoint*>& vpPoints, float th, vector<MapPoint*>& vpReplacePoint)
     {
         // Get Calibration Parameters for later projection
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
+        const float& fx = pKF->fx;
+        const float& fy = pKF->fy;
+        const float& cx = pKF->cx;
+        const float& cy = pKF->cy;
 
         // Decompose Scw
         cv::Mat sRcw = Scw.rowRange(0, 3).colRange(0, 3);
@@ -985,7 +985,7 @@ namespace ORB_SLAM2
         cv::Mat Ow = -Rcw.t() * tcw;
 
         // Set of MapPoints already found in the KeyFrame
-        const set<MapPoint *> spAlreadyFound = pKF->GetMapPoints();
+        const unordered_map<MapPoint*, int> spAlreadyFound = pKF->GetMapPoints();
 
         int nFused = 0;
 
@@ -994,7 +994,7 @@ namespace ORB_SLAM2
         // For each candidate MapPoint project and match
         for (int iMP = 0; iMP < nPoints; iMP++)
         {
-            MapPoint *pMP = vpPoints[iMP];
+            MapPoint* pMP = vpPoints[iMP];
 
             // Discard Bad MapPoints and already found
             if (pMP->isBad() || spAlreadyFound.count(pMP))
@@ -1057,12 +1057,12 @@ namespace ORB_SLAM2
             for (vector<size_t>::const_iterator vit = vIndices.begin(); vit != vIndices.end(); vit++)
             {
                 const size_t idx = *vit;
-                const int &kpLevel = pKF->mvKeysUn[idx].octave;
+                const int& kpLevel = pKF->mvKeysUn[idx].octave;
 
                 if (kpLevel < nPredictedLevel - 1 || kpLevel > nPredictedLevel)
                     continue;
 
-                const cv::Mat &dKF = pKF->mDescriptors.row(idx);
+                const cv::Mat& dKF = pKF->mDescriptors.row(idx);
 
                 int dist = DescriptorDistance(dMP, dKF);
 
@@ -1076,7 +1076,7 @@ namespace ORB_SLAM2
             // If there is already a MapPoint replace otherwise add new measurement
             if (bestDist <= TH_LOW)
             {
-                MapPoint *pMPinKF = pKF->GetMapPoint(bestIdx);
+                MapPoint* pMPinKF = pKF->GetMapPoint(bestIdx);
                 if (pMPinKF)
                 {
                     if (!pMPinKF->isBad())
@@ -1093,7 +1093,6 @@ namespace ORB_SLAM2
 
         return nFused;
     }
-
     int ORBmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches12,
                                  const float &s12, const cv::Mat &R12, const cv::Mat &t12, const float th)
     {

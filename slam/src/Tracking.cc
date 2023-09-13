@@ -167,7 +167,15 @@ namespace ORB_SLAM2
     {
         mpViewer = pViewer;
     }
+    void Tracking::SetNFeaturesToExtractor(int nFeatures) {
+        if (mSensor == System::STEREO) {
+            mpORBextractorRight->setNFeatures(nFeatures);
+            mpORBextractorLeft->setNFeatures(nFeatures);
+        }
 
+        if (mSensor == System::MONOCULAR)
+            mpIniORBextractor->setNFeatures(nFeatures);
+    }
     cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
     {
         mImGray = imRectLeft;
@@ -1367,10 +1375,10 @@ namespace ORB_SLAM2
                 }
             }
 
-            const set<KeyFrame *> spChilds = pKF->GetChilds();
-            for (set<KeyFrame *>::const_iterator sit = spChilds.begin(), send = spChilds.end(); sit != send; sit++)
+            const unordered_map<KeyFrame*, int> spChilds = pKF->GetChilds();
+            for (auto sit = spChilds.begin(), send = spChilds.end(); sit != send; sit++)
             {
-                KeyFrame *pChildKF = *sit;
+                KeyFrame* pChildKF = sit->first;
                 if (!pChildKF->isBad())
                 {
                     if (pChildKF->mnTrackReferenceForFrame != mCurrentFrame.mnId)

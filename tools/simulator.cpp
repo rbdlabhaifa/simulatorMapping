@@ -30,7 +30,8 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
     float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
+    int numberOfFeatures = fSettings["ORBextractor.nFeatures"];
+    int trackingnFeatures = fSettings["ORBextractor.trackingnFeatures"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
@@ -39,7 +40,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
         mapLoadPath,
         true);
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-    orbExtractor = std::make_shared<ORB_SLAM2::ORBextractor>(nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
+    orbExtractor = std::make_shared<ORB_SLAM2::ORBextractor>(numberOfFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
 }
 
 void Simulator::command(std::string& command, int intervalUsleep, double fps, int totalCommandTimeInSeconds)
@@ -80,19 +81,29 @@ bool Simulator::feedSLAM(cv::Mat& img) {
     }
     locationLock.unlock();
     auto state = SLAM->GetTracker()->mState;
-    isInitalized = !(state == SLAM->GetTracker()->NOT_INITIALIZED);
+    bool currentIsInitalized = !(state == SLAM->GetTracker()->NOT_INITIALIZED || state == SLAM->GetTracker()->NO_IMAGES_YET);
+    if (currentIsInitalized && !isInitalized) {
+        SLAM->GetTracker()->SetNFeaturesToExtractor(trackingnFeatures);
+    }
+    if (!currentIsInitalized && isInitalized) {
+        SLAM->GetTracker()->SetNFeaturesToExtractor(numberOfFeatures);
+    }
+    isInitalized = currentIsInitalized;
     return state == SLAM->GetTracker()->OK;
 }
 void Simulator::SLAMThread() {
     while (!stopFlagSLAM && !stopFlag) {
-        if (!currentImg.empty()) {
-            imgLock.lock();
-            cv::Mat img = currentImg.clone();
-            imgLock.unlock();
-            isLocalized = feedSLAM(img);
-        }
-        else {
-            Sleep(1);
+        if (track)
+        {
+            if (!currentImg.empty()) {
+                imgLock.lock();
+                cv::Mat img = currentImg.clone();
+                imgLock.unlock();
+                isLocalized = feedSLAM(img);
+            }
+            else {
+                Sleep(1);
+            }
         }
     }
 

@@ -121,7 +121,7 @@ public:
     void EraseConnection(KeyFrame* pKF);
     void UpdateConnections();
     void UpdateBestCovisibles();
-    std::set<KeyFrame *> GetConnectedKeyFrames();
+    std::unordered_map<KeyFrame*, int> GetConnectedKeyFrames();
     std::vector<KeyFrame* > GetVectorCovisibleKeyFrames();
     std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
     std::vector<KeyFrame*> GetCovisiblesByWeight(const int &w);
@@ -131,20 +131,20 @@ public:
     void AddChild(KeyFrame* pKF);
     void EraseChild(KeyFrame* pKF);
     void ChangeParent(KeyFrame* pKF);
-    std::set<KeyFrame*> GetChilds();
+    std::unordered_map<KeyFrame*, int> GetChilds();
     KeyFrame* GetParent();
     bool hasChild(KeyFrame* pKF);
 
     // Loop Edges
     void AddLoopEdge(KeyFrame* pKF);
-    std::set<KeyFrame*> GetLoopEdges();
+    std::unordered_map<KeyFrame*, int> GetLoopEdges();
 
     // MapPoint observation functions
     void AddMapPoint(MapPoint* pMP, const size_t &idx);
     void EraseMapPointMatch(const size_t &idx);
     void EraseMapPointMatch(MapPoint* pMP);
     void ReplaceMapPointMatch(const size_t &idx, MapPoint* pMP);
-    std::set<MapPoint*> GetMapPoints();
+    std::unordered_map<MapPoint*, int> GetMapPoints();
     std::vector<MapPoint*> GetMapPointMatches();
     int TrackedMapPoints(const int &minObs);
     MapPoint* GetMapPoint(const size_t &idx);
@@ -290,10 +290,10 @@ protected:
 		
     KeyFrame* mpParent;
 		id_map mparent_KfId_map;
-    std::set<KeyFrame*> mspChildrens;
-		std::map<long unsigned int, id_map> 	   mmChildrens_nId;
-    std::set<KeyFrame*> mspLoopEdges;
-		std::map<long unsigned int, id_map> 	   mmLoopEdges_nId;
+        std::unordered_map<KeyFrame*, int> mspChildrens;
+        std::unordered_map<long unsigned int, id_map> mmChildrens_nId;
+        std::unordered_map<KeyFrame*, int> mspLoopEdges;
+        std::unordered_map<long unsigned int, id_map> mmLoopEdges_nId;
 
     // Bad flags
     bool mbNotErase;
