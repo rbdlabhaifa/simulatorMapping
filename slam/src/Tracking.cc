@@ -242,9 +242,7 @@ namespace ORB_SLAM2
 
     cv::Mat
     Tracking::GrabImageMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const float cols,
-                                 const float rows,
-                                 const double &timestamp)
-    {
+                                 const float rows, const double &timestamp, const cv::Mat &im) {
 
         if (mImGray.channels() == 3)
         {
@@ -270,7 +268,7 @@ namespace ORB_SLAM2
                               mbf,
                               mThDepth);
         //}
-        Track();
+        Track(im);
 
         return mCurrentFrame.mTcw.clone();
     }
@@ -305,10 +303,8 @@ namespace ORB_SLAM2
         return mCurrentFrame.mTcw.clone();
     }
 
-    void Tracking::Track()
-    {
-        if (mState == NO_IMAGES_YET)
-        {
+    void Tracking::Track(const cv::Mat &im) {
+        if (mState == NO_IMAGES_YET) {
             mState = NOT_INITIALIZED;
         }
 
@@ -328,9 +324,8 @@ namespace ORB_SLAM2
                 StereoInitialization();
             else
                 MonocularInitialization();
-            if (mpFrameDrawer != nullptr)
-            {
-                mpFrameDrawer->Update(this);
+            if (mpFrameDrawer != nullptr) {
+                mpFrameDrawer->Update(this, im);
             }
 
             if (mState != OK)

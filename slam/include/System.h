@@ -99,7 +99,8 @@ namespace ORB_SLAM2
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
         cv::Mat
-        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im = cv::Mat());
+
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

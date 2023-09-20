@@ -53,9 +53,9 @@ add_library(${PROJECT_NAME} STATIC
         slam/src/Initializer.cc
         slam/src/Viewer.cc
         slam/src/LoopClosing.cc
-        utils/src/Point.cpp
-        utils/src/Line.cpp
         utils/src/Auxiliary.cpp
+        utils/src/OfflineMapPoint.cpp
+        utils/src/MapControl.cpp
         )
 
 
@@ -67,10 +67,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         DBoW3
         Threads::Threads Boost::boost Boost::serialization Boost::system ${PYTHON_LIBRARIES} nlohmann_json::nlohmann_json
         )
-add_library(simulator tools/simulator.cpp)
+add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
 add_subdirectory(exe)
 add_executable(VocCreation tools/VocCreation/createTrees.cpp)
 target_link_libraries(VocCreation ${PROJECT_NAME})
 add_executable(convertVocTxtToBin tools/bin_vocabulary.cc)
 target_link_libraries(convertVocTxtToBin DBoW3)
+add_library(exitRoom tools/navigation/RoomExit.cpp)
+target_link_libraries(exitRoom ${PROJECT_NAME})
+add_subdirectory(exe)

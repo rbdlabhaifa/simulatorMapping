@@ -38,7 +38,7 @@ public:
 
     Map* mpMap;
 
-    void DrawMapPoints(bool is_simulator=false, std::vector<cv::Point3d> seen_points=std::vector<cv::Point3d>(), std::vector<cv::Point3d> new_points_seen=std::vector<cv::Point3d>());
+    void DrawMapPoints();
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
     void SetCurrentCameraPose(const cv::Mat &Tcw);

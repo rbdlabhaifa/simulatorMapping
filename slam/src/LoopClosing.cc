@@ -523,6 +523,69 @@ namespace ORB_SLAM2
                         pLoopMP->AddObservation(mpCurrentKF, i);
                         pLoopMP->ComputeDistinctiveDescriptors();
                     }
+                    lpKFtoCheck.push_back(pChild);
+                }
+
+                pKF->mTcwBefGBA = pKF->GetPose();
+                pKF->SetPose(pKF->mTcwGBA);
+                lpKFtoCheck.pop_front();
+            }
+                                                  
+
+            // Correct MapPoints
+            const vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+
+            for(size_t i=0; i<vpMPs.size(); i++)
+            {
+                                    
+
+                MapPoint* pMP = vpMPs[i];
+                if(!pMP)
+                    continue;
+
+                if(pMP->isBad())
+                    continue;
+
+                if(pMP->mnBAGlobalForKF==nLoopKF)
+                {
+                                                                    
+                    // If optimized by Global BA, just update
+                    pMP->SetWorldPos(pMP->mPosGBA);
+                }
+                else
+                {
+                                                                     
+
+                    // Update according to the correction of its reference keyframe
+                    KeyFrame* pRefKF = pMP->GetReferenceKeyFrame();
+                    if(!pRefKF)
+                        continue;
+                    if(pRefKF->mnBAGlobalForKF!=nLoopKF)
+                        continue;
+                    fflush(stdout);
+
+                    /* TODO : Stop-Gap for Loop Closure. Size coming as Zero! */
+                    if (!pRefKF->mTcwBefGBA.rows || !pRefKF->mTcwBefGBA.cols)
+                        continue;
+
+
+                    // Map to non-corrected camera
+                    cv::Mat Rcw = pRefKF->mTcwBefGBA.rowRange(0,3).colRange(0,3);
+                                
+
+                    cv::Mat tcw = pRefKF->mTcwBefGBA.rowRange(0,3).col(3);
+                                                                                     
+
+                    cv::Mat Xc = Rcw*pMP->GetWorldPos()+tcw;
+                                                                    
+
+                    // Backproject using corrected camera
+                    cv::Mat Twc = pRefKF->GetPoseInverse();
+                    cv::Mat Rwc = Twc.rowRange(0,3).colRange(0,3);
+                    cv::Mat twc = Twc.rowRange(0,3).col(3);
+                                                             
+
+                    pMP->SetWorldPos(Rwc*Xc+twc);
                 }
             }
         }

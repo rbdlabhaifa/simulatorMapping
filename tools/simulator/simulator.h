@@ -194,7 +194,11 @@ private:
 
    void static applyUpModelCam(pangolin::OpenGlRenderState &cam, double value);
 
-   void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
+    void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
+
+    void faster();
+
+    void slower();
 };
 
 #endif // ORB_SLAM2_SIMULATOR_H
