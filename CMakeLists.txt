@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Debug)
 ENDIF ()
+
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -MD -bigobj")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -MD -bigobj")
@@ -21,7 +22,7 @@ find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/Thirdparty/Pan
 
 include_directories(
 ${OpenCV_INCLUDE_DIRS}
-            ${EIGEN3_INCLUDE_DIR}        
+            ${EIGEN3_INCLUDE_DIR}
         ${Pangolin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
