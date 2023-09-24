@@ -17,7 +17,7 @@ if the path is in the `simulatorMapping` directory - just change the path to you
 if the path isn't in the `simulatorMapping` directory - change it to the equivalent file in the all-data file you downloaded
 
 ### 1. Configure the parameters to your machine:
-cd to `Vocabulary/` directory and run: `tar -xf ORBVoc.txt.tar.gz` 
+cd to `Vocabulary/` directory and run: `tar -xf ORBvoc.txt.tar.gz` 
 Open generalSettings.json and change:
 - `VocabularyPath` to the path of your project
 - `DroneYamlPathSlam` to the path of your drone config file
