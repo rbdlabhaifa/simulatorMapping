@@ -36,14 +36,14 @@ This is optional and do it only if you have a physical drone next to you
 in order to create orb-slam map for using in the simulator you need to:
 - run `./exe/offline_orb_slam` from the `build` folder
 
-### 4. Run orb slam on model:
-- run `./exe/run_model_with_orb_slam` from the `build` folder
+### 4. Run runSimulator:
+- run `./exe/runSimulator` from the `build` folder
 
+## Optional advanced stages:
 ### 5. localize on your own map:
 for localize on the orb slam map from the known points on each frame(without model GUI)
 - configure your parameters also on `demoSettings.json`
 - run `./exe/demo` from the `build` folder
-
 
 ### 6. Build partial map:
 - run `./exe/save_first_frame` from the `build` folder

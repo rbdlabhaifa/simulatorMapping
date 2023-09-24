@@ -39,16 +39,12 @@ int main(int argc, char **argv) {
     for (int i = 0; i < std::ceil(360 / angle); i++) {
         std::string c = "left 0.7";
         simulator.command(c);
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "right 0.7";
         simulator.command(c);
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
         c = "cw " + std::to_string(angle);
         simulator.command(c);
-        //runTimeCurrentLocation = simulator.getCurrentLocation();
         sleep(1);
     }
-    //simulator.setTrack(false);
     sleep(2);
     auto scanMap = simulator.getCurrentMap();
     std::vector<Eigen::Vector3d> eigenData;
