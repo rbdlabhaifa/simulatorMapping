@@ -5,7 +5,7 @@
 #include <vector>
 #include "DBoW3/src/Vocabulary.h"
 #include"DBoW3/src/DescManip.h"
-
+#include <memory>
 // this file DOES NOT give proper weights to leaf nodes, this is done by python
 // expecting argv[0] := branching factor, argv[1] := depth, argv[2] := new tree file name
 int main(int argc, char **argv)

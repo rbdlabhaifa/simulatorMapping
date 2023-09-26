@@ -39,12 +39,43 @@ namespace ORB_SLAM2
             fps = 30;
         mT = 1e3 / fps;
 
+        mImageWidth = fSettings["Camera.width"];
+        mImageHeight = fSettings["Camera.height"];
+        if (mImageWidth < 1 || mImageHeight < 1)
+        {
+            mImageWidth = 640;
+            mImageHeight = 480;
+        }
+
         mViewpointX = fSettings["Viewer.ViewpointX"];
         mViewpointY = fSettings["Viewer.ViewpointY"];
         mViewpointZ = fSettings["Viewer.ViewpointZ"];
         mViewpointF = fSettings["Viewer.ViewpointF"];
         mbReuse = bReuse;
         this->isPangolinExists = isPangolinExists;
+
+        // std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+        // std::ifstream programData(settingPath);
+        // nlohmann::json data;
+        // programData >> data;
+        // programData.close();
+
+        // std::string map_input_dir = data["mapInputDir"];
+        // mCloudPoints = map_input_dir + "cloud1.csv";
+
+        // double startPointX = data["startingCameraPosX"];
+        // double startPointY = data["startingCameraPosY"];
+        // double startPointZ = data["startingCameraPosZ"];
+        // mCurrentPosition = cv::Point3d(startPointX, startPointY, startPointZ);
+        // mCurrentYaw = data["yawRad"];
+        // mCurrentPitch = data["pitchRad"];
+        // mCurrentRoll = data["rollRad"];
+
+        // mNewPointsSeen = Auxiliary::getPointsFromPos(mCloudPoints, mCurrentPosition, mCurrentYaw, mCurrentPitch, mCurrentRoll, mTwc);
+        // mPointsSeen = std::vector<cv::Point3d>();
+
+        // mMovingScale = data["movingScale"];
+        // mRotateScale = data["rotateScale"];
     }
 
     void Viewer::Run()
@@ -64,21 +95,6 @@ namespace ORB_SLAM2
         // Issue specific OpenGl we might need
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (isPangolinExists)
-        {
-            pangolin::Panel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
-        }
-        else
-        {
-            pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
-        }
-        pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
-        pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
-        pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames", true, true);
-        pangolin::Var<bool> menuShowGraph("menu.Show Graph", true, true);
-        pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode", mbReuse, true);
-        pangolin::Var<bool> menuReset("menu.Reset", false, false);
-        pangolin::Var<bool> menuShutDown("menu.ShutDown", false, false);
 
         // Define Camera Render Object (for view / scene browsing)
         pangolin::OpenGlRenderState s_cam(
@@ -110,72 +126,45 @@ namespace ORB_SLAM2
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc);
-           
-            if (menuFollowCamera && bFollow) {
+
+            if (bFollow)
+            {
                 s_cam.Follow(Twc);
             }
-            else if (menuFollowCamera && !bFollow)
+            else if (!bFollow)
             {
                 s_cam.SetModelViewMatrix(
                     pangolin::ModelViewLookAt(mViewpointX, mViewpointY, mViewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
                 s_cam.Follow(Twc);
                 bFollow = true;
             }
-            else if (!menuFollowCamera && bFollow)
-            {
-                bFollow = false;
-            }
 
-            if (menuLocalizationMode && !bLocalizationMode) {
+            if (!bLocalizationMode)
+            {
                 mpSystem->ActivateLocalizationMode();
                 bLocalizationMode = true;
-            } else if (!menuLocalizationMode && bLocalizationMode) {
-                mpSystem->DeactivateLocalizationMode();
-                bLocalizationMode = false;
             }
+
             d_cam.Activate(s_cam);
 
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            if (menuShowKeyFrames || menuShowGraph)
-                mpMapDrawer->DrawKeyFrames(menuShowKeyFrames, menuShowGraph);
-            if (menuShowPoints) {
-                mpMapDrawer->DrawMapPoints();
+            mpMapDrawer->DrawKeyFrames(true, true);
+
+            mpMapDrawer->DrawMapPoints();
+
+            if (mpFrameDrawer != nullptr)
+            {
+                view1.Activate();
+
+                mpFrameDrawer->DrawFrame();
             }
 
             pangolin::FinishFrame();
-
-            if (mpFrameDrawer != nullptr){
-                cv::Mat im = mpFrameDrawer->DrawFrame();
-                cv::imshow("ORB-SLAM2: Current Frame", im);
-                cv::waitKey(mT);
-            }
-
-            if (menuReset)
-            {
-                menuShowGraph = true;
-                menuShowKeyFrames = true;
-                menuShowPoints = true;
-                menuLocalizationMode = false;
-                if (bLocalizationMode)
-                    mpSystem->DeactivateLocalizationMode();
-                bLocalizationMode = false;
-                bFollow = true;
-                menuFollowCamera = true;
-                mpSystem->Reset();
-                menuReset = false;
-
-            }
-
-            if (menuShutDown)
-            {
-                mpSystem->shutdown_requested = true;
-            }
 
             if (Stop())
             {
                 while (isStopped())
                 {
-                    Sleep(3);
+                    System::systemUsleep(3);
                 }
             }
 

@@ -40,7 +40,7 @@ namespace ORB_SLAM2
                                             mbDeactivateLocalizationMode(false)
     {
         // Output welcome message
-        cout << endl
+        cout << std::endl
              << "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza." << endl
              << "This program comes with ABSOLUTELY NO WARRANTY;" << endl
              << "This is free software, and you are welcome to redistribute it" << endl
@@ -187,7 +187,7 @@ namespace ORB_SLAM2
                 // Wait until Local Mapping has effectively stopped
                 while (!mpLocalMapper->isStopped())
                 {
-                    Sleep(1);
+                    systemUsleep(1);
                 }
 
                 mpTracker->InformOnlyTracking(true);
@@ -232,7 +232,7 @@ namespace ORB_SLAM2
                 // Wait until Local Mapping has effectively stopped
                 while (!mpLocalMapper->isStopped())
                 {
-                    Sleep(1);
+                    systemUsleep(1);
                 }
 
                 mpTracker->InformOnlyTracking(true);
@@ -260,7 +260,8 @@ namespace ORB_SLAM2
     }
 
     cv::Mat
-    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp,const cv::Mat &im) {
+    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp)
+    {
         cv::Mat Tcw;
         if (mSensor != MONOCULAR)
         {
@@ -278,7 +279,7 @@ namespace ORB_SLAM2
                 // Wait until Local Mapping has effectively stopped
                 while (!mpLocalMapper->isStopped())
                 {
-                    Sleep(1);
+                    systemUsleep(1);
                 }
 
                 mpTracker->InformOnlyTracking(true);
@@ -304,8 +305,7 @@ namespace ORB_SLAM2
 
         // return (mpTracker->GrabImageMonocular(im,timestamp)).clone();
         return (mpTracker->GrabImageMonocular(descriptors, keyPoints, mpViewer->GetImageWidth(),
-                                              mpViewer->GetImageHeight(), timestamp, im));
-
+                                              mpViewer->GetImageHeight(), timestamp));
     }
 
     cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
@@ -330,7 +330,7 @@ namespace ORB_SLAM2
                 // Wait until Local Mapping has effectively stopped
                 while (!mpLocalMapper->isStopped())
                 {
-                    Sleep(1);
+                    systemUsleep(1);
                 }
 
                 mpTracker->InformOnlyTracking(true);
@@ -396,7 +396,7 @@ namespace ORB_SLAM2
         while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() ||
                !mpViewer->isFinished() || mpLoopCloser->isRunningGBA())
         {
-            Sleep(3000);
+            systemUsleep(3000);
         }
         // if(mpViewer)
         //    pangolin::BindToContext("ORB-SLAM2: Map Viewer");

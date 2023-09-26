@@ -45,8 +45,8 @@ void RoomExit::createLines() {
 
 void RoomExit::findBestLines() {
     createLines();
-    auto to90 = std::vector<Line>(lines.begin(), lines.begin() + 90);
-    auto to180 = std::vector<Line>(lines.begin() + 90, lines.end());
+    auto to90 = std::vector<LineEigen>(lines.begin(), lines.begin() + 90);
+    auto to180 = std::vector<LineEigen>(lines.begin() + 90, lines.end());
     auto sectors = dividePointsToAxesSectors();
     for (int i = 0; i < sectors.size(); i++) {
         auto goodLines = findBestLinesInSector(sectors[i], i % 2 == 0 ? to90 : to180);
@@ -90,9 +90,9 @@ std::vector<std::vector<Eigen::Vector3d>> RoomExit::dividePointsToAxesSectors() 
     return sectors;
 }
 
-std::vector<Line>
-RoomExit::findBestLinesInSector(std::vector<Eigen::Vector3d> &sector, std::vector<Line> &sectorLines) {
-    std::vector<Line> goodLines;
+std::vector<LineEigen>
+RoomExit::findBestLinesInSector(std::vector<Eigen::Vector3d> &sector, std::vector<LineEigen> &sectorLines) {
+    std::vector<LineEigen> goodLines;
     double prevDistance = sectorLines.front().getSumOfDistanceToCloud(sector);
     double prevFirstDerivative = prevDistance;
     bool acc = true;
@@ -149,7 +149,7 @@ void RoomExit::filterByVariance() {
     }
     for (auto &[angle, slice]: slices) {
         double ratio = (slicesVariances[angle] - minVariance) / (maxVariance - minVariance);
-        Line side(polygonVertices[angle], polygonVertices.upper_bound(angle)->second);
+        LineEigen side(polygonVertices[angle], polygonVertices.upper_bound(angle)->second);
 
         for (auto &point: slice) {
             Eigen::Vector2d point2d(point.x(), point.z());
@@ -184,12 +184,12 @@ std::vector<std::pair<double, Eigen::Vector3d>> RoomExit::getExitPointsByVarianc
     for (auto &[angle, slice]: slices) {
         angles.emplace_back(angle);
     }
-    std::unordered_map<int, Line> biSectors;
+    std::unordered_map<int, LineEigen> biSectors;
     Eigen::Vector2d zero(0, 0);
     for (int i = 0; i < angles.size() - 1; ++i) {
-        biSectors[angles[i]] = Line(zero, (double(angles[i] + angles[i + 1]) / 2) * (M_PI / double(180)));
+        biSectors[angles[i]] = LineEigen(zero, (double(angles[i] + angles[i + 1]) / 2) * (M_PI / double(180)));
     }
-    biSectors[angles.back()] = Line(zero, (double(angles.back() + angles.front()) / 2) * (M_PI / double(180)));
+    biSectors[angles.back()] = LineEigen(zero, (double(angles.back() + angles.front()) / 2) * (M_PI / double(180)));
 
     for (auto &[angle, slicePoints]: slices) {
         if (slicePoints.size() <5){
@@ -242,12 +242,12 @@ std::vector<std::pair<double, Eigen::Vector3d>> RoomExit::getExitPoints() {
     return getExitPointsByVariance();
 }
 
-Line::Line(Eigen::Vector2d &point, double slope) : slope(slope), origin(point) {
+LineEigen::LineEigen(Eigen::Vector2d &point, double slope) : slope(slope), origin(point) {
     yIntercept = point.y() - point.x() * slope;
     dest = Eigen::Vector2d(1, slope * 1 + yIntercept);
 }
 
-double Line::getSumOfDistanceToCloud(std::vector<Eigen::Vector3d> &cloud) {
+double LineEigen::getSumOfDistanceToCloud(std::vector<Eigen::Vector3d> &cloud) {
     double distance = 0.0;
     for (auto &point: cloud) {
         Eigen::Vector2d point2d(point.x(), point.z());
@@ -256,15 +256,15 @@ double Line::getSumOfDistanceToCloud(std::vector<Eigen::Vector3d> &cloud) {
     return distance;
 }
 
-double Line::getDistanceToPoint(Eigen::Vector2d &point) {
+double LineEigen::getDistanceToPoint(Eigen::Vector2d &point) {
     return std::abs(slope * point.x() - point.y() + yIntercept) / std::sqrt(std::pow(slope, 2) + 1);
 }
 
-Line::Line(Eigen::Vector2d &point1, Eigen::Vector2d &point2) : origin(point1), dest(point2) {
+LineEigen::LineEigen(Eigen::Vector2d &point1, Eigen::Vector2d &point2) : origin(point1), dest(point2) {
     slope = (point2.y() - point1.y()) / (point2.x() - point1.x());
     yIntercept = point1.y() - slope * point1.x();
 }
 
-Line::Line() : slope(0), origin(), dest(), yIntercept(0) {
+LineEigen::LineEigen() : slope(0), origin(), dest(), yIntercept(0) {
 
 }

@@ -79,7 +79,7 @@ namespace ORB_SLAM2
             if (CheckFinish())
                 break;
 
-            Sleep(5);
+            System::systemUsleep(5000);
         }
 
         SetFinish();
@@ -119,26 +119,31 @@ namespace ORB_SLAM2
         // Compute reference BoW similarity score
         // This is the lowest score to a connected keyframe in the covisibility graph
         // We will impose loop candidates to have a higher similarity than this
-        const vector<KeyFrame *> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
-        const DBoW3::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
+        //const vector<KeyFrame *> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
+        //const DBoW2::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
+        const auto vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
+        const auto& CurrentBowVec = mpCurrentKF->mBowVec;
         float minScore = 1;
-        for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++)
+        //for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++)
+        for (const auto pKF : vpConnectedKeyFrames)
         {
-            KeyFrame *pKF = vpConnectedKeyFrames[i];
+            //KeyFrame *pKF = vpConnectedKeyFrames[i];
             if (pKF->isBad())
                 continue;
-            const DBoW3::BowVector &BowVec = pKF->mBowVec;
 
+            //const DBoW2::BowVector &BowVec = pKF->mBowVec;
+            const auto& BowVec = pKF->mBowVec;
             float score = mpORBVocabulary->score(CurrentBowVec, BowVec);
 
-            if (score < minScore)
-                minScore = score;
+            minScore = score < minScore ? score : minScore;
         }
 
         // Query the database imposing the minimum score
-        vector<KeyFrame *> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+        //vector<KeyFrame *> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+        auto vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
 
         // If there are no loop candidates, just add new keyframe and return false
+        // BAR
         if (vpCandidateKFs.empty())
         {
             mpKeyFrameDB->add(mpCurrentKF);
@@ -155,23 +160,31 @@ namespace ORB_SLAM2
 
         vector<ConsistentGroup> vCurrentConsistentGroups;
         vector<bool> vbConsistentGroup(mvConsistentGroups.size(), false);
-        for (size_t i = 0, iend = vpCandidateKFs.size(); i < iend; i++)
-        {
-            KeyFrame *pCandidateKF = vpCandidateKFs[i];
 
-            set<KeyFrame *> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
-            spCandidateGroup.insert(pCandidateKF);
+        //for (size_t i = 0, iend = vpCandidateKFs.size(); i < iend; i++)
+        for (const auto pCandidateKF : vpCandidateKFs)
+        {
+            //KeyFrame *pCandidateKF = vpCandidateKFs[i];
+
+            //set<KeyFrame *> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();    //original version
+            //unordered_map<KeyFrame*, int> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();     // second version - is it more readable?
+            auto spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
+            // spCandidateGroup.insert(pCandidateKF);
 
             bool bEnoughConsistent = false;
             bool bConsistentForSomeGroup = false;
             for (size_t iG = 0, iendG = mvConsistentGroups.size(); iG < iendG; iG++)
             {
-                set<KeyFrame *> sPreviousGroup = mvConsistentGroups[iG].first;
+                //set<KeyFrame *> sPreviousGroup = mvConsistentGroups[iG].first;
+                unordered_map<KeyFrame*, int> sPreviousGroup = mvConsistentGroups[iG].first;
 
                 bool bConsistent = false;
-                for (set<KeyFrame *>::iterator sit = spCandidateGroup.begin(), send = spCandidateGroup.end(); sit != send; sit++)
+
+                //for (auto sit = spCandidateGroup.begin(), send = spCandidateGroup.end(); sit != send; sit++)
+                for (const auto& sit : spCandidateGroup)
                 {
-                    if (sPreviousGroup.count(*sit))
+                    //if (sPreviousGroup.count(*sit))
+                    if (sPreviousGroup.count(sit.first))
                     {
                         bConsistent = true;
                         bConsistentForSomeGroup = true;
@@ -183,12 +196,14 @@ namespace ORB_SLAM2
                 {
                     int nPreviousConsistency = mvConsistentGroups[iG].second;
                     int nCurrentConsistency = nPreviousConsistency + 1;
+
                     if (!vbConsistentGroup[iG])
                     {
                         ConsistentGroup cg = make_pair(spCandidateGroup, nCurrentConsistency);
                         vCurrentConsistentGroups.push_back(cg);
                         vbConsistentGroup[iG] = true; // this avoid to include the same group more than once
                     }
+
                     if (nCurrentConsistency >= mnCovisibilityConsistencyTh && !bEnoughConsistent)
                     {
                         mvpEnoughConsistentCandidates.push_back(pCandidateKF);
@@ -224,7 +239,6 @@ namespace ORB_SLAM2
         mpCurrentKF->SetErase();
         return false;
     }
-
     bool LoopClosing::ComputeSim3()
     {
         // For each consistent loop candidate we try to compute a Sim3
@@ -409,7 +423,7 @@ namespace ORB_SLAM2
             mbStopGBA = true;
 
             while (!isFinishedGBA())
-                Sleep(5);
+                System::systemUsleep(5000);
 
             mpThreadGBA->join();
             delete mpThreadGBA;
@@ -418,7 +432,7 @@ namespace ORB_SLAM2
         // Wait until Local Mapping has effectively stopped
         while (!mpLocalMapper->isStopped())
         {
-            Sleep(1);
+            System::systemUsleep(1000);
         }
 
         // Ensure current keyframe is updated
@@ -436,9 +450,9 @@ namespace ORB_SLAM2
             // Get Map Mutex
             unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
-            for (vector<KeyFrame *>::iterator vit = mvpCurrentConnectedKFs.begin(), vend = mvpCurrentConnectedKFs.end(); vit != vend; vit++)
+            for (auto vit = mvpCurrentConnectedKFs.begin(), vend = mvpCurrentConnectedKFs.end(); vit != vend; vit++)
             {
-                KeyFrame *pKFi = *vit;
+                KeyFrame* pKFi = *vit;
 
                 cv::Mat Tiw = pKFi->GetPose();
 
@@ -461,18 +475,18 @@ namespace ORB_SLAM2
             }
 
             // Correct all MapPoints obsrved by current keyframe and neighbors, so that they align with the other side of the loop
-            for (KeyFrameAndPose::iterator mit = CorrectedSim3.begin(), mend = CorrectedSim3.end(); mit != mend; mit++)
+            for (auto mit = CorrectedSim3.begin(), mend = CorrectedSim3.end(); mit != mend; mit++)
             {
-                KeyFrame *pKFi = mit->first;
+                KeyFrame* pKFi = mit->first;
                 g2o::Sim3 g2oCorrectedSiw = mit->second;
                 g2o::Sim3 g2oCorrectedSwi = g2oCorrectedSiw.inverse();
 
                 g2o::Sim3 g2oSiw = NonCorrectedSim3[pKFi];
 
-                vector<MapPoint *> vpMPsi = pKFi->GetMapPointMatches();
+                vector<MapPoint*> vpMPsi = pKFi->GetMapPointMatches();
                 for (size_t iMP = 0, endMPi = vpMPsi.size(); iMP < endMPi; iMP++)
                 {
-                    MapPoint *pMPi = vpMPsi[iMP];
+                    MapPoint* pMPi = vpMPsi[iMP];
                     if (!pMPi)
                         continue;
                     if (pMPi->isBad())
@@ -513,8 +527,8 @@ namespace ORB_SLAM2
             {
                 if (mvpCurrentMatchedPoints[i])
                 {
-                    MapPoint *pLoopMP = mvpCurrentMatchedPoints[i];
-                    MapPoint *pCurMP = mpCurrentKF->GetMapPoint(i);
+                    MapPoint* pLoopMP = mvpCurrentMatchedPoints[i];
+                    MapPoint* pCurMP = mpCurrentKF->GetMapPoint(i);
                     if (pCurMP)
                         pCurMP->Replace(pLoopMP);
                     else
@@ -523,69 +537,6 @@ namespace ORB_SLAM2
                         pLoopMP->AddObservation(mpCurrentKF, i);
                         pLoopMP->ComputeDistinctiveDescriptors();
                     }
-                    lpKFtoCheck.push_back(pChild);
-                }
-
-                pKF->mTcwBefGBA = pKF->GetPose();
-                pKF->SetPose(pKF->mTcwGBA);
-                lpKFtoCheck.pop_front();
-            }
-                                                  
-
-            // Correct MapPoints
-            const vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
-
-            for(size_t i=0; i<vpMPs.size(); i++)
-            {
-                                    
-
-                MapPoint* pMP = vpMPs[i];
-                if(!pMP)
-                    continue;
-
-                if(pMP->isBad())
-                    continue;
-
-                if(pMP->mnBAGlobalForKF==nLoopKF)
-                {
-                                                                    
-                    // If optimized by Global BA, just update
-                    pMP->SetWorldPos(pMP->mPosGBA);
-                }
-                else
-                {
-                                                                     
-
-                    // Update according to the correction of its reference keyframe
-                    KeyFrame* pRefKF = pMP->GetReferenceKeyFrame();
-                    if(!pRefKF)
-                        continue;
-                    if(pRefKF->mnBAGlobalForKF!=nLoopKF)
-                        continue;
-                    fflush(stdout);
-
-                    /* TODO : Stop-Gap for Loop Closure. Size coming as Zero! */
-                    if (!pRefKF->mTcwBefGBA.rows || !pRefKF->mTcwBefGBA.cols)
-                        continue;
-
-
-                    // Map to non-corrected camera
-                    cv::Mat Rcw = pRefKF->mTcwBefGBA.rowRange(0,3).colRange(0,3);
-                                
-
-                    cv::Mat tcw = pRefKF->mTcwBefGBA.rowRange(0,3).col(3);
-                                                                                     
-
-                    cv::Mat Xc = Rcw*pMP->GetWorldPos()+tcw;
-                                                                    
-
-                    // Backproject using corrected camera
-                    cv::Mat Twc = pRefKF->GetPoseInverse();
-                    cv::Mat Rwc = Twc.rowRange(0,3).colRange(0,3);
-                    cv::Mat twc = Twc.rowRange(0,3).col(3);
-                                                             
-
-                    pMP->SetWorldPos(Rwc*Xc+twc);
                 }
             }
         }
@@ -596,21 +547,22 @@ namespace ORB_SLAM2
         SearchAndFuse(CorrectedSim3);
 
         // After the MapPoint fusion, new links in the covisibility graph will appear attaching both sides of the loop
-        map<KeyFrame *, set<KeyFrame *>> LoopConnections;
+        //map<KeyFrame *, set<KeyFrame *>> LoopConnections;
+        unordered_map<KeyFrame*, unordered_map<KeyFrame*, int>> LoopConnections;
 
-        for (vector<KeyFrame *>::iterator vit = mvpCurrentConnectedKFs.begin(), vend = mvpCurrentConnectedKFs.end(); vit != vend; vit++)
+        for (auto vit = mvpCurrentConnectedKFs.begin(), vend = mvpCurrentConnectedKFs.end(); vit != vend; vit++)
         {
-            KeyFrame *pKFi = *vit;
-            vector<KeyFrame *> vpPreviousNeighbors = pKFi->GetVectorCovisibleKeyFrames();
+            KeyFrame* pKFi = *vit;
+            vector<KeyFrame*> vpPreviousNeighbors = pKFi->GetVectorCovisibleKeyFrames();
 
             // Update connections. Detect new links.
             pKFi->UpdateConnections();
             LoopConnections[pKFi] = pKFi->GetConnectedKeyFrames();
-            for (vector<KeyFrame *>::iterator vit_prev = vpPreviousNeighbors.begin(), vend_prev = vpPreviousNeighbors.end(); vit_prev != vend_prev; vit_prev++)
+            for (auto vit_prev = vpPreviousNeighbors.begin(), vend_prev = vpPreviousNeighbors.end(); vit_prev != vend_prev; vit_prev++)
             {
                 LoopConnections[pKFi].erase(*vit_prev);
             }
-            for (vector<KeyFrame *>::iterator vit2 = mvpCurrentConnectedKFs.begin(), vend2 = mvpCurrentConnectedKFs.end(); vit2 != vend2; vit2++)
+            for (auto vit2 = mvpCurrentConnectedKFs.begin(), vend2 = mvpCurrentConnectedKFs.end(); vit2 != vend2; vit2++)
             {
                 LoopConnections[pKFi].erase(*vit2);
             }
@@ -679,7 +631,7 @@ namespace ORB_SLAM2
                 if (!mbResetRequested)
                     break;
             }
-            Sleep(5);
+            System::systemUsleep(5000);
         }
     }
 
@@ -716,30 +668,31 @@ namespace ORB_SLAM2
 
                 while (!mpLocalMapper->isStopped() && !mpLocalMapper->isFinished())
                 {
-                    Sleep(1);
+                    System::systemUsleep(1000);
                 }
 
                 // Get Map Mutex
                 unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
                 // Correct keyframes starting at map first keyframe
-                list<KeyFrame *> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(), mpMap->mvpKeyFrameOrigins.end());
+               // list<KeyFrame *> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(), mpMap->mvpKeyFrameOrigins.end());
+                vector<KeyFrame*> vpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(), mpMap->mvpKeyFrameOrigins.end());
 
-                while (!lpKFtoCheck.empty())
+                while (!vpKFtoCheck.empty())
                 {
 
-                    KeyFrame *pKF = lpKFtoCheck.front();
+                    KeyFrame* pKF = vpKFtoCheck.front();
                     if (!pKF)
                         continue;
 
-                    const set<KeyFrame *> sChilds = pKF->GetChilds();
+                    const unordered_map<KeyFrame*, int> sChilds = pKF->GetChilds();
 
                     cv::Mat Twc = pKF->GetPoseInverse();
 
-                    for (set<KeyFrame *>::const_iterator sit = sChilds.begin(); sit != sChilds.end(); sit++)
+                    for (auto sit = sChilds.begin(); sit != sChilds.end(); sit++)
                     {
 
-                        KeyFrame *pChild = *sit;
+                        KeyFrame* pChild = sit->first;
                         if (!pChild)
                             continue;
 
@@ -752,21 +705,22 @@ namespace ORB_SLAM2
 
                             pChild->mnBAGlobalForKF = nLoopKF;
                         }
-                        lpKFtoCheck.push_back(pChild);
+                        vpKFtoCheck.push_back(pChild);
                     }
 
                     pKF->mTcwBefGBA = pKF->GetPose();
                     pKF->SetPose(pKF->mTcwGBA);
-                    lpKFtoCheck.pop_front();
+                    //lpKFtoCheck.pop_front();
+                    vpKFtoCheck.erase(vpKFtoCheck.begin());
                 }
 
                 // Correct MapPoints
-                const vector<MapPoint *> vpMPs = mpMap->GetAllMapPoints();
+                const vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
 
                 for (size_t i = 0; i < vpMPs.size(); i++)
                 {
 
-                    MapPoint *pMP = vpMPs[i];
+                    MapPoint* pMP = vpMPs[i];
                     if (!pMP)
                         continue;
 
@@ -783,14 +737,14 @@ namespace ORB_SLAM2
                     {
 
                         // Update according to the correction of its reference keyframe
-                        KeyFrame *pRefKF = pMP->GetReferenceKeyFrame();
+                        KeyFrame* pRefKF = pMP->GetReferenceKeyFrame();
                         if (!pRefKF)
                             continue;
                         if (pRefKF->mnBAGlobalForKF != nLoopKF)
                             continue;
                         cout << "RunGlobalBundleAdjustment CP " << pRefKF->mnId
-                             << " " << pRefKF->mTcwBefGBA.rows
-                             << " " << pRefKF->mTcwBefGBA.cols << endl;
+                            << " " << pRefKF->mTcwBefGBA.rows
+                            << " " << pRefKF->mTcwBefGBA.cols << endl;
                         fflush(stdout);
 
                         /* TODO : Stop-Gap for Loop Closure. Size coming as Zero! */
@@ -822,7 +776,6 @@ namespace ORB_SLAM2
             mbRunningGBA = false;
         }
     }
-
     void LoopClosing::RequestFinish()
     {
         unique_lock<mutex> lock(mMutexFinish);

@@ -90,12 +90,13 @@ namespace g2o
         std::transform(s.begin(), s.end(), back_inserter(ret), (int (*)(int))std::toupper);
         return ret;
     }
-
+#if WINDOWS
     std::string formatString(const char *fmt, ...)
     {
         char *auxPtr = NULL;
         va_list arg_list;
         va_start(arg_list, fmt);
+
         int numChar = _vscprintf(fmt, arg_list);
         va_end(arg_list);
         std::string retString;
@@ -108,7 +109,6 @@ namespace g2o
         free(auxPtr);
         return retString;
     }
-
     int strPrintf(std::string &str, const char *fmt, ...)
     {
         char *auxPtr = NULL;
@@ -120,6 +120,35 @@ namespace g2o
         free(auxPtr);
         return numChars;
     }
+#else
+    std::string formatString(const char *fmt, ...) {
+        char *auxPtr = NULL;
+        va_list arg_list;
+        va_start(arg_list, fmt);
+        int numChar = vasprintf(&auxPtr, fmt, arg_list);
+        va_end(arg_list);
+        std::string retString;
+        if (numChar != -1)
+            retString = auxPtr;
+        else {
+            std::cerr << __PRETTY_FUNCTION__ << ": Error while allocating memory" << std::endl;
+        }
+        free(auxPtr);
+        return retString;
+    }
+    int strPrintf(std::string &str, const char *fmt, ...) {
+        char *auxPtr = NULL;
+        va_list arg_list;
+        va_start(arg_list, fmt);
+        int numChars = vasprintf(&auxPtr, fmt, arg_list);
+        va_end(arg_list);
+        str = auxPtr;
+        free(auxPtr);
+        return numChars;
+    }
+#endif
+
+
 
     std::string strExpandFilename(const std::string &filename)
     {

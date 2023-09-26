@@ -6,8 +6,21 @@ IF (NOT CMAKE_BUILD_TYPE)
 ENDIF ()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -MD -bigobj")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -MD -bigobj")
+IF (WIN32)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -MD -bigobj")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -MD -bigobj")
+ELSE (WIN32)
+    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O0 -fPIC" )
+    set( CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wall -O0 -fPIC" )
+    if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+        set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -march=native" )
+        set( CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wall -O3 -march=native" )
+    endif ()
+ENDIF ()
+add_definitions(-DEIGEN_NO_DEBUG)
+add_definitions(-DEIGEN_NO_STATIC_ASSERT)
+add_definitions(-DEIGEN_FAST_MATH)
+add_definitions(-DEIGEN_VECTORIZE)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 list(APPEND VCPKG_FEATURE_FLAGS "versions")
 find_package(PythonLibs REQUIRED)
@@ -31,6 +44,8 @@ ${OpenCV_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/utils
         ${PROJECT_SOURCE_DIR}/slam/include/
         ${PROJECT_SOURCE_DIR}/tools
+        ${PROJECT_SOURCE_DIR}/tools/simulator/
+
 )
 
 add_library(${PROJECT_NAME} STATIC

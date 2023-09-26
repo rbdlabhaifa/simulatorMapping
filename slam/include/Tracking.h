@@ -62,7 +62,7 @@ public:
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
-    cv::Mat GrabImageMonocular(const cv::Mat &descriptors, vector<cv::KeyPoint> &keyPoints, const float cols, const float rows, const double &timestamp, const cv::Mat &im=cv::Mat());
+    cv::Mat GrabImageMonocular(const cv::Mat &descriptors, vector<cv::KeyPoint> &keyPoints, const float cols, const float rows, const double &timestamp);
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
     void SetViewer(Viewer* pViewer);
@@ -74,7 +74,7 @@ public:
 
     // Use this function if you have deactivated local mapping and you only want to localize the camera.
     void InformOnlyTracking(const bool &flag);
-
+    void SetNFeaturesToExtractor(int nFeatures);
 
 public:
 
@@ -119,7 +119,7 @@ public:
 protected:
 
     // Main tracking function. It is independent of the input sensor.
-    void Track(const cv::Mat &im = cv::Mat());
+    void Track();
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();

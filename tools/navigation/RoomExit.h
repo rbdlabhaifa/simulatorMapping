@@ -12,13 +12,13 @@
 #include <unordered_map>
 #include <map>
 
-class Line {
+class LineEigen {
 public:
-    Line(Eigen::Vector2d &point, double slope);
+    LineEigen(Eigen::Vector2d &point, double slope);
 
-    Line();
+    LineEigen();
 
-    Line(Eigen::Vector2d &point1, Eigen::Vector2d &point2);
+    LineEigen(Eigen::Vector2d &point1, Eigen::Vector2d &point2);
 
     double getSumOfDistanceToCloud(std::vector<Eigen::Vector3d> &cloud);
 
@@ -57,7 +57,7 @@ private:
 
     bool isInsidePolygon(Eigen::Vector2d &point);
 
-    std::vector<Line> findBestLinesInSector(std::vector<Eigen::Vector3d> &sector, std::vector<Line> &sectorLines);
+    std::vector<LineEigen> findBestLinesInSector(std::vector<Eigen::Vector3d> &sector, std::vector<LineEigen> &sectorLines);
 
     std::vector<std::vector<Eigen::Vector3d>> dividePointsToAxesSectors();
 
@@ -67,7 +67,7 @@ private:
     std::map<int, std::vector<Eigen::Vector3d >> slices;
     std::vector<Eigen::Vector3d> points;
     std::vector<Eigen::Vector3d> normalizedPoints;
-    std::vector<Line> lines;
+    std::vector<LineEigen> lines;
 };
 
 

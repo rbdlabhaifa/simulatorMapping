@@ -24,8 +24,11 @@
 #include <string>
 #include <thread>
 #include <opencv2/core/core.hpp>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #define NOMINMAX
 #include <windows.h>
+
+#endif
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -67,7 +70,13 @@ namespace ORB_SLAM2
             STEREO = 1,
             RGBD = 2
         };
+    void static systemUsleep(int microseconds){
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+        Sleep(std::ceil(microseconds/1000));
 
+#endif
+        usleep(microseconds);
+    }
     public:
         bool shutdown_requested = false;
 
@@ -99,8 +108,7 @@ namespace ORB_SLAM2
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
         cv::Mat
-        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im = cv::Mat());
-
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

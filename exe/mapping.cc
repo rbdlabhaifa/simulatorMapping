@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
             cap >> frame;
         }
         if (frame.empty()) {
-            usleep(20000);
+            ORB_SLAM2::System::systemUsleep(20000);
             continue;
         }
 

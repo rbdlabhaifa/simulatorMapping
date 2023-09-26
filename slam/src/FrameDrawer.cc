@@ -28,7 +28,7 @@
 
 namespace ORB_SLAM2 {
 
-    FrameDrawer::FrameDrawer(Map *pMap, bool bReuse) : mpMap(pMap) {
+    FrameDrawer::FrameDrawer(Map* pMap, bool bReuse) : mpMap(pMap) {
         mState = Tracking::SYSTEM_NOT_READY;
         if (bReuse)
             mState = Tracking::LOST;
@@ -60,29 +60,18 @@ namespace ORB_SLAM2 {
                 vCurrentKeys = mvCurrentKeys;
                 vIniKeys = mvIniKeys;
                 vMatches = mvIniMatches;
-            } else if (mState == Tracking::OK) {
+            }
+            else if (mState == Tracking::OK) {
                 vCurrentKeys = mvCurrentKeys;
                 vbVO = mvbVO;
                 vbMap = mvbMap;
-            } else if (mState == Tracking::LOST) {
+            }
+            else if (mState == Tracking::LOST) {
                 vCurrentKeys = mvCurrentKeys;
             }
         } // destroy scoped mutex -> release mutex
 
-        if (im.empty())
-        {
-            if (this->image_to_show.empty()) // if we have an no image to overlay do it
-            {
-                im = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0,0,0)).clone();
-            }
-            else
-            {
-                im = this->image_to_show.clone();
-            }
-        }
-        
-
-        if (im.channels() < 3) //this should be always true
+        if (!im.empty() && im.channels() < 3) //this should be always true
             cvtColor(im, im, CV_GRAY2BGR);
 
         cv::Mat imWithInfo;
@@ -114,9 +103,9 @@ namespace ORB_SLAM2 {
                 if (vMatches[i] >= 0 && !vCurrentKeys.empty() && vCurrentKeys.size() > i) {
 
                     float x1 = ((2 * vIniKeys[i].pt.x / imWithInfo.cols) - 1.0f);
-                    float y1 = ((2 * vIniKeys[i].pt.y / imWithInfo.rows) - 1.0f);
+                    float y1 = -((2 * vIniKeys[i].pt.y / imWithInfo.rows) - 1.0f);
                     float x2 = ((2 * vCurrentKeys[vMatches[i]].pt.x / imWithInfo.cols) - 1.0f);
-                    float y2 = ((2 * vCurrentKeys[vMatches[i]].pt.y / imWithInfo.rows) - 1.0f);
+                    float y2 = -((2 * vCurrentKeys[vMatches[i]].pt.y / imWithInfo.rows) - 1.0f);
                     glVertex3f(x1, y1, 0);
                     glVertex3f(x2, y2, 0);
 
@@ -124,7 +113,8 @@ namespace ORB_SLAM2 {
             }
             glEnd();
 
-        } else if (state == Tracking::OK) //TRACKING
+        }
+        else if (state == Tracking::OK) //TRACKING
         {
             mnTracked = 0;
             mnTrackedVO = 0;
@@ -132,40 +122,17 @@ namespace ORB_SLAM2 {
             for (int i = 0; i < N; i++) {
                 if ((i < vbVO.size() && vbVO[i]) || (i < vbMap.size() && vbMap[i])) {
                     float x1 = ((2 * vCurrentKeys[i].pt.x / imWithInfo.cols) - 1.0f);
-                    float y1 = ((2 * vCurrentKeys[i].pt.y / imWithInfo.rows) - 1.0f);
+                    float y1 = -((2 * vCurrentKeys[i].pt.y / imWithInfo.rows) - 1.0f);
                     float width = 0.01f;
 
                     // This is a match to a MapPoint in the map
                     if (vbMap[i]) {
-
-                        glColor3f(0, 1.0f, 0);
-                        glBegin(GL_LINE_LOOP);
-                        glVertex2f(x1 - width, y1 - width);
-                        glVertex2f(x1 - width, y1 + width);
-                        glVertex2f(x1 + width, y1 + width);
-                        glVertex2f(x1 + width, y1 - width);
-                        glEnd();
-
-                        glBegin(GL_POINTS);
-                        glVertex2f(x1, y1);
-                        glEnd();
-
+                        DrawRectangleAndCircle(x1, y1, width);
                         mnTracked++;
                     }
                     else // This is match to a "visual odometry" MapPoint created in the last frame
                     {
-                        glColor3f(0, 1.0f, 0);
-                        glBegin(GL_LINE_LOOP);
-                        glVertex2f(x1 - width, y1 - width);
-                        glVertex2f(x1 - width, y1 + width);
-                        glVertex2f(x1 + width, y1 + width);
-                        glVertex2f(x1 + width, y1 - width);
-                        glEnd();
-
-                        glBegin(GL_POINTS);
-                        glVertex2f(x1, y1);
-                        glEnd();
-
+                        DrawRectangleAndCircle(x1, y1, width);
                         mnTrackedVO++;
                     }
                 }
@@ -173,8 +140,22 @@ namespace ORB_SLAM2 {
         }
     }
 
+    void FrameDrawer::DrawRectangleAndCircle(float x, float y, float width) {
+        glColor3f(0, 1.0f, 0);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(x - width, y - width);
+        glVertex2f(x - width, y + width);
+        glVertex2f(x + width, y + width);
+        glVertex2f(x + width, y - width);
+        glEnd();
 
-    void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText) {
+        glBegin(GL_POINTS);
+        glVertex2f(x, y);
+        glEnd();
+    }
+
+
+    void FrameDrawer::DrawTextInfo(cv::Mat& im, int nState, cv::Mat& imText) {
         stringstream s;
         if (nState == Tracking::NO_IMAGES_YET)
             s << " WAITING FOR IMAGES";
@@ -190,9 +171,11 @@ namespace ORB_SLAM2 {
             s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Matches: " << mnTracked;
             if (mnTrackedVO > 0)
                 s << ", + VO matches: " << mnTrackedVO;
-        } else if (nState == Tracking::LOST) {
+        }
+        else if (nState == Tracking::LOST) {
             s << " TRACK LOST. TRYING TO RELOCALIZE ";
-        } else if (nState == Tracking::SYSTEM_NOT_READY) {
+        }
+        else if (nState == Tracking::SYSTEM_NOT_READY) {
             s << " LOADING ORB VOCABULARY. PLEASE WAIT...";
         }
 
@@ -203,11 +186,18 @@ namespace ORB_SLAM2 {
         im.copyTo(imText.rowRange(0, im.rows).colRange(0, im.cols));
         imText.rowRange(im.rows, imText.rows) = cv::Mat::zeros(textSize.height + 10, im.cols, im.type());
         cv::putText(imText, s.str(), cv::Point(5, imText.rows - 5), cv::FONT_HERSHEY_PLAIN, 1,
-                    cv::Scalar(255, 255, 255), 1, 8);
+            cv::Scalar(255, 255, 255), 1, 8);
+        /*glColor3f(1.0f, 1.0f, 1.0f);
+        glRasterPos2f(5, imText.rows - 5);
+        int len, i;
+        len = s.str().size();
+        for (i = 0; i < len; i++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s.str()[i]);
+        }*/
 
     }
 
-    void FrameDrawer::Update(Tracking *pTracker, const cv::Mat &im) {
+    void FrameDrawer::Update(Tracking* pTracker) {
         unique_lock<mutex> lock(mMutex);
         pTracker->mImGray.copyTo(mIm);
         mvCurrentKeys = pTracker->mCurrentFrame.mvKeys;
@@ -216,17 +206,14 @@ namespace ORB_SLAM2 {
         mvbMap = vector<bool>(N, false);
         mbOnlyTracking = pTracker->mbOnlyTracking;
 
-        if (!im.empty()) // if we sent an image to overlay on
-        {
-            this->image_to_show = im;
-        }
 
         if (pTracker->mLastProcessedState == Tracking::NOT_INITIALIZED) {
             mvIniKeys = pTracker->mInitialFrame.mvKeys;
             mvIniMatches = pTracker->mvIniMatches;
-        } else if (pTracker->mLastProcessedState == Tracking::OK) {
+        }
+        else if (pTracker->mLastProcessedState == Tracking::OK) {
             for (int i = 0; i < N; i++) {
-                MapPoint *pMP = pTracker->mCurrentFrame.mvpMapPoints[i];
+                MapPoint* pMP = pTracker->mCurrentFrame.mvpMapPoints[i];
                 if (pMP) {
                     if (!pTracker->mCurrentFrame.mvbOutlier[i]) {
                         if (pMP->Observations() > 0)

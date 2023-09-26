@@ -167,7 +167,15 @@ namespace ORB_SLAM2
     {
         mpViewer = pViewer;
     }
+    void Tracking::SetNFeaturesToExtractor(int nFeatures) {
+        if (mSensor == System::STEREO) {
+            mpORBextractorRight->setNFeatures(nFeatures);
+            mpORBextractorLeft->setNFeatures(nFeatures);
+        }
 
+        if (mSensor == System::MONOCULAR)
+            mpIniORBextractor->setNFeatures(nFeatures);
+    }
     cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
     {
         mImGray = imRectLeft;
@@ -242,7 +250,9 @@ namespace ORB_SLAM2
 
     cv::Mat
     Tracking::GrabImageMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const float cols,
-                                 const float rows, const double &timestamp, const cv::Mat &im) {
+                                 const float rows,
+                                 const double &timestamp)
+    {
 
         if (mImGray.channels() == 3)
         {
@@ -268,7 +278,7 @@ namespace ORB_SLAM2
                               mbf,
                               mThDepth);
         //}
-        Track(im);
+        Track();
 
         return mCurrentFrame.mTcw.clone();
     }
@@ -303,8 +313,10 @@ namespace ORB_SLAM2
         return mCurrentFrame.mTcw.clone();
     }
 
-    void Tracking::Track(const cv::Mat &im) {
-        if (mState == NO_IMAGES_YET) {
+    void Tracking::Track()
+    {
+        if (mState == NO_IMAGES_YET)
+        {
             mState = NOT_INITIALIZED;
         }
 
@@ -324,8 +336,9 @@ namespace ORB_SLAM2
                 StereoInitialization();
             else
                 MonocularInitialization();
-            if (mpFrameDrawer != nullptr) {
-                mpFrameDrawer->Update(this, im);
+            if (mpFrameDrawer != nullptr)
+            {
+                mpFrameDrawer->Update(this);
             }
 
             if (mState != OK)
@@ -1362,10 +1375,10 @@ namespace ORB_SLAM2
                 }
             }
 
-            const set<KeyFrame *> spChilds = pKF->GetChilds();
-            for (set<KeyFrame *>::const_iterator sit = spChilds.begin(), send = spChilds.end(); sit != send; sit++)
+            const unordered_map<KeyFrame*, int> spChilds = pKF->GetChilds();
+            for (auto sit = spChilds.begin(), send = spChilds.end(); sit != send; sit++)
             {
-                KeyFrame *pChildKF = *sit;
+                KeyFrame* pChildKF = sit->first;
                 if (!pChildKF->isBad())
                 {
                     if (pChildKF->mnTrackReferenceForFrame != mCurrentFrame.mnId)
@@ -1595,7 +1608,7 @@ namespace ORB_SLAM2
 
         cout << "System Reseting" << endl;
         while (!mpViewer->isStopped())
-            Sleep(3);
+            System::systemUsleep(3000);
 
         // Reset Local Mapping
         cout << "Reseting Local Mapper...";
@@ -1631,6 +1644,7 @@ namespace ORB_SLAM2
         mlbLost.clear();
 
         mpViewer->Release();
+        mpLocalMapper->Release();
     }
 
     void Tracking::ChangeCalibration(const string &strSettingPath)

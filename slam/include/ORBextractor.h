@@ -93,7 +93,9 @@ namespace ORB_SLAM2
         }
 
         std::vector<cv::Mat> mvImagePyramid;
-
+        void setNFeatures(int _nFeatures) {
+            nfeatures = _nFeatures;
+        }
     protected:
         void ComputePyramid(cv::Mat image);
         void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>> &allKeypoints);

@@ -1,6 +1,6 @@
 #include <time.h>
 
-#include"DBow3/src/Vocabulary.h"
+#include "DBoW3/src/Vocabulary.h"
 
 
 bool load_as_text(DBoW3::Vocabulary& voc, const std::string infile) {
