@@ -282,12 +282,12 @@ namespace ORB_SLAM2
                     Sleep(1);
                 }
 
-                mpTracker->InformOnlyTracking(true);
+                //mpTracker->InformOnlyTracking(true);
                 mbActivateLocalizationMode = false;
             }
             if (mbDeactivateLocalizationMode)
             {
-                mpTracker->InformOnlyTracking(false);
+                //mpTracker->InformOnlyTracking(false);
                 mpLocalMapper->Release();
                 mbDeactivateLocalizationMode = false;
             }

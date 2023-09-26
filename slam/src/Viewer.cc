@@ -95,7 +95,13 @@ namespace ORB_SLAM2
         // Issue specific OpenGl we might need
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+        pangolin::CreatePanel("menu").SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(175));
+        pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
+        pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
+        pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames", true, true);
+        pangolin::Var<bool> menuShowGraph("menu.Show Graph", true, true);
+        pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode", false, true);
+        pangolin::Var<bool> menuReset("menu.Reset", false, false);
         // Define Camera Render Object (for view / scene browsing)
         pangolin::OpenGlRenderState s_cam(
             pangolin::ProjectionMatrix(1024, 768, mViewpointF, mViewpointF, 512, 389, 0.1, 1000),

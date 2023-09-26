@@ -1644,6 +1644,7 @@ namespace ORB_SLAM2
         mlbLost.clear();
 
         mpViewer->Release();
+        mpLocalMapper->Release();
     }
 
     void Tracking::ChangeCalibration(const string &strSettingPath)

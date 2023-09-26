@@ -101,6 +101,8 @@ namespace ORB_SLAM2
                 // Safe area to stop
                 while (isStopped() && !CheckFinish())
                 {
+                    ResetIfRequested();
+
                     Sleep(5);
                 }
                 if (CheckFinish())
@@ -577,6 +579,7 @@ namespace ORB_SLAM2
         {
             mbStopped = true;
             cout << "Local Mapping STOP" << endl;
+            mbStopRequested = false;
             return true;
         }
 
@@ -741,6 +744,7 @@ namespace ORB_SLAM2
             mlNewKeyFrames.clear();
             mlpRecentAddedMapPoints.clear();
             mbResetRequested = false;
+            mbStopped = true;
         }
     }
 
