@@ -18,7 +18,6 @@
 #include <opencv2/core.hpp>
 #include <Eigen/Core>
 #include <nlohmann/json.hpp>
-#include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 #include <pangolin/pangolin.h>

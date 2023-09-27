@@ -6,7 +6,8 @@
 
 int main(int argc, char **argv)
 {
-    std::ifstream programData(argv[1]);
+    std::string settingPath = Auxiliary::GetGeneralSettingsPath();
+    std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
