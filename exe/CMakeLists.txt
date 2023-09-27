@@ -14,6 +14,9 @@ target_link_libraries(save_map ${PROJECT_NAME})
 add_executable(save_first_frame save_first_frame.cc)
 target_link_libraries(save_first_frame ${PROJECT_NAME})
 
+add_executable(save_keypoints_mapping save_keypoints_mapping.cc)
+target_link_libraries(save_keypoints_mapping ${PROJECT_NAME})
+
 add_executable(remove_map_points remove_map_points.cc)
 target_link_libraries(remove_map_points ${PROJECT_NAME})
 

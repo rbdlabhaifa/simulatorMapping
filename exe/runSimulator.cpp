@@ -41,14 +41,13 @@ int main(int argc, char **argv)
     {
         std::string c = "forward 0.5";
         simulator.command(c);
-        currentLocation = simulator.getCurrentLocation();
-        c = "back 0.5";
+        c = "right 0.7";
         simulator.command(c);
-        currentLocation = simulator.getCurrentLocation();
         c = "cw " + std::to_string(angle);
         simulator.command(c);
-        currentLocation = simulator.getCurrentLocation();
+        sleep(1);
     }
+    sleep(2);
     auto scanMap = simulator.getCurrentMap();
 
     //simulatorThread.join();

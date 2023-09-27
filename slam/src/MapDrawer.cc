@@ -41,89 +41,43 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 
 }
 
-void MapDrawer::DrawMapPoints(bool is_simulator, std::vector<cv::Point3d> seen_points, std::vector<cv::Point3d> new_points_seen)
+void MapDrawer::DrawMapPoints()
 {
-    if (!is_simulator)
+    const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
+
+    set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+
+    if(vpMPs.empty())
+        return;
+
+    glPointSize(mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.0,0.0);
+
+    for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
     {
-        const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
-        const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
-
-        set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
-
-        if(vpMPs.empty())
-            return;
-
-        glPointSize(mPointSize);
-        glBegin(GL_POINTS);
-        glColor3f(0.0,0.0,0.0);
-
-        // cv::Mat Rwc;
-        // cv::Mat twc;
-        // bool good = false;
-        // if(!mCameraPose.empty())
-        // {
-        //     unique_lock<mutex> lock(mMutexCamera);
-        //     Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
-        //     twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
-        //     good = true;
-        // }
-
-        for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
-        {
-            if(vpMPs[i]->isBad() || spRefMPs.count(vpMPs[i]))
-                continue;
-            cv::Mat pos = vpMPs[i]->GetWorldPos();
-            // cv::Mat Rwc = mCameraPose.rowRange(0, 3).colRange(0, 3).clone().t();
-            // cv::Mat twc = -mCameraPose.rowRange(0, 3).col(3);
-            // if(good)
-            //     pos = Rwc*pos - twc;
-            glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
-        }
-        glEnd();
-
-        glPointSize(mPointSize);
-        glBegin(GL_POINTS);
-        glColor3f(1.0,0.0,0.0);
-
-        for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
-        {
-            if((*sit)->isBad())
-                continue;
-            cv::Mat pos = (*sit)->GetWorldPos();
-            // cv::Mat Rwc = mCameraPose.rowRange(0, 3).colRange(0, 3).clone();
-            // cv::Mat twc = mCameraPose.rowRange(0, 3).col(3);
-            // if(good)
-            //     pos = Rwc*pos - twc;
-            glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
-
-        }
-
-        glEnd();
+        if(vpMPs[i]->isBad() || spRefMPs.count(vpMPs[i]))
+            continue;
+        cv::Mat pos = vpMPs[i]->GetWorldPos();
+        glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
     }
-    else
+    glEnd();
+
+    glPointSize(mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(1.0,0.0,0.0);
+
+    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
     {
-        glPointSize(mPointSize);
-        glBegin(GL_POINTS);
-        glColor3f(0.0,0.0,0.0);
+        if((*sit)->isBad())
+            continue;
+        cv::Mat pos = (*sit)->GetWorldPos();
+        glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
 
-        for(auto point : seen_points)
-        {
-            glVertex3f((float)point.x, (float)point.y, (float)point.z);
-        }
-        glEnd();
-
-        glPointSize(mPointSize);
-        glBegin(GL_POINTS);
-        glColor3f(1.0,0.0,0.0);
-
-        for(auto point : new_points_seen)
-        {
-            glVertex3f((float)point.x, (float)point.y, (float)point.z);
-
-        }
-
-        glEnd();
     }
+
+    glEnd();
 
 }
 
