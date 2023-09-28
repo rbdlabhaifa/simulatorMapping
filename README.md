@@ -37,17 +37,22 @@ this is optional and do it only if you want to create a new simulator model
 in order to create orb-slam map for using in the simulator you need to:
 - run `./exe/offline_orb_slam` from the `build` folder
 
-### 4. Run runSimulator:
+### 4. Add room exit code:
+optional if you want to find room exit and navigate to the destanation:
+- open in roomExit file(source and header) from the tools/ directory
+- change the implementation to your implementation of the room exit
+
+### 5. Run runSimulator:
 - run `./exe/runSimulator` from the `build` folder in order to use the simulator within the model
 pay attention to the prints - you will need to press enter from the console in order to start running the simulator
 
 ## Optional advanced stages:
-### 5. localize on your own map:
+### 6. localize on your own map:
 for localize on the orb slam map from the known points on each frame(without model GUI)
 - configure your parameters also on `demoSettings.json`
 - run `./exe/demo` from the `build` folder
 
-### 6. Build partial map:
+### 7. Build partial map:
 - run `./exe/save_first_frame` from the `build` folder
 - run `./exe/remove_map_points` from the `build` folder
 - run `./exe/build_new_map_demo` from the `build` folder
