@@ -29,15 +29,17 @@ Open generalSettings.json and change:
 - `framesOutput` to the folder where `frames_lab_transformation_matrix.csv` is in for using the point cloud transformation we want
 
 ### 2. Create video for orb slam mapping:
-This is optional and do it only if you have a physical drone next to you
+This is optional and do it only if you have a physical drone next to you and tou want to create new simulator model
 - run `./exe/mapping` from the `build` folder
 
 ### 3. create Orb Slam map from video:
+this is optional and do it only if you want to create a new simulator model
 in order to create orb-slam map for using in the simulator you need to:
 - run `./exe/offline_orb_slam` from the `build` folder
 
 ### 4. Run runSimulator:
-- run `./exe/runSimulator` from the `build` folder
+- run `./exe/runSimulator` from the `build` folder in order to use the simulator within the model
+pay attention to the prints - you will need to press enter from the console in order to start running the simulator
 
 ## Optional advanced stages:
 ### 5. localize on your own map:
