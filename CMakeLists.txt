@@ -35,7 +35,10 @@ find_package(PkgConfig)
 pkg_search_module(Eigen3 REQUIRED eigen3)
 find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system serialization)
+find_package(Boost REQUIRED COMPONENTS system serialization python)
+find_package(PythonLibs 3.10 REQUIRED)
+message(PY_VERSION="${PY_VERSION}")
+
 find_package(PCL 1.8 REQUIRED)
 add_subdirectory(Thirdparty)
 find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}Thirdparty/Pangolin")
@@ -58,8 +61,6 @@ include_directories(
 
 # Add definitions
 add_definitions(${PCL_DEFINITIONS})
-
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME}
         slam/src/System.cc
@@ -105,4 +106,19 @@ add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
 add_library(exitRoom tools/navigation/RoomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})
+
+add_library(simulator_python SHARED tools/simulator/simulator_python.cpp)
+
+target_link_libraries(simulator_python boost_python310 ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} simulator)
+
+# Copy the __init__.py file
+configure_file(tools/simulator/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/__init__.py COPYONLY)
+
+# Suppress prefix "lib" because Python does not allow this prefix
+set_target_properties(simulator_python PROPERTIES PREFIX "")
+
+message(PYTHON_INSTALL_PATH="${PYTHON_INSTALL_PATH}")
+
+install(TARGETS simulator_python DESTINATION "${PYTHON_INSTALL_PATH}")
+
 add_subdirectory(exe)

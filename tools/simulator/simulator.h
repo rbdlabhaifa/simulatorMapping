@@ -69,6 +69,8 @@ public:
 
      ~Simulator();
 
+    void simulatorRunThread();
+
 /**
  *Starts the 3D model viewer (pangolin), and wait for the user or code signal to start sending the view to the ORBSLAM2 object
  * */
@@ -165,8 +167,6 @@ private:
     std::mutex locationLock;
 
     double speedFactor;
-
-    void simulatorRunThread();
 
     void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
                         Eigen::MatrixXf &surface);
