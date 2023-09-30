@@ -36,7 +36,7 @@ namespace ORB_SLAM2 {
         mIm = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
     }
 
-    void FrameDrawer::DrawFrame() {
+    cv::Mat FrameDrawer::DrawFrame() {
         cv::Mat im;
         vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
         vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -71,7 +71,19 @@ namespace ORB_SLAM2 {
             }
         } // destroy scoped mutex -> release mutex
 
-        if (!im.empty() && im.channels() < 3) //this should be always true
+         if (im.empty())
+        {
+            if (this->imageToShow.empty()) // if we have an no image to overlay do it
+            {
+                im = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0,0,0)).clone();
+            }
+            else
+            {
+                im = this->imageToShow.clone();
+            }
+        }
+
+        if (im.channels() < 3) //this should be always true
             cvtColor(im, im, CV_GRAY2BGR);
 
         cv::Mat imWithInfo;
@@ -186,18 +198,10 @@ namespace ORB_SLAM2 {
         im.copyTo(imText.rowRange(0, im.rows).colRange(0, im.cols));
         imText.rowRange(im.rows, imText.rows) = cv::Mat::zeros(textSize.height + 10, im.cols, im.type());
         cv::putText(imText, s.str(), cv::Point(5, imText.rows - 5), cv::FONT_HERSHEY_PLAIN, 1,
-            cv::Scalar(255, 255, 255), 1, 8);
-        /*glColor3f(1.0f, 1.0f, 1.0f);
-        glRasterPos2f(5, imText.rows - 5);
-        int len, i;
-        len = s.str().size();
-        for (i = 0; i < len; i++) {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s.str()[i]);
-        }*/
-
+        cv::Scalar(255, 255, 255), 1, 8);
     }
 
-    void FrameDrawer::Update(Tracking* pTracker) {
+    void FrameDrawer::Update(Tracking* pTracker, const cv::Mat &im) {
         unique_lock<mutex> lock(mMutex);
         pTracker->mImGray.copyTo(mIm);
         mvCurrentKeys = pTracker->mCurrentFrame.mvKeys;
@@ -206,6 +210,10 @@ namespace ORB_SLAM2 {
         mvbMap = vector<bool>(N, false);
         mbOnlyTracking = pTracker->mbOnlyTracking;
 
+        if (!im.empty()) // if we sent an image to overlay on
+        {
+            this->imageToShow = im;
+        }
 
         if (pTracker->mLastProcessedState == Tracking::NOT_INITIALIZED) {
             mvIniKeys = pTracker->mInitialFrame.mvKeys;

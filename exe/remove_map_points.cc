@@ -77,7 +77,7 @@ int main() {
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
     std::string mapLocation = data["fullMapLocation"];
-    ORB_SLAM2::System SLAM = ORB_SLAM2::System( vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, true,
+    ORB_SLAM2::System SLAM = ORB_SLAM2::System( vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true,
                                                mapLocation, false);
 
     // Read all first frame points

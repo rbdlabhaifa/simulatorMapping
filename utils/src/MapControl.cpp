@@ -250,7 +250,7 @@ MapControl::MapControl(bool isPartialMap) {
     }
     this->mSystem = nullptr;
     if (this->mUseOrbSlam) {
-        this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true, true,
+        this->mSystem = new ORB_SLAM2::System(this->mVocPath, this->mConfigPath, ORB_SLAM2::System::MONOCULAR, true,
                                           this->mLoadMap, this->mLoadMapPath, this->mContinueMapping);
     }
 

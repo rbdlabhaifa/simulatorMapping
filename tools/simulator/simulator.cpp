@@ -38,7 +38,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std:
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
     SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true,
-                                               trackImages, loadMap, mapLoadPath, true);
+                                               loadMap, mapLoadPath, true);
 
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
     orbExtractor = std::make_shared<ORB_SLAM2::ORBextractor>(numberOfFeatures, fScaleFactor, nLevels, fIniThFAST,
@@ -73,7 +73,7 @@ bool Simulator::feedSLAM(cv::Mat &img) {
         std::vector<cv::KeyPoint> pts;
         cv::Mat mDescriptors;
         orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
-        Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp);
+        Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp, img);
     }
     locationLock.unlock();
     auto state = SLAM->GetTracker()->mState;

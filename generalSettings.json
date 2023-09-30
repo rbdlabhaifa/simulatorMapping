@@ -25,6 +25,6 @@
   "framesOutput": "/home/liam/Documents/frames/",
   "useLabICP": true,
   "simulatorStartingSpeed": 1,
-  "trackImages": true
+  "trackImages": false
 }
 

@@ -43,10 +43,10 @@ namespace ORB_SLAM2
         FrameDrawer(Map* pMap, bool bReuse);
 
         // Update info from the last processed frame.
-        void Update(Tracking* pTracker);
+        void Update(Tracking* pTracker, const cv::Mat& im = cv::Mat());
 
         // Draw last processed frame.
-        void DrawFrame();
+        cv::Mat DrawFrame();
 
     protected:
 
@@ -66,6 +66,8 @@ namespace ORB_SLAM2
         int mState;
 
         Map* mpMap;
+
+        cv::Mat imageToShow;
 
         std::mutex mMutex;
     };

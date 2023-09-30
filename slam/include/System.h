@@ -86,7 +86,6 @@ namespace ORB_SLAM2
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer = true,
-               const bool bUseFrameDrawer = true,
                bool reuse = false, std::string mapName = "Slam_latest_Map.bin",
                bool continue_mapping = false,
                bool isPangolinExists = false);
@@ -108,7 +107,7 @@ namespace ORB_SLAM2
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
         cv::Mat
-        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp);
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat& im = cv::Mat());
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

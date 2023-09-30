@@ -34,7 +34,7 @@ namespace ORB_SLAM2
 {
 
     System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-                   const bool bUseViewer, const bool bUseFrameDrawer, bool bReuse, std::string mapName,
+                   const bool bUseViewer, bool bReuse, std::string mapName,
                    bool continue_mapping,
                    bool isPangolinExists) : mSensor(sensor), mbReset(false), mbActivateLocalizationMode(bReuse),
                                             mbDeactivateLocalizationMode(false)
@@ -125,14 +125,7 @@ namespace ORB_SLAM2
             this->DeactivateLocalizationMode();
 
         // Create Drawers. These are used by the Viewer
-        if (bUseFrameDrawer)
-        {
-            mpFrameDrawer = new FrameDrawer(mpMap, bReuse);
-        }
-        else
-        {
-            mpFrameDrawer = nullptr;
-        }
+        mpFrameDrawer = new FrameDrawer(mpMap, bReuse);
         mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
 
         // Initialize the Tracking thread
@@ -260,7 +253,7 @@ namespace ORB_SLAM2
     }
 
     cv::Mat
-    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp)
+    System::TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat& im)
     {
         cv::Mat Tcw;
         if (mSensor != MONOCULAR)
@@ -305,7 +298,7 @@ namespace ORB_SLAM2
 
         // return (mpTracker->GrabImageMonocular(im,timestamp)).clone();
         return (mpTracker->GrabImageMonocular(descriptors, keyPoints, mpViewer->GetImageWidth(),
-                                              mpViewer->GetImageHeight(), timestamp));
+                                              mpViewer->GetImageHeight(), timestamp, im));
     }
 
     cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
