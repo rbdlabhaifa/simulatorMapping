@@ -66,6 +66,7 @@ public:
               bool saveMap = false, std::string simulatorOutputDirPath = "../slamMaps/", bool loadMap = false,
               std::string mapLoadPath = "../slamMaps/example.bin",
               double movementFactor = 0.01,
+              double speedFactor = 1.0,
               std::string vocPath = "../Vocabulary/ORBvoc.txt");
 
     /**
@@ -77,6 +78,8 @@ public:
      * @return is the simulator is ready
      * */
     bool isReady() { return ready; }
+
+    bool startScanning() { return start; }
 
     /**
      * @brief Fetches the current location matrix from ORBSLAM2.
@@ -103,7 +106,7 @@ public:
      *
      * This method enables the users to navigate the virtual robot in the simulation by executing specific commands.
      */
-    void command(std::string &command, int intervalUsleep = 50,
+    void command(const std::string &command, int intervalUsleep = 50000,
                  double fps = 30.0,
                  int totalCommandTimeInSeconds = 1);
     /**
@@ -111,13 +114,21 @@ public:
      *
      */
     void stop() { stopFlag = true; }
+
     /**
      * @brief enabling or disabling the ORBSLAM process.
      *
      */
     void setTrack(bool value) { track = value; }
+
+    void setSpeed(double speed);
+
+    double getSpeed() const;
+
     void simulatorRunThread();
+
     std::shared_ptr<ORB_SLAM2::System> GetSLAM() { return SLAM; }
+
 private:
     /**
      * @brief A map for controlling the virtual robot's actions.
@@ -145,6 +156,7 @@ private:
     bool stopFlag;
     bool stopFlagSLAM;
     bool ready;
+    bool start;
 
     bool saveMapSignal;
     bool track;
@@ -166,7 +178,10 @@ private:
     std::mutex imgLock;
     int numberOfFeatures;
     int trackingNumberOfFeatures;
+    double speedFactor;
+
     void SLAMThread();
+
     bool feedSLAM(cv::Mat& img);
 
     void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
@@ -196,6 +211,10 @@ private:
     void static applyUpModelCam(pangolin::OpenGlRenderState &cam, double value);
 
     void static applyPitchRotationToModelCam(pangolin::OpenGlRenderState &cam, double value);
+
+    void slower();
+
+    void faster();
 };
 
 #endif // ORB_SLAM2_SIMULATOR_H

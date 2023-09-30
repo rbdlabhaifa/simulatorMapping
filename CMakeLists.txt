@@ -23,7 +23,6 @@ add_definitions(-DEIGEN_FAST_MATH)
 add_definitions(-DEIGEN_VECTORIZE)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 list(APPEND VCPKG_FEATURE_FLAGS "versions")
-find_package(PythonLibs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PythonLibs REQUIRED)
@@ -34,8 +33,8 @@ add_subdirectory(Thirdparty)
 find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/Thirdparty/Pangolin")
 
 include_directories(
-${OpenCV_INCLUDE_DIRS}
-            ${EIGEN3_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIRS}
+        ${EIGEN3_INCLUDE_DIR}
         ${Pangolin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
@@ -81,10 +80,17 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         ${Pangolin_LIBRARIES}
         g2o
         DBoW3
-        Threads::Threads Boost::boost Boost::serialization Boost::system ${PYTHON_LIBRARIES} nlohmann_json::nlohmann_json
+        Threads::Threads
+        Boost::boost
+        Boost::serialization
+        Boost::system
+        ${PYTHON_LIBRARIES}
+        nlohmann_json::nlohmann_json
         )
+
 add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
-add_subdirectory(exe)
+
 add_library(exitRoom tools/navigation/RoomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})
+add_subdirectory(exe)

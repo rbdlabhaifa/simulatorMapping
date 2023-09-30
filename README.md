@@ -43,7 +43,7 @@ optional if you want to find room exit and navigate to the destanation:
 
 ### 5. Run runSimulator:
 - run `./exe/runSimulator` from the `build` folder in order to use the simulator within the model
-pay attention to the prints - you will need to press enter from the console in order to start running the simulator
+pay attention to the prints - you will need to press tab from the model viewer in order to start running the simulator
 
 ## Optional advanced stages:
 ### 6. localize on your own map:
