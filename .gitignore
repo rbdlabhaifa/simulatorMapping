@@ -5,7 +5,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+
 
 # Precompiled Headers
 *.gch
@@ -41,5 +41,12 @@ simulatorDataSets/
 
 **/**/build/
 slamMaps/
-
-.vscode/
+.vs
+.vscode
+vcpkg_installed/
+out/
+videos/
+**/bin**
+**/Debug**
+CMakeSettings.json
+leaves_to_weights.pkl

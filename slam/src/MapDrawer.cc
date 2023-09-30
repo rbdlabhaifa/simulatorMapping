@@ -78,6 +78,7 @@ void MapDrawer::DrawMapPoints()
     }
 
     glEnd();
+
 }
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
@@ -151,24 +152,23 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
                 }
             }
 
-            // Spanning tree
             KeyFrame* pParent = vpKFs[i]->GetParent();
-            if(pParent)
+            if (pParent)
             {
                 cv::Mat Owp = pParent->GetCameraCenter();
-                glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                glVertex3f(Owp.at<float>(0),Owp.at<float>(1),Owp.at<float>(2));
+                glVertex3f(Ow.at<float>(0), Ow.at<float>(1), Ow.at<float>(2));
+                glVertex3f(Owp.at<float>(0), Owp.at<float>(1), Owp.at<float>(2));
             }
 
             // Loops
-            set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
-            for(set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
+            unordered_map<KeyFrame*, int> sLoopKFs = vpKFs[i]->GetLoopEdges();
+            for (auto sit = sLoopKFs.begin(), send = sLoopKFs.end(); sit != send; sit++)
             {
-                if((*sit)->mnId<vpKFs[i]->mnId)
+                if ((sit->first)->mnId < vpKFs[i]->mnId)
                     continue;
-                cv::Mat Owl = (*sit)->GetCameraCenter();
-                glVertex3f(Ow.at<float>(0),Ow.at<float>(1),Ow.at<float>(2));
-                glVertex3f(Owl.at<float>(0),Owl.at<float>(1),Owl.at<float>(2));
+                cv::Mat Owl = (sit->first)->GetCameraCenter();
+                glVertex3f(Ow.at<float>(0), Ow.at<float>(1), Ow.at<float>(2));
+                glVertex3f(Owl.at<float>(0), Owl.at<float>(1), Owl.at<float>(2));
             }
         }
 

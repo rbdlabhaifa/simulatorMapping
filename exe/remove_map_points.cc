@@ -2,7 +2,9 @@
 #include <string>
 #include <thread>
 #include <iostream>
+#if defined(UNIX)
 #include <unistd.h>
+#endif
 #include <unordered_set>
 #include <nlohmann/json.hpp>
 #include <opencv2/videoio.hpp>
@@ -75,7 +77,7 @@ int main() {
     std::string vocPath = data["VocabularyPath"];
     std::string droneYamlPathSlam = data["DroneYamlPathSlam"];
     std::string mapLocation = data["fullMapLocation"];
-    ORB_SLAM2::System SLAM = ORB_SLAM2::System( vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, true,
+    ORB_SLAM2::System SLAM = ORB_SLAM2::System( vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true,
                                                mapLocation, false);
 
     // Read all first frame points
@@ -103,7 +105,7 @@ int main() {
         ORB_SLAM2::KeyFrame* keyframe = SLAM.GetMap()->GetAllKeyFrames()[i];
         bool to_delete = true;
         for (auto& point : keyframe->GetMapPoints()) {
-            auto pointValue = point->GetWorldPos();
+            auto pointValue = point.first->GetWorldPos();
             Eigen::Matrix<double, 3, 1> vector = ORB_SLAM2::Converter::toVector3d(pointValue);
             cv::Point3d point3D = cv::Point3d(vector.x(), vector.y(), vector.z());
             if (pointInVec(point3D, points)) {

@@ -9,8 +9,11 @@
 #include <vector>
 #include <limits>
 #include <fstream>
-#include <unistd.h>
-#include <signal.h>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define NOMINMAX
+#include <windows.h>
+#endif
+#include <csignal>
 #include <filesystem>
 #include <opencv2/core.hpp>
 #include <Eigen/Core>
@@ -22,13 +25,15 @@
 #include <pangolin/scene/axis.h>
 #include <pangolin/scene/scenehandler.h>
 
-class Auxiliary {
+
+class Auxiliary
+{
 public:
     static std::string GetGeneralSettingsPath();
 
     static std::string GetDemoSettingsPath();
 
-    static bool isPointVisible(const cv::Point3f& point, const cv::Point3f& cameraPos, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
+    static bool isPointVisible(const cv::Point3f &point, const cv::Point3f &cameraPos, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
 
     static void getPoints(std::string csvPath, std::vector<cv::Point3f> *points, const cv::Point3f &camera_position, float fx, float fy, float cx, float cy, float k1, float k2, float k3, float p1, float p2, int width, int height, float roll_degree, float yaw_degree, float pitch_degree);
 
@@ -40,8 +45,8 @@ public:
 
     static std::vector<std::string> GetAllFrameDatas();
 
-    static std::vector<std::string> GetFrameDatas(double amount=1); // Between 0 to 1
+    static std::vector<std::string> GetFrameDatas(double amount = 1); // Between 0 to 1
 
-    static void add_unique_points(std::vector<cv::Point3d>& target, const std::vector<cv::Point3d>& source);
+    static void add_unique_points(std::vector<cv::Point3d> &target, const std::vector<cv::Point3d> &source);
 };
 #endif // ORB_SLAM2_AUXILIARY_H

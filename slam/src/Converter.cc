@@ -107,15 +107,15 @@ cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matr
     return cvMat.clone();
 }
 
-Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Mat &cvVector)
+Eigen::Vector3d Converter::toVector3d(const cv::Mat &cvVector)
 {
-    Eigen::Matrix<double,3,1> v;
+    Eigen::Vector3d v;
     v << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
 
     return v;
 }
 
-Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Point3f &cvPoint)
+Eigen::Vector3d Converter::toVector3d(const cv::Point3f &cvPoint)
 {
     Eigen::Matrix<double,3,1> v;
     v << cvPoint.x, cvPoint.y, cvPoint.z;
@@ -123,7 +123,7 @@ Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Point3f &cvPoint)
     return v;
 }
 
-Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
+Eigen::Matrix3d Converter::toMatrix3d(const cv::Mat &cvMat3)
 {
     Eigen::Matrix<double,3,3> M;
 
@@ -132,6 +132,43 @@ Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
          cvMat3.at<float>(2,0), cvMat3.at<float>(2,1), cvMat3.at<float>(2,2);
 
     return M;
+}
+Eigen::Vector3f Converter::toVector3f(const cv::Mat& cvVector)
+{
+    Eigen::Matrix<float, 3, 1> v;
+    v << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
+
+    return v;
+}
+
+Eigen::Matrix3f Converter::toMatrix3f(const cv::Mat& cvMat3)
+{
+    Eigen::Matrix3f M;
+
+    M << cvMat3.at<float>(0, 0), cvMat3.at<float>(0, 1), cvMat3.at<float>(0, 2),
+        cvMat3.at<float>(1, 0), cvMat3.at<float>(1, 1), cvMat3.at<float>(1, 2),
+        cvMat3.at<float>(2, 0), cvMat3.at<float>(2, 1), cvMat3.at<float>(2, 2);
+
+    return M;
+}
+
+Eigen::Vector4f Converter::toVector4f(const cv::Mat& cvVector) {
+    assert(cvVector.rows == 4 && cvVector.cols == 1 && cvVector.type() == CV_32F);
+
+    Eigen::Vector4f v;
+    v << cvVector.at<float>(0), cvVector.at<float>(1),
+        cvVector.at<float>(2), cvVector.at<float>(3);
+
+    return v;
+}
+
+cv::Mat Converter::toCvMatf(const Eigen::Matrix4f& m) {
+    cv::Mat cvMat(4, 4, CV_32F);
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            cvMat.at<float>(i, j) = m(i, j);
+
+    return cvMat.clone();
 }
 
 std::vector<float> Converter::toQuaternion(const cv::Mat &M)

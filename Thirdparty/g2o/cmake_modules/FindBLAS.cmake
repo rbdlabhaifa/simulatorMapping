@@ -24,6 +24,9 @@
 # - find libraries for a C++ compiler, instead of Fortran
 # - added BLAS_INCLUDE_DIR, BLAS_DEFINITIONS and BLAS_LIBRARIES_DIR
 # - removed BLAS95_LIBRARIES
+if(NOT WIN32)
+  
+
 
 include(CheckFunctionExists)
 
@@ -417,3 +420,4 @@ else()
   #message("DEBUG: BLAS_FOUND = ${BLAS_FOUND}")
 
 endif(BLAS_LIBRARIES_DIR OR BLAS_LIBRARIES)
+endif(NOT WIN32)

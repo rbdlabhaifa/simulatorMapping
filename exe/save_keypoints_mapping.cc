@@ -103,7 +103,7 @@ int main() {
     std::string simulatorOutputDirPath = data["simulatorOutputDir"];
     simulatorOutputDir = simulatorOutputDirPath + "keypointsMapping-" + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
-    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true, true,
+    SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true,
                                                loadMapPath, false);
 
     saveKeyPointsMapping();

@@ -18,6 +18,7 @@
     "boost",
     "boost-serialization",
     "suitesparse",
+    "lapack-reference",
     "ceres",
     "openblas",
     "ffmpeg"

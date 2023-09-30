@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     std::string Slam_lastest_Map_location =
         !bReuse ? directory_named_time + "/Slam_latest_Map.bin"
                 : "Slam_latest_Map.bin";
-    ORB_SLAM2::System SLAM(data["VocabularyPath"], data["DroneYamlPathSlam"], ORB_SLAM2::System::MONOCULAR, true, true,
+    ORB_SLAM2::System SLAM(data["VocabularyPath"], data["DroneYamlPathSlam"], ORB_SLAM2::System::MONOCULAR, true,
                            bReuse, Slam_lastest_Map_location, bReuse);
     bool use_drone = true;
     if (data["webcam"])
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
             cap >> frame;
         }
         if (frame.empty()) {
-            usleep(20000);
+            ORB_SLAM2::System::systemUsleep(20000);
             continue;
         }
 

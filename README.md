@@ -17,7 +17,6 @@ if the path is in the `simulatorMapping` directory - just change the path to you
 if the path isn't in the `simulatorMapping` directory - change it to the equivalent file in the all-data file you downloaded
 
 ### 1. Configure the parameters to your machine:
-cd to `Vocabulary/` directory and run: `tar -xf ORBvoc.txt.tar.gz` 
 Open generalSettings.json and change:
 - `VocabularyPath` to the path of your project
 - `DroneYamlPathSlam` to the path of your drone config file
@@ -44,7 +43,7 @@ optional if you want to find room exit and navigate to the destanation:
 
 ### 5. Run runSimulator:
 - run `./exe/runSimulator` from the `build` folder in order to use the simulator within the model
-pay attention to the prints - you will need to press enter from the console in order to start running the simulator
+pay attention to the prints - you will need to press tab from the model viewer in order to start running the simulator
 
 ## Optional advanced stages:
 ### 6. localize on your own map:

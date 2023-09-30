@@ -24,11 +24,10 @@
 #include <vector>
 #include <cmath>
 #include <opencv2/core/core.hpp>
-
+#include <random>
 #include "KeyFrame.h"
 #include "ORBmatcher.h"
 
-#include "../Thirdparty/DBoW2/DUtils/Random.h"
 
 namespace ORB_SLAM2
 {
@@ -161,11 +160,13 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
         mnIterations++;
 
         vAvailableIndices = mvAllIndices;
-
+        std::random_device rd;  // Seed for the random number generator
+        std::mt19937 generator(rd()); // Mersenne Twister 19937 random number engine
+        std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
         // Get min set of points
         for(short i = 0; i < 3; ++i)
         {
-            int randi = DUtils::Random::RandomInt(0, vAvailableIndices.size()-1);
+            int randi = distribution(generator);
 
             int idx = vAvailableIndices[randi];
 

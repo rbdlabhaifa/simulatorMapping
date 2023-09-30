@@ -23,8 +23,8 @@
 #include <iostream>
 using namespace std;
 #include "MapPoint.h"
-#include "../Thirdparty/DBoW2/DBoW2/BowVector.h"
-#include "../Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include "DBoW3/src/BowVector.h"
+#include "DBoW3/src/FeatureVector.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
 #include "Frame.h"
@@ -41,10 +41,7 @@ using namespace std;
 #include <boost/serialization/split_member.hpp>
 #include <mutex>
 
-#include <eigen3/Eigen/Core>
-
-// #define _BAR
-
+#include <Eigen/Core>
 
 namespace ORB_SLAM2
 {
@@ -124,7 +121,7 @@ public:
     void EraseConnection(KeyFrame* pKF);
     void UpdateConnections();
     void UpdateBestCovisibles();
-    std::set<KeyFrame *> GetConnectedKeyFrames();
+    std::unordered_map<KeyFrame*, int> GetConnectedKeyFrames();
     std::vector<KeyFrame* > GetVectorCovisibleKeyFrames();
     std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
     std::vector<KeyFrame*> GetCovisiblesByWeight(const int &w);
@@ -134,20 +131,20 @@ public:
     void AddChild(KeyFrame* pKF);
     void EraseChild(KeyFrame* pKF);
     void ChangeParent(KeyFrame* pKF);
-    std::set<KeyFrame*> GetChilds();
+    std::unordered_map<KeyFrame*, int> GetChilds();
     KeyFrame* GetParent();
     bool hasChild(KeyFrame* pKF);
 
     // Loop Edges
     void AddLoopEdge(KeyFrame* pKF);
-    std::set<KeyFrame*> GetLoopEdges();
+    std::unordered_map<KeyFrame*, int> GetLoopEdges();
 
     // MapPoint observation functions
     void AddMapPoint(MapPoint* pMP, const size_t &idx);
     void EraseMapPointMatch(const size_t &idx);
     void EraseMapPointMatch(MapPoint* pMP);
     void ReplaceMapPointMatch(const size_t &idx, MapPoint* pMP);
-    std::set<MapPoint*> GetMapPoints();
+    std::unordered_map<MapPoint*, int> GetMapPoints();
     std::vector<MapPoint*> GetMapPointMatches();
     int TrackedMapPoints(const int &minObs);
     MapPoint* GetMapPoint(const size_t &idx);
@@ -239,8 +236,8 @@ public:
     cv::Mat mDescriptors;
 
     //BoW
-    DBoW2::BowVector mBowVec;
-    DBoW2::FeatureVector mFeatVec;
+    DBoW3::BowVector mBowVec;
+    DBoW3::FeatureVector mFeatVec;
 
     // Pose relative to parent (this is computed when bad flag is activated)
     cv::Mat mTcp;
@@ -293,10 +290,10 @@ protected:
 		
     KeyFrame* mpParent;
 		id_map mparent_KfId_map;
-    std::set<KeyFrame*> mspChildrens;
-		std::map<long unsigned int, id_map> 	   mmChildrens_nId;
-    std::set<KeyFrame*> mspLoopEdges;
-		std::map<long unsigned int, id_map> 	   mmLoopEdges_nId;
+        std::unordered_map<KeyFrame*, int> mspChildrens;
+        std::unordered_map<long unsigned int, id_map> mmChildrens_nId;
+        std::unordered_map<KeyFrame*, int> mspLoopEdges;
+        std::unordered_map<long unsigned int, id_map> mmLoopEdges_nId;
 
     // Bad flags
     bool mbNotErase;
@@ -306,7 +303,6 @@ protected:
     float mHalfBaseline; // Only for visualization
 
     Map* mpMap;
-// #ifndef _BAR_
 	friend class boost::serialization::access;
  	template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
@@ -325,86 +321,6 @@ protected:
     std::mutex mMutexPose;
     std::mutex mMutexConnections;
     std::mutex mMutexFeatures;
-  
-  public:
-  void rpi_save(const std::string& file_name);
-  // {
-    
-  //   std::ofstream bin_file(file_name, std::ios::out | std::ios::binary);
-
-  //   boost::archive::binary_oarchive oa(bin_file);
-
-  //   oa << *this;
-
-  //   bin_file.close();
-
-  // }
-
-  // private:
-// #ifdef _BAR_
-//   friend class boost::serialization::access;
-
-// template<class Archive>
-//     void save(Archive & ar, const unsigned int version) const
-//     {
-//         std::vector<cv::Point2f> kpnts;
-//         std::vector<cv::Point2f> kpnts_undist;
-//         std::vector<int> kpnts_octave;
-//         std::vector<cv::Point3f> list_points3d;
-
-//         uint nKeyPoints = mvKeys.size();
-//         kpnts.reserve(nKeyPoints); kpnts_undist.reserve(nKeyPoints); kpnts_octave.reserve(nKeyPoints);
-//         for(uint i=0; i<nKeyPoints; i++){
-//             kpnts.push_back(mvKeys[i].pt);
-//             kpnts_undist.push_back(mvKeysUn[i].pt);
-//             kpnts_octave.push_back(mvKeysUn[i].octave);
-//         }
-
-//         uint nDescs = mDescriptors.rows;
-//         list_points3d.reserve(nDescs);
-//         for(uint i=0; i<nDescs; i++){
-//             MapPoint* p = mvpMapPoints[i];
-//             if(p && !p->isBad()){
-//                 auto point = p->GetWorldPos();
-//                 Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(point);
-//                 list_points3d.emplace_back(v.x(), v.y(), v.z());
-//             }
-//             else{
-//               list_points3d.emplace_back(0, 0, 0);
-//             }
-//         }
-
-//         cv::Mat R = Tcw.rowRange(0,3).colRange(0,3);
-//         cv::Mat t = Tcw.rowRange(0,3).col(3);
-
-
-//         ar & image;
-//         ar & mDescriptors;
-//         ar & kpnts;
-//         ar & kpnts_undist;
-//         ar & const_cast<std::vector<int> &>(kpnts_octave);
-//         ar & list_points3d;
-//         ar & R;
-//         ar & t;
-//         ar & fx;
-//         ar & fy;
-//         ar & cx;
-//         ar & cy;
-//         ar & invfx;
-//         ar & invfy;
-//     }
-
-
-// template<class Archive>
-//     void load(Archive & ar, const unsigned int version)
-//     {
-//     }
-
-//     BOOST_SERIALIZATION_SPLIT_MEMBER()
-// #endif
-
-
-
 };
 
 } //namespace ORB_SLAM

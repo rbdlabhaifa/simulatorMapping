@@ -34,41 +34,43 @@
 namespace ORB_SLAM2
 {
 
-class Tracking;
-class Viewer;
+    class Tracking;
+    class Viewer;
 
-class FrameDrawer
-{
-public:
-    FrameDrawer(Map* pMap, bool bReuse);
+    class FrameDrawer
+    {
+    public:
+        FrameDrawer(Map* pMap, bool bReuse);
 
-    // Update info from the last processed frame.
-    void Update(Tracking *pTracker, const cv::Mat &im = cv::Mat());
+        // Update info from the last processed frame.
+        void Update(Tracking* pTracker, const cv::Mat& im = cv::Mat());
 
-    // Draw last processed frame.
-    cv::Mat DrawFrame();
+        // Draw last processed frame.
+        cv::Mat DrawFrame();
 
-protected:
+    protected:
 
-    void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
+        void DrawTextInfo(cv::Mat& im, int nState, cv::Mat& imText);
 
-    // Info of the frame to be drawn
-    cv::Mat mIm;
-    int N;
-    vector<cv::KeyPoint> mvCurrentKeys;
-    vector<bool> mvbMap, mvbVO;
-    bool mbOnlyTracking;
-    int mnTracked, mnTrackedVO;
-    vector<cv::KeyPoint> mvIniKeys;
-    vector<int> mvIniMatches;
-    int mState;
+        void DrawRectangleAndCircle(float x, float y, float width);
 
-    Map* mpMap;
+        // Info of the frame to be drawn
+        cv::Mat mIm;
+        int N;
+        vector<cv::KeyPoint> mvCurrentKeys;
+        vector<bool> mvbMap, mvbVO;
+        bool mbOnlyTracking;
+        int mnTracked, mnTrackedVO;
+        vector<cv::KeyPoint> mvIniKeys;
+        vector<int> mvIniMatches;
+        int mState;
 
-    std::mutex mMutex;
+        Map* mpMap;
 
-    cv::Mat image_to_show;
-};
+        cv::Mat imageToShow;
+
+        std::mutex mMutex;
+    };
 
 } //namespace ORB_SLAM
 
