@@ -39,6 +39,14 @@ namespace ORB_SLAM2
             fps = 30;
         mT = 1e3 / fps;
 
+        mImageWidth = fSettings["Camera.width"];
+        mImageHeight = fSettings["Camera.height"];
+        if (mImageWidth < 1 || mImageHeight < 1)
+        {
+            mImageWidth = 640;
+            mImageHeight = 480;
+        }
+
         mViewpointX = fSettings["Viewer.ViewpointX"];
         mViewpointY = fSettings["Viewer.ViewpointY"];
         mViewpointZ = fSettings["Viewer.ViewpointZ"];
