@@ -1,4 +1,11 @@
 # Simulator Mapping
+
+## Requirements:
+
+- Ubuntu 22.04 OR windows
+- At least 4 cores(If you're working from virtual machine please allocate at least 4 cores to the VM)
+- Prefered: 6 cores
+
 ## I. Installation:
 
 - `./install.sh`*

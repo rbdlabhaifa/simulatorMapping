@@ -38,5 +38,5 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
       -D WITH_OPENGL=ON \
     -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules \
     -D BUILD_EXAMPLES=ON ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 

@@ -25,7 +25,7 @@ git checkout 3.4.0
 mkdir build
 cd build
 cmake ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 if [ ! -f "/usr/local/include/Eigen" ]; then
   sudo ln -sf /usr/local/include/eigen3/Eigen /usr/local/include/Eigen
 fi
@@ -37,31 +37,31 @@ cd json
 mkdir build
 cd build
 cmake ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 cd ~
 git clone https://github.com/lava/matplotlib-cpp.git
 cd matplotlib-cpp
 mkdir build
 cd build
 cmake ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 cd ~
 git clone https://github.com/gabime/spdlog.git
 cd spdlog
 mkdir build
 cd build
 cmake ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 cd ~
 git clone https://github.com/liamvanunu/ctello.git
 cd ctello
 mkdir build
 cd build
 cmake ..
-sudo make -j$(nproc) install
+sudo make -j3 install
 
 cd "$cwd"
 mkdir build
 cd build
 cmake ..
-make -j
+make -j3
