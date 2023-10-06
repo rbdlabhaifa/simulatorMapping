@@ -1,7 +1,6 @@
 # Simulator Mapping
 ## I. Installation:
 
-- `git submodule update --init --recursive`
 - `./install.sh`*
 
 * There is a chance that you will encouter some make errors - they happen because you don't give enough resources to the Virtual Machine. Just give more resources(You can find how easily in the internet). When you run again don't run `./install.sh` but run `cd build` and then `make`.
