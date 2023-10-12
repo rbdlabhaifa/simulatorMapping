@@ -6,7 +6,7 @@
   "loadMapPath": "/home/liam/Documents/slamMaps/example_mapping11/simulatorMap.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/Documents/slamMaps/",
-  "modelTextureNameToAlignTo": "floor",
+  "modelTextureNameToAlignTo": "poly",
   "mapInputDir": "/home/liam/Documents/slamMaps/example_mapping11/",
   "continue": false,
   "webcam": true,
@@ -18,13 +18,14 @@
   "rollRad": 2.87,
   "movingScale": 0.2,
   "rotateScale": 0.2,
-  "modelPath": "/home/liam/Documents/aaa/untitled.obj",
+  "modelPath": "/home/liam/Documents/Drone-model/poly.obj",
   "pointSize": 10,
   "movementFactor": 0.05,
   "framesFolder": "/home/liam/Documents/textures/",
   "framesOutput": "/home/liam/Documents/frames/",
   "useLabICP": true,
   "simulatorStartingSpeed": 1,
-  "trackImages": false
+  "trackImages": false,
+  "csvPointsPath": "/home/liam/DroneModel/"
 }
 

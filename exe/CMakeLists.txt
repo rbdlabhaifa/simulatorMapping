@@ -7,6 +7,8 @@ target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 add_executable(mapping mapping.cc)
 target_link_libraries(mapping ${PROJECT_NAME})
 
+add_executable(run_orb_slam run_orb_slam.cc)
+target_link_libraries(run_orb_slam ${PROJECT_NAME})
 
 add_executable(save_map save_map.cc)
 target_link_libraries(save_map ${PROJECT_NAME})
@@ -26,8 +28,15 @@ target_link_libraries(navigate_to_point ${PROJECT_NAME})
 add_executable(demo demo.cc)
 target_link_libraries(demo ${PROJECT_NAME})
 
+add_executable(save_frame save_frame.cc)
+target_link_libraries(save_frame ${PROJECT_NAME})
+
+add_executable(draw_all_points draw_all_points.cpp)
+target_link_libraries(draw_all_points ${PROJECT_NAME})
+
 add_executable(build_new_map_demo build_new_map_demo.cc)
 target_link_libraries(build_new_map_demo ${PROJECT_NAME})
 
 add_executable(test_exitRoomAlgo test_exitRoomAlgo.cpp)
 target_link_libraries(test_exitRoomAlgo exitRoom)
+

@@ -16,20 +16,6 @@
 std::unique_ptr<ORB_SLAM2::System> SLAM;
 std::string simulatorOutputDir;
 
-bool matCompare(cv::Mat& a, cv::Mat& b) {
-    if (a.rows != b.rows || a.cols != b.cols || a.type() != b.type()) {
-        return false;
-    }
-    for (int i = 0; i < a.rows; i++) {
-        const void* a_row = a.ptr(i);
-        const void* b_row = b.ptr(i);
-        if (memcmp(a_row, b_row, a.cols*a.elemSize()) != 0) {
-            return false;
-        }
-    }
-    return true;
-};
-
 void saveKeyPointsMapping() {
     std::ofstream pointData;
     int i = 0;
