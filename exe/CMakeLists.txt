@@ -34,6 +34,9 @@ target_link_libraries(save_frame ${PROJECT_NAME})
 add_executable(draw_all_points draw_all_points.cpp)
 target_link_libraries(draw_all_points ${PROJECT_NAME})
 
+add_executable(run_with_pos_track run_with_pos_track.cc)
+target_link_libraries(run_with_pos_track ${PROJECT_NAME})
+
 add_executable(build_new_map_demo build_new_map_demo.cc)
 target_link_libraries(build_new_map_demo ${PROJECT_NAME})
 

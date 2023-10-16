@@ -18,7 +18,7 @@
   "rollRad": 2.87,
   "movingScale": 0.2,
   "rotateScale": 0.2,
-  "modelPath": "/home/liam/Documents/Drone-model/poly.obj",
+  "modelPath": "/home/liam/Documents/aaa/untitled.obj",
   "pointSize": 10,
   "movementFactor": 0.05,
   "framesFolder": "/home/liam/Documents/textures/",
