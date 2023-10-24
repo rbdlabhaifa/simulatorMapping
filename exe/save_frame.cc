@@ -119,6 +119,13 @@ void saveKeypoints3DToCSV(const std::vector<KeyPoint3D> keypoints3D, const std::
 }
 
 int main(int argc, char **argv) {
+    if(argc != 2)
+    {
+        std::cerr << std::endl << "Usage: ./exe/save_frame frame_name" << std::endl;
+        return 1;
+    }
+    std::string frame_name(argv[1]);
+
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
@@ -279,7 +286,8 @@ int main(int argc, char **argv) {
                 keypoints3D[i].point = point;
             }
 
-            std::string keypoints_csv_path = "orbs_with_3d.csv";
+            std::string keypoints_csv_path = frame_name + "_orbs_with_3d.csv";
+            cv::imwrite(frame_name + ".png", imgBuffer);
 
             saveKeypoints3DToCSV(keypoints3D, keypoints_csv_path);
 
