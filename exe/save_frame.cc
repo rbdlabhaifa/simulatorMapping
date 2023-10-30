@@ -156,7 +156,10 @@ int main(int argc, char **argv) {
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
+    bool orbSlamExtractor = data["orbSlamExtractor"];
+
     ORB_SLAM2::ORBextractor* orbExtractor = new ORB_SLAM2::ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+    cv::Ptr<cv::ORB> cvExtractor = cv::ORB::create(nFeatures, fScaleFactor, nLevels);
 
     // Options
     bool show_bounds = false;
@@ -257,8 +260,12 @@ int main(int argc, char **argv) {
             // Detect keypoints
             std::vector<cv::KeyPoint> keypoints;
             cv::Mat descriptors;
-            (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
-
+            if (orbSlamExtractor) {
+                (*orbExtractor)(img, cv::Mat(), keypoints, descriptors);
+            }
+            else {
+                cvExtractor->detectAndCompute(img, cv::Mat(), keypoints, descriptors);
+            }
             std::cout << "Keypoints size: " << keypoints.size() << ", Descriptor size: " << descriptors.rows << std::endl;
 
             // Draw keypoints on the image
@@ -287,6 +294,7 @@ int main(int argc, char **argv) {
             }
 
             std::string keypoints_csv_path = frame_name + "_orbs_with_3d.csv";
+            cv::flip(imgBuffer, imgBuffer, 0);
             cv::imwrite(frame_name + ".png", imgBuffer);
 
             saveKeypoints3DToCSV(keypoints3D, keypoints_csv_path);
