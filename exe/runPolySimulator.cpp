@@ -23,9 +23,9 @@ int main(int argc, char **argv) {
 
     std::cout << std::endl << "running " << argv[0] << " file" << std::endl;
 
-    while (!simManager.getSimulatorPointer()->isSetInPlace()){
-        usleep(1000);
-    }
+    // while (!simManager.getSimulatorPointer()->isSetInPlace()){
+    //     usleep(1000);
+    // }
 
     //simManager.rotateAndSlam(45, 360);
     //simManager.reflectDroneView();
