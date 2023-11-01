@@ -1,12 +1,17 @@
 add_executable(runSimulator runSimulator.cpp)
 target_link_libraries(runSimulator simulator exitRoom)
 
+add_executable(runPolySimulator runPolySimulator.cpp)
+target_link_libraries(runPolySimulator polySimulator simulatorManager ${PROJECT_NAME})
+
+add_executable(make_a_round make_a_round.cc)
+target_link_libraries(make_a_round ${PROJECT_NAME})
+
 add_executable(offline_orb_slam offline_orb_slam.cc)
 target_link_libraries(offline_orb_slam ${PROJECT_NAME})
 
 add_executable(mapping mapping.cc)
 target_link_libraries(mapping ${PROJECT_NAME})
-
 
 add_executable(save_map save_map.cc)
 target_link_libraries(save_map ${PROJECT_NAME})
