@@ -24,6 +24,7 @@ public:
     }
 
     //this function makes a rotation of 360 deg and SLAMMING since the ORB_SLAM system initialized.
+    //You can choose to split the 'angleToCover' parameter to 'angleToCover/angle' times.
     void rotateAndSlam(int angle, int angleToCover){
         actionLock.lock();
 
@@ -41,14 +42,21 @@ public:
             simulatorPtr->setTrack();
             if(simulatorPtr->isTracking()){
                 auto partialMove = std::ceil(angleToCover / angle);
-                for (int i = 0; i < std::ceil(angle) && systemActive; i++) {
+                int last_i = 0;
+                for (int i = 0, rotates = 0; i < std::ceil(angle) && systemActive; i++, rotates++) {
 
+                    if(rotates > 5 && last_i == i){
+                        last_i = i;
+                        i++;
+                        continue;
+                    }
                     std::cout << i << std::endl;
 
                     std::string c;
                     if (simulatorPtr->getSlamState() != 2) { //if SLAM's state is not 'OK' turn back.
                         c = "cw " + std::to_string(-partialMove);
                         simulatorPtr->command(c);
+                        last_i = i;
                         i = i - 1;
                         continue;
                     }
@@ -72,6 +80,7 @@ public:
                     if (simulatorPtr->slamFinishedLoopCloser()){
                         break; //if we detected a loop, stop the loop and keep on.
                     }
+                    last_i = i;
                 }
 
             }
@@ -184,7 +193,7 @@ public:
         loadMenuOptions();
         while(listen){
             std::cout << std::endl << "Input 9 for the menu to show up." << std::endl;
-            std::cin >> key;
+            cin >> key;
             std::cout << std::endl << "user choice: " << key << std::endl;
             switch(key){
                 case 1: {
@@ -268,10 +277,12 @@ public:
                 case 12: {
                     this->simulatorPtr->setStopFlag(true);
                     this->listen = false;
+                    this->systemActive = false;
                 } break;
 
                 default: {
                     cout << "you entered a wrong value!" << endl;
+                    listen = false;
                 } break;
             }
             if (key == 404){
@@ -289,6 +300,19 @@ public:
         this->threadSystemList.push_back(std::move(_thread));
     }
 
+//    void observerLoop(){
+//        while(true){
+//            if(!listen){
+//                if (this->listenerThread.joinable()){
+//                    this->listenerThread.join();
+//                } else {
+//                    this->listen = true;
+//                    this->listenerThread = std::thread(&SimulatorManager::ManagerKeyListener, this);
+//                }
+//            }
+//        }
+//    }
+
     // TODO: this function should be deleted after importing the necessary methods from polySimulator
     PolySimulator* getSimulatorPointer(){
         return this->simulatorPtr;
@@ -297,7 +321,6 @@ public:
     ~SimulatorManager(){
         this->systemActive = false;
         this->listenerThread.join();
-
         for(std::thread &listThread : this->threadSystemList){
             listThread.join();
         }
@@ -307,16 +330,20 @@ public:
 private:
     PolySimulator *simulatorPtr;
     std::thread listenerThread;
+//    std::thread observerThread;
     bool listen = true;
     bool shouldReflectView = false;
     bool systemActive = false;
     std::vector<std::thread> threadSystemList;
     std::mutex actionLock;
 
+    int latestINTInput = 5000;
+
     explicit SimulatorManager(bool _loadCustomMap){
         this->simulatorPtr = PolySimulator::getInstance(_loadCustomMap);
         this->simulatorThread = this->simulatorPtr->run();
         this->listenerThread = std::thread(&SimulatorManager::ManagerKeyListener, this);
+//        this->observerThread = std::thread(&SimulatorManager::observerLoop, this);
         this->systemActive = true;
     }
 };

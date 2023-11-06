@@ -100,8 +100,7 @@ add_library(findExit tools/navigation/ExitRoomFiles/exit_room_algo.cpp)
 target_link_libraries(findExit ${PROJECT_NAME})
 
 #build the polySimulator class and attach it to 'polySimulator' in the project.
-add_library(polySimulator tools/simulator/polySimulator.cpp
-)
+add_library(polySimulator tools/simulator/polySimulator.cpp)
 #   tools/simulator/polySimulator.cpp)
 target_link_libraries(polySimulator findExit ${PROJECT_NAME} )
 

@@ -3,7 +3,7 @@
   "DroneYamlPathSlam": "/home/dean/RBD/simulatorMapping/config/tello_9F5EC2_640.yaml",
   "offlineVideoTestPath": "/home/dean/RBD/AdditionalData/mapping.avi",
   "loadMap": false,
-  "loadMapPath": "/home/dean/Desktop/AdditionalData/simulatorMap.bin",
+  "loadMapPath": "/home/dean/Desktop/SHITLAB/AdditionalData/simulatorMap.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/dean/RBD/simulatorMapping/mapOutputs/",
   "modelTextureNameToAlignTo": "floor",

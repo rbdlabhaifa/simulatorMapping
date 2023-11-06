@@ -422,8 +422,8 @@ std::vector<double> PolySimulator::getDroneLocation(){
     this->locationLock.unlock();
 
     position.push_back(model_view_at(0, 3));
-    position.push_back(model_view_at(1, 3));
     position.push_back(model_view_at(2, 3));
+    position.push_back(model_view_at(1, 3));
 
     return position;  //x,y,z -> x,z,y
 }
@@ -600,9 +600,9 @@ void PolySimulator::renderDroneLocations(){
 
 std::vector<vector<double>> PolySimulator::getCurrentMapPoint(){
     std::vector<vector<double>> vectorOfDoublePoints;
-    if(slamFinishedLoopCloser() == true){
+    if(slamFinishedLoopCloser()){
         try{
-        vectorOfDoublePoints = fromMapPointsToDoubleVec(this->SLAM->GetMap()->GetAllMapPoints());
+            vectorOfDoublePoints = fromMapPointsToDoubleVec(this->SLAM->GetMap()->GetAllMapPoints());
         }
         catch(exception e){
         std::cout << "Error occured while trying to get the current ORB-SLAM2's Map." << std::endl;

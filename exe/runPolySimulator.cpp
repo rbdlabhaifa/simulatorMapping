@@ -23,11 +23,27 @@ int main(int argc, char **argv) {
 
     std::cout << std::endl << "running " << argv[0] << " file" << std::endl;
 
-    // while (!simManager.getSimulatorPointer()->isSetInPlace()){
-    //     usleep(1000);
-    // }
+    //This loop makes sure you want to activate this series of actions by letting you change the isSetPlace flag of the simulator to 'true' whenever you want to execute the code.
+    while (!simManager.getSimulatorPointer()->isSetInPlace()){
+//        simManager.getSimulatorPointer()->printCurrentLocation();
+        usleep(1000);
+    }
 
-    //simManager.rotateAndSlam(45, 360);
+    simManager.moveDroneToXYZ({4, -8, 0.17}, 30000);
+    simManager.rotateAndSlam(2, 360);
+
+    simManager.moveDroneToXYZ({6, -3, 0.17}, 30000);
+    simManager.rotateAndSlam(2, 360);
+
+    simManager.moveDroneToXYZ({2.5, -2.2, 0.17}, 30000);
+    simManager.rotateAndSlam(2, 360);
+
+    simManager.moveDroneToXYZ({2.5, -13.7, 0.17}, 30000);
+    simManager.rotateAndSlam(2, 360);
+
+    simManager.moveDroneToXYZ({4.2, -12.2, 0.17}, 30000);
+    simManager.rotateAndSlam(2, 360);
+
     //simManager.reflectDroneView();
 
 
