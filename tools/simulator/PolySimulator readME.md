@@ -24,11 +24,11 @@ This class is designed by the singleton pattern which creates a safer environmen
 To use the PolySimulator, ensure that you have completed the installation process thoroughly, including configuring the required paths. Make sure to specify the location of Polycam's model files, including the `.obj` file, its corresponding `.mtl` file, and any texture files (`.png` or `.jpg`).
 When creating the instance of the simulator by using the SimulatorManager, make sure that you choose if you want to load the pre-chosen model or just point a new path to it in the cmd.
 
-### Feel free to add functionalities that will help improve the abilities of the drones.
+### Feel free to add functionalities that will help improve the abilities of the simulator.
 
 ### Usage
 1. Configure the simulator by pointing the configuration settings file to the location of Polycam's model files.
-2. Create an instance of the PolySimulator class.
+2. Create an instance of the SimulatorManager class.
 3. Start exploring the wide range of options and tools available for developers.
 4. Look for examples in runPolySimulator.cpp
 

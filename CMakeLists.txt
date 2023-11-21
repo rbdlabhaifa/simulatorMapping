@@ -99,11 +99,15 @@ target_link_libraries(simulator ${PROJECT_NAME})
 add_library(findExit tools/navigation/ExitRoomFiles/exit_room_algo.cpp)
 target_link_libraries(findExit ${PROJECT_NAME})
 
+add_library(rootSimulator tools/simulator/simulatorMainClass.h)
+target_link_libraries(rootSimulator ${PROJECT_NAME} )
+
 #build the polySimulator class and attach it to 'polySimulator' in the project.
 add_library(polySimulator tools/simulator/polySimulator.cpp
-)
-#   tools/simulator/polySimulator.cpp)
-target_link_libraries(polySimulator findExit ${PROJECT_NAME} )
+        tools/simulator/simulatorMainClass.cpp
+        tools/simulator/simulatorMainClass.h)
+target_link_libraries(polySimulator rootSimulator findExit ${PROJECT_NAME} )
+
 
 add_library(simulatorManager tools/simulator/simulatorManager.h)
 target_link_libraries(simulatorManager polySimulator findExit ${PROJECT_NAME} )

@@ -14,8 +14,7 @@
 #include <thread>
 
 //exit includes
-#define NEAR_PLANE 0.1
-#define FAR_PLANE 20
+
 //exit - classes
 class DataReader {
 public:
@@ -108,61 +107,6 @@ public:
 
         return zscores;
     }
-//     double Diversity(const Eigen::MatrixXd& mat, const Eigen::VectorXd& T, const std::vector<int>& N1) {
-//     double temp = 1.0 / N1.size();
-//     double sum = 0.0;
-
-//     for (int i : N1) {
-//         sum += T[i];
-//     }
-
-//     return temp * sum;
-// }
-//     std::tuple<Eigen::VectorXi, double, Eigen::VectorXd> Fast_Min_x(const Eigen::MatrixXd& mat, const Eigen::VectorXd& T, const Eigen::VectorXi& N1, double gamma, const Eigen::VectorXi& S, int x = 2) {
-//     double sum_n1 = T.maxCoeff();
-
-//     Eigen::VectorXd values(N1.size());
-//     for (int i = 0; i < N1.size(); ++i) {
-//         values[i] = -mat(static_cast<int>(T[N1[i]]), N1[i]);
-//     }
-
-//     Eigen::VectorXi values_arg_sort(N1.size());
-//     for (int i = 0; i < N1.size(); ++i) {
-//         values_arg_sort[i] = i;
-//     }
-
-//     std::sort(values_arg_sort.data(), values_arg_sort.data() + N1.size(), [&](int i, int j) {
-//         return values[i] < values[j];
-//     });
-
-//     Eigen::VectorXd values_sorted(N1.size());
-//     for (int i = 0; i < N1.size(); ++i) {
-//         values_sorted[i] = values[values_arg_sort[i]];
-//     }
-
-//     Eigen::VectorXd sumvals(N1.size());
-//     sumvals[0] = values_sorted[0] + gamma * x * (S.size() + 1);
-//     for (int i = 1; i < N1.size(); ++i) {
-//         sumvals[i] = values_sorted[i] + sumvals[i - 1] + gamma * (x + 1);
-//     }
-
-//     sumvals.array() += sum_n1;
-
-//     Eigen::VectorXd res = sumvals.array() - Diversity(mat, T, N1);
-
-//     if (values_sorted[0] + gamma > 0) {
-//         return std::make_tuple(Eigen::VectorXi(), (sum_n1 - Diversity(mat, T, N1)), res);
-//     } else {
-//         int min_res_idx = 0;
-//         for (int i = 1; i < res.size(); ++i) {
-//             if (res[i] < res[min_res_idx]) {
-//                 min_res_idx = i;
-//             }
-//         }
-//         Eigen::VectorXi selected_indices = values_arg_sort.head(min_res_idx + 1);
-//         return std::make_tuple(selected_indices, res[min_res_idx], res);
-//     }
-// }
 
     std::vector<std::vector<double>> clean_data(const std::vector<std::vector<double>>& data_points, double zscore_threshold = 3.0) {
         
@@ -185,39 +129,6 @@ public:
 
         return filtered_points;
     }
-//     double FindValue(const std::vector<std::vector<double>>& mat, const std::vector<int>& X, const std::vector<int>& Y, const std::vector<int>& N1, double gamma) {
-//     if (X.size() == mat.size()) {
-//         return gamma * X.size();
-//     }
-
-//     int n = mat.size();
-//     std::vector<std::vector<double>> mat2 = mat; // Create a copy of the input matrix
-
-//     for (int xi : X) {
-//         mat2[xi].assign(n, 0.0);
-//         for (int i = 0; i < n; ++i) {
-//             mat2[i][xi] = 0.0;
-//         }
-//     }
-
-//     for (int yi : Y) {
-//         for (int i = 0; i < n; ++i) {
-//             mat2[i][yi] = mat[i][yi];
-//             mat2[yi][i] = mat[yi][i];
-//         }
-//     }
-
-//     double sum_n1 = 0.0;
-//     for (int yi : Y) {
-//         double max_val = -std::numeric_limits<double>::max();
-//         for (int j = 0; j < n; ++j) {
-//             max_val = std::max(max_val, mat2[yi][j]);
-//         }
-//         sum_n1 += max_val;
-//     }
-
-//     return sum_n1 - Diversity(mat2, Y[0], N1) + gamma * X.size();
-// }
 
 private:
 
@@ -304,40 +215,7 @@ public:
 
         return projected_data;
     }
-    // std::vector<double> calculate_average_distances(const std::vector<std::vector<double>>& data_points, const std::vector<double>& drone_pos) {
-    //     size_t num_angles = 360;
-    //     std::vector<double> avg_distances(num_angles, std::numeric_limits<double>::quiet_NaN());
-    //     std::vector<int> count_datapoints_per_angle(num_angles, 0);
 
-    //     for (size_t i = 0; i < num_angles; ++i) {
-    //         double angle_min = i * M_PI / 180.0;
-    //         double angle_max = (i + 1) * M_PI / 180.0;
-    //         std::vector<size_t> indices;
-            
-    //         for (size_t j = 0; j < data_points.size(); ++j) {
-    //             double angle = std::atan2(data_points[j][1] - drone_pos[1], data_points[j][0] - drone_pos[0]);
-    //             angle = std::fmod(angle + 2 * M_PI, 2 * M_PI);
-                
-    //             if (angle >= angle_min && angle < angle_max) {
-    //                 indices.push_back(j);
-    //             }
-    //         }
-
-    //         size_t count = indices.size();
-    //         count_datapoints_per_angle[i] = count;
-            
-    //         if (count > 1) {
-    //             double sum_distances = 0.0;
-    //             for (size_t index : indices) {
-    //                 sum_distances += std::sqrt(std::pow(data_points[index][0] - drone_pos[0], 2) +
-    //                                            std::pow(data_points[index][1] - drone_pos[1], 2));
-    //             }
-    //             avg_distances[i] = sum_distances / count;
-    //         }
-    //     }
-
-    //     return avg_distances;
-    // }
     std::vector<size_t> count_nan_dist_neighbors(
         const std::vector<size_t>& nan_indices,
         const std::vector<double>& avg_distances,
@@ -513,79 +391,6 @@ return avg_distances;
 }
 
 
-//     std::pair<std::vector<double>, std::vector<double>> find_exit(
-//     const std::vector<std::vector<double>>& datapoints,
-//     const std::vector<double>& drone_pos,
-//     const std::vector<double>& avg_distances
-// ) {
-//     size_t num_angles = avg_distances.size();
-//     std::vector<double> angles(num_angles);
-    
-    
-//     for (size_t i = 0; i < num_angles; ++i) {
-//         angles[i] = i * 2.0 * M_PI / num_angles;
-//     }
-
-//     std::vector<size_t> nan_indices;
-    
-    
-//     for (size_t i = 0; i < avg_distances.size(); ++i) {
-//         if (std::isnan(avg_distances[i])) {
-//             nan_indices.push_back(i);
-//         }
-//     }
-
-    
-//     if (nan_indices.empty()) {
-//         return std::make_pair(std::vector<double>(), std::vector<double>());
-//     }
-
-    
-//     std::vector<size_t> nan_counts = count_nan_dist_neighbors(nan_indices, avg_distances);
-
-//     size_t max_count = 0;
-//     std::vector<size_t> max_count_indices;
-
-    
-//     for (size_t i = 0; i < nan_counts.size(); ++i) {
-//         if (nan_counts[i] == max_count) {
-//             max_count_indices.push_back(i);
-//         } else if (nan_counts[i] > max_count) {
-//             max_count = nan_counts[i];
-//             max_count_indices.clear();
-//             max_count_indices.push_back(i);
-//         }
-//     }
-
-//     std::vector<size_t> max_count_indices_with_nan;
-
-    
-//     for (size_t index : max_count_indices) {
-//         if (std::isnan(avg_distances[index])) {
-//             max_count_indices_with_nan.push_back(index);
-//         }
-//     }
-
-    
-//     size_t middle_index = max_count_indices_with_nan[max_count_indices_with_nan.size() / 2];
-//     size_t exit_angle_index = middle_index;
-//     double exit_angle = angles[exit_angle_index];
-
-    
-//     double mean_distance = 0.0;
-//     for (const auto& point : datapoints) {
-//         mean_distance += std::sqrt(std::pow(point[0], 2) + std::pow(point[1], 2));
-//     }
-//     mean_distance /= datapoints.size();
-
-//     double exit_x = drone_pos[0] + std::cos(exit_angle) * mean_distance;
-//     double exit_y = drone_pos[1] + std::sin(exit_angle) * mean_distance;
-//     std::vector<double> exit_point = { exit_x, exit_y };
-//     std::vector<double> exit_angles = { exit_angle };
-
-//     return std::make_pair(exit_point, exit_angles);
-// }
-
 };
 class AlgoRunner{
 public:
@@ -616,19 +421,6 @@ public:
                     ret_point.push_back(coord);
                 }
             }
-
-            //if( i < 2 ){
-            //     ret_point.push_back(coord);
-            //     i++;
-            // }
-            // std::cout << std::endl;
-
-            // std::cout << "Exit Angles: ";
-            // for (const double& angle : result.second) {
-            //     std::cout << angle << " ";
-            // }
-            // std::cout << std::endl;
-            // Access the exit point and exit angle
             
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
