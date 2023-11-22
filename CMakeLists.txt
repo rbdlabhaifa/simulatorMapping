@@ -29,6 +29,7 @@ find_package(PythonLibs REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(OpenCV REQUIRED)
+find_package(glm)
 add_subdirectory(Thirdparty)
 find_package(Pangolin REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/Thirdparty/Pangolin")
 
@@ -40,6 +41,8 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/
         ${PROJECT_SOURCE_DIR}/Thirdparty/
+        ${PROJECT_SOURCE_DIR}/Thirdparty/glm
+        ${PROJECT_SOURCE_DIR}/Thirdparty/glm/glm
         ${PROJECT_SOURCE_DIR}/utils
         ${PROJECT_SOURCE_DIR}/slam/include/
         ${PROJECT_SOURCE_DIR}/tools
@@ -71,7 +74,9 @@ add_library(${PROJECT_NAME} STATIC
         utils/src/Auxiliary.cpp
         utils/src/OfflineMapPoint.cpp
         utils/src/MapControl.cpp
-        )
+        tools/simulator/polySimulator.cpp
+        tools/simulator/simulatorManager.h
+)
 
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
@@ -90,6 +95,22 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 add_library(simulator tools/simulator/simulator.cpp)
 target_link_libraries(simulator ${PROJECT_NAME})
+
+add_library(findExit tools/navigation/ExitRoomFiles/exit_room_algo.cpp)
+target_link_libraries(findExit ${PROJECT_NAME})
+
+add_library(rootSimulator tools/simulator/simulatorMainClass.h)
+target_link_libraries(rootSimulator ${PROJECT_NAME} )
+
+#build the polySimulator class and attach it to 'polySimulator' in the project.
+add_library(polySimulator tools/simulator/polySimulator.cpp
+        tools/simulator/simulatorMainClass.cpp
+        tools/simulator/simulatorMainClass.h)
+target_link_libraries(polySimulator rootSimulator findExit ${PROJECT_NAME} )
+
+
+add_library(simulatorManager tools/simulator/simulatorManager.h)
+target_link_libraries(simulatorManager polySimulator findExit ${PROJECT_NAME} )
 
 add_library(exitRoom tools/navigation/RoomExit.cpp)
 target_link_libraries(exitRoom ${PROJECT_NAME})

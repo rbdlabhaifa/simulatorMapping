@@ -95,7 +95,7 @@ Camera.RGB: 1
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 2000
+ORBextractor.nFeatures: 1200
 ORBextractor.trackingNumberOfFeatures: 800
 
 

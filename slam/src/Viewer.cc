@@ -64,7 +64,7 @@ namespace ORB_SLAM2
         }
         else
         {
-            pangolin::CreateWindowAndBind("ORB-SLAM2: Map & Camera Viewer", 1300, 750);
+            pangolin::CreateWindowAndBind("ORB-SLAM2: Map & Camera Viewer", 640.0 + 640.0, 480);
         }
         // 3D Mouse handler requires depth testing to be enabled
         glEnable(GL_DEPTH_TEST);
@@ -75,19 +75,25 @@ namespace ORB_SLAM2
 
         // Define Camera Render Object (for view / scene browsing)
         pangolin::OpenGlRenderState s_cam(
-            pangolin::ProjectionMatrix(1024, 768, mViewpointF, mViewpointF, 512, 389, 0.1, 1000),
+            pangolin::ProjectionMatrix(1280, 768, mViewpointF, mViewpointF, 512, 389, 0.1, 20),
             pangolin::ModelViewLookAt(mViewpointX, mViewpointY, mViewpointZ, 0, 0, 0, 0.0, -1.0, 0.0));
 
+//        pangolin::View& view1 = pangolin::Display("view1")
+//            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f);
         pangolin::View& view1 = pangolin::Display("view1")
-            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f);
+                .SetBounds(0.0, 1.0, 0.0, 1.0, -640.0f / 480.0f);
 
         // Add named OpenGL viewport to window and provide 3D Handler
+//        pangolin::View& d_cam = pangolin::Display("cam")
+//            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
+//            .SetHandler(new pangolin::Handler3D(s_cam));
+
         pangolin::View& d_cam = pangolin::Display("cam")
-            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
-            .SetHandler(new pangolin::Handler3D(s_cam));
+                .SetBounds(0.0, 1.0, 0.0, 1.0, -1280.0f / 768.0f)
+                .SetHandler(new pangolin::Handler3D(s_cam));
 
         pangolin::Display("multi")
-            .SetBounds(pangolin::Attach::Pix(175), 1.0, 0.0, 1.0)
+            .SetBounds(0.0, 1.0, 0.0, 1.0)
             .SetLayout(pangolin::LayoutEqualHorizontal)
             .AddDisplay(d_cam)
             .AddDisplay(view1);

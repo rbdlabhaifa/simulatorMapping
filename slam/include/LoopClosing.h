@@ -74,7 +74,15 @@ public:
     bool isFinishedGBA(){
         unique_lock<std::mutex> lock(mMutexGBA);
         return mbFinishedGBA;
-    }   
+    }
+
+    bool getLoopClosed(){
+        return this->loopClosed;
+    }
+
+    bool getMapReleased(){
+        return this->mapReleased;
+    }
 
     void RequestFinish();
 
@@ -139,6 +147,9 @@ protected:
 
     // Fix scale in the stereo/RGB-D case
     bool mbFixScale;
+
+    bool loopClosed = false;
+    bool mapReleased = false;
 };
 
 } //namespace ORB_SLAM
