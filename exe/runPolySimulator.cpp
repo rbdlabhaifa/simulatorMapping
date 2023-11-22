@@ -18,7 +18,7 @@ using std::vector;
 
 int main(int argc, char **argv) {
     bool loadCustomMap = std::stoi(argv[1]);
-    SimulatorManager &simManager = SimulatorManager::getInstance(loadCustomMap);
+    SimulatorManager& simManager = SimulatorManager::getInstance(loadCustomMap);
 
     PolySimulator* simPtr = simManager.getSimulatorPointer();
     std::cout << std::endl << "running " << argv[0] << " file" << std::endl;
@@ -62,8 +62,9 @@ int main(int argc, char **argv) {
     while(!simManager.getSimulatorPointer()->slamFinishMapReleasing()){
         //wait for map to release
     }
-    simPtr->shouldSaveDroneLocations();
-    simPtr->getSLAM()->SaveMap("Current Map");
+
+    std::string mapName = "CurrentSession";
+    simPtr->saveMap(mapName);
 
 //    simManager.activateExitRoomAlgorithm(mapPoints);
 

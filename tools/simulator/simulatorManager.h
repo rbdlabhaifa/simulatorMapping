@@ -355,8 +355,11 @@ public:
         for(std::thread &listThread : this->threadSystemList){
             listThread.join();
         }
-//        delete this->simulatorPtr;
+        delete this->simulatorPtr;
     }
+
+    SimulatorManager(const SimulatorManager&) = delete;
+    SimulatorManager& operator=(const SimulatorManager&) = delete;
 
 private:
     PolySimulator *simulatorPtr;

@@ -231,8 +231,6 @@ public:
        return this->dronePath;
     }
 
-
-   // temp
     void setDronePath(vector<vector<double>> points){
         this->dronePath = points;
     }

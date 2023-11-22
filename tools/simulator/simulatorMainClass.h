@@ -115,7 +115,9 @@ public:
 
     std::shared_ptr<ORB_SLAM2::System> getSLAM() { return SLAM; }
 
-    ~rootSimulator();
+    void saveMap(const std::string& prefix = "");
+
+    virtual ~rootSimulator() = 0;
 
 protected:
     /**
@@ -140,8 +142,6 @@ protected:
 
     std::shared_ptr<ORB_SLAM2::System> SLAM;
 
-protected:
-
 //    std::shared_ptr<pangolin::OpenGlRenderState> shared_cam;
 
     pangolin::OpenGlRenderState s_cam;
@@ -156,6 +156,7 @@ protected:
     double movementFactor{};
     std::string modelPath;
     std::string modelTextureNameToAlignTo;
+    std::string simulatorOutputDirPath;
     std::vector<Eigen::Vector3d> Picks_w;
     bool isSaveMap;
     bool trackImages{};
@@ -168,8 +169,6 @@ protected:
     std::mutex simulatorLock;
 
     double speedFactor{};
-
-    void saveMap(const std::string& prefix = "");
 
     void intervalOverCommand(const std::function<void(pangolin::OpenGlRenderState &, double &)> &func,
                              double value, int intervalUsleep,

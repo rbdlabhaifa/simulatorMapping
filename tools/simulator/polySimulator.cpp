@@ -19,7 +19,7 @@ PolySimulator::PolySimulator(bool _loadCustomMap){
     this->trackImages = data["trackImages"];
     this->movementFactor = data["movementFactor"];
     this->speedFactor = data["simulatorStartingSpeed"];
-    std::string simulatorOutputDirPath = data["mapInputDir"];
+    this->simulatorOutputDirPath = data["simulatorOutputDir"];
 
     bool shouldLoadMap = false;
     // end configuration content loading
