@@ -16,7 +16,7 @@
 ### 0. Use existing data or build new simulator:
 This part is only for users of existing simulator and not meant for users who want to create new simulator model.
 If you want to use existing simulator(like the one of the TLV University Lab) download this zip file:
-https://drive.google.com/file/d/1Raquzboq6UFSv8-rkuv3qI4IYJSXumCu/view?usp=sharing
+https://drive.google.com/file/d/1McpMjSu7-ziM0-tqMumX0LM7evFS9Irs/view?usp=sharing
 
 After you downloaded the zip file go to `generalSettings.json` and change the paths described in part 1 as follows:
 if the path is in the `simulatorMapping` directory - just change the path to your `simulatorMapping` path.
