@@ -586,6 +586,8 @@ namespace ORB_SLAM2
 
         cout << "Loop Closed!" << endl;
 
+        this->loopClosed = true;
+
         mLastLoopKFid = mpCurrentKF->mnId;
     }
 
@@ -770,6 +772,8 @@ namespace ORB_SLAM2
                 mpLocalMapper->Release();
 
                 cout << "Map updated!" << endl;
+
+                this->mapReleased = true;
             }
 
             mbFinishedGBA = true;

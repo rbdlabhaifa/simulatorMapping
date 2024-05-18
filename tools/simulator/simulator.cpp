@@ -102,7 +102,6 @@ void Simulator::SLAMThread() {
             }
         }
     }
-
 }
 
 void Simulator::simulatorRunThread() {
