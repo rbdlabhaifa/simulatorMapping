@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     std::string configPath = data["DroneYamlPathSlam"];
     std::string vocabulary_path = data["VocabularyPath"];
     std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
+    bool alignModelToTexture = data["alignModelToTexture"];
     std::string model_path = data["modelPath"];
     std::string simulatorOutputDir = data["simulatorOutputDir"];
     std::string mapInputDir = data["mapInputDir"];
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
     double movementFactor = data["movementFactor"];
     double simulatorStartingSpeed = data["simulatorStartingSpeed"];
 
-    Simulator simulator(configPath, model_path, modelTextureNameToAlignTo, trackImages, false, simulatorOutputDir, false,
+    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, trackImages, false, simulatorOutputDir, false,
                         mapInputDir, movementFactor, simulatorStartingSpeed, vocabulary_path);
 
     auto simulatorThread = simulator.run();

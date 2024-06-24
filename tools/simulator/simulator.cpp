@@ -11,14 +11,15 @@ cv::Mat Simulator::getCurrentLocation() {
     return locationCopy;
 }
 
-Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, std::string modelTextureNameToAlignTo,
-                     bool trackImages,
+Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool alignModelToTexture,
+                     std::string modelTextureNameToAlignTo, bool trackImages,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
                      double movementFactor,
                      double speedFactor,
                      std::string vocPath) : stopFlag(false), ready(false), saveMapSignal(false),
                                             track(false), start(false),
                                             movementFactor(movementFactor), modelPath(model_path),
+                                            alignModelToTexture(alignModelToTexture),
                                             modelTextureNameToAlignTo(modelTextureNameToAlignTo),
                                             isSaveMap(saveMap),
                                             trackImages(trackImages), cull_backfaces(false), isInitalized(false),
@@ -154,7 +155,9 @@ void Simulator::simulatorRunThread() {
             .SetHandler(&handler);
     int numberOfFramesForOrbslam = 0;
     const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
-    alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
+    if (alignModelToTexture) {
+        alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
+    }
     geomToRender = pangolin::ToGlGeometry(modelGeometry);
     for (auto &buffer: geomToRender.buffers) {
         buffer.second.attributes.erase("normal");
