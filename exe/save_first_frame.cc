@@ -1,4 +1,4 @@
-#include "include/MapControl.h"
+#include "MapControl/MapControl.h"
 
 void handleKeyboardEventsScan(MapControl *mapControl) {
     pangolin::RegisterKeyPressCallback('l', [&mapControl]() { mapControl->ToggleFollowCamera(); });

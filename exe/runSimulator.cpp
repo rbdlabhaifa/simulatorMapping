@@ -1,9 +1,6 @@
-//
-// Created by tzuk on 6/4/23.
-//
-#include "include/Auxiliary.h"
+#include "Auxiliary.h"
 #include "simulator/simulator.h"
-#include "navigation/RoomExit.h"
+#include "RoomExit/RoomExit.h"
 
 int main(int argc, char **argv)
 {

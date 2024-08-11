@@ -12,7 +12,7 @@
 
 #include "System.h"
 #include "Converter.h"
-#include "include/Auxiliary.h"
+#include "Auxiliary.h"
 
 std::vector<cv::Point3d> readPoints(std::string filename) {
     std::vector<cv::Point3d> points;

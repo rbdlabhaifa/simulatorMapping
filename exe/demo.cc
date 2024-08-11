@@ -18,7 +18,7 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "include/MapControl.h"
+#include "MapControl/MapControl.h"
 
 void handleKeyboardEventsScan(MapControl *mapControl) {
     pangolin::RegisterKeyPressCallback('l', [&mapControl]() { mapControl->ToggleFollowCamera(); });

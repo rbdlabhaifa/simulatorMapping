@@ -10,7 +10,7 @@
 
 #include "System.h"
 #include "Converter.h"
-#include "include/Auxiliary.h"
+#include "Auxiliary.h"
 
 /************* SIGNAL *************/
 std::unique_ptr<ORB_SLAM2::System> SLAM;

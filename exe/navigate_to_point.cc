@@ -1,8 +1,8 @@
 #include <pangolin/utils/file_utils.h>
 #include <pangolin/geometry/glgeometry.h>
 
-#include "include/run_model/TextureShader.h"
-#include "include/Auxiliary.h"
+#include "RunModel/TextureShader.h"
+#include "Auxiliary.h"
 
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 20
