@@ -30,7 +30,7 @@ target_link_libraries(ORB_SLAM2 PUBLIC
         ${EIGEN3_LIBS}
         ${Pangolin_LIBRARIES}
         g2o
-        DBoW3
+        DBoW2
         Threads::Threads
         Boost::boost
         Boost::serialization

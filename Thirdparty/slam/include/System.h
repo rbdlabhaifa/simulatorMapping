@@ -1,34 +1,31 @@
 /**
- * This file is part of ORB-SLAM2.
- *
- * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
- * For more information see <https://github.com/raulmur/ORB_SLAM2>
- *
- * ORB-SLAM2 is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * ORB-SLAM2 is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
- */
+* This file is part of ORB-SLAM2.
+*
+* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+* For more information see <https://github.com/raulmur/ORB_SLAM2>
+*
+* ORB-SLAM2 is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* ORB-SLAM2 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include <string>
-#include <thread>
-#include <opencv2/core/core.hpp>
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-#define NOMINMAX
-#include <windows.h>
-
-#endif
+#include<string>
+#include<thread>
+#include<opencv2/core/core.hpp>
+#include<unistd.h>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -45,8 +42,8 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
-namespace ORB_SLAM2
-{
+
+namespace ORB_SLAM2 {
 
     class Viewer;
 
@@ -60,24 +57,17 @@ namespace ORB_SLAM2
 
     class LoopClosing;
 
-    class System
-    {
+    class System {
     public:
         // Input sensor
-        enum eSensor
-        {
+        enum eSensor {
             MONOCULAR = 0,
             STEREO = 1,
             RGBD = 2
         };
-    void static systemUsleep(int microseconds){
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-        Sleep(std::ceil(microseconds/1000));
 
-#endif
-        usleep(microseconds);
-    }
     public:
+
         bool shutdown_requested = false;
 
         // Enable serialization
@@ -86,9 +76,12 @@ namespace ORB_SLAM2
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer = true,
-               bool reuse = false, std::string mapName = "Slam_latest_Map.bin",
+               const bool bUseFrameDrawer = true,
+               bool reuse = false, std::string
+               mapName = "Slam_latest_Map.bin",
                bool continue_mapping = false,
-               bool isPangolinExists = false);
+               bool isPangolinExists = false
+        );
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -107,7 +100,8 @@ namespace ORB_SLAM2
         cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
         cv::Mat
-        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat& im = cv::Mat());
+        TrackMonocular(const cv::Mat &descriptors, std::vector<cv::KeyPoint> &keyPoints, const double &timestamp, const cv::Mat &im = cv::Mat());
+
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
@@ -119,18 +113,16 @@ namespace ORB_SLAM2
         void Reset();
 
         Map *GetMap();
-        inline MapDrawer *GetMapDrawer()
-        {
+
+        inline MapDrawer *GetMapDrawer() {
             return mpMapDrawer;
         }
 
-        inline LocalMapping *GetLocalMapping()
-        {
+        inline LocalMapping *GetLocalMapping() {
             return mpLocalMapper;
         }
 
-        inline LoopClosing *GetLoopClosing()
-        {
+        inline LoopClosing *GetLoopClosing() {
             return mpLoopCloser;
         }
 
@@ -148,7 +140,7 @@ namespace ORB_SLAM2
 
         // Get map with tracked frames and points.
         // Call first Shutdown()
-        // Map *GetMap();
+        //Map *GetMap();
 
         // Save camera trajectory in the TUM RGB-D dataset format.
         // Call first Shutdown()
@@ -171,6 +163,7 @@ namespace ORB_SLAM2
         // LoadMap(const string &filename);
 
     private:
+
         // Input sensor
         eSensor mSensor;
 
@@ -217,6 +210,6 @@ namespace ORB_SLAM2
         bool mbDeactivateLocalizationMode;
     };
 
-} // namespace ORB_SLAM
+}// namespace ORB_SLAM
 
 #endif // SYSTEM_H

@@ -20,7 +20,8 @@
 
 #include "Initializer.h"
 
-#include <random>
+#include "DBoW2/DUtils/Random.h"
+
 #include "Optimizer.h"
 #include "ORBmatcher.h"
 
@@ -76,19 +77,16 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     // Generate sets of 8 points for each RANSAC iteration
     mvSets = vector< vector<size_t> >(mMaxIterations,vector<size_t>(8,0));
 
-    
-    std::random_device rd;
-    std::mt19937 generator(rd());
+    DUtils::Random::SeedRandOnce(0);
+
     for(int it=0; it<mMaxIterations; it++)
     {
         vAvailableIndices = vAllIndices;
-       
+
         // Select a minimum set
         for(size_t j=0; j<8; j++)
         {
-            
-            std::uniform_int_distribution<int> distribution(0, vAvailableIndices.size() - 1);
-            int randi = distribution(generator);
+            int randi = DUtils::Random::RandomInt(0,vAvailableIndices.size()-1);
             int idx = vAvailableIndices[randi];
 
             mvSets[it][j] = idx;
@@ -112,16 +110,17 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
 
     // Compute ratio of scores
     float RH = SH/(SH+SF);
+
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
     if(RH>0.40)
 	{
-    	cout << __FUNCTION__ << " : Homography Mode Computing.." << endl;
-        return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,0.5,20);
+    	//cout << __FUNCTION__ << " : Homography Mode Computing.." << endl;
+        return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
 	}
     else //if(pF_HF>0.6)
 	{	
-    	cout << __FUNCTION__ << "Fundamental Mode Computing.." << endl;
-        return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,0.5,20);
+    	//cout << __FUNCTION__ << "Fundamental Mode Computing.." << endl;
+        return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
 	}
     return false;
 }

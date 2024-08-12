@@ -8,7 +8,7 @@ cv::Mat Simulator::getCurrentLocation() {
 }
 
 Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool alignModelToTexture,
-                     std::string modelTextureNameToAlignTo, bool trackImages,
+                     std::string modelTextureNameToAlignTo,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
                      double movementFactor,
                      double speedFactor,
@@ -18,7 +18,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool
                                             alignModelToTexture(alignModelToTexture),
                                             modelTextureNameToAlignTo(modelTextureNameToAlignTo),
                                             isSaveMap(saveMap),
-                                            trackImages(trackImages), cull_backfaces(false), isInitalized(false),
+                                            cull_backfaces(false), isInitalized(false),
                                             stopFlagSLAM(false),
                                             speedFactor(speedFactor),
                                             viewportDesiredSize(640, 480) {
@@ -68,24 +68,11 @@ bool Simulator::feedSLAM(cv::Mat &img) {
     auto value = now_ms.time_since_epoch();
     double timestamp = value.count() / 1000.0;
     locationLock.lock();
-    if (trackImages) {
-        Tcw = SLAM->TrackMonocular(img, timestamp);
-    } else {
-        std::vector<cv::KeyPoint> pts;
-        cv::Mat mDescriptors;
-        orbExtractor->operator()(img, cv::Mat(), pts, mDescriptors);
-        Tcw = SLAM->TrackMonocular(mDescriptors, pts, timestamp, img);
-    }
+    Tcw = SLAM->TrackMonocular(img, timestamp);
     locationLock.unlock();
     auto state = SLAM->GetTracker()->mState;
     bool currentIsInitalized = !(state == SLAM->GetTracker()->NOT_INITIALIZED ||
                                  state == SLAM->GetTracker()->NO_IMAGES_YET);
-    if (currentIsInitalized && !isInitalized) {
-        SLAM->GetTracker()->SetNFeaturesToExtractor(trackingNumberOfFeatures);
-    }
-    if (!currentIsInitalized && isInitalized) {
-        SLAM->GetTracker()->SetNFeaturesToExtractor(numberOfFeatures);
-    }
     isInitalized = currentIsInitalized;
     return state == SLAM->GetTracker()->OK;
 }
@@ -99,7 +86,7 @@ void Simulator::SLAMThread() {
                 imgLock.unlock();
                 isLocalized = feedSLAM(img);
             } else {
-                ORB_SLAM2::System::systemUsleep(1000);
+                usleep(1000);
             }
         }
     }
@@ -153,7 +140,6 @@ void Simulator::simulatorRunThread() {
     pangolin::View &d_cam = pangolin::Display("simulator_d_cam")
             .SetBounds(0.0, 1.0, 0.0, 1.0, ((float) -viewportDesiredSize[0] / (float) viewportDesiredSize[1]))
             .SetHandler(&handler);
-    int numberOfFramesForOrbslam = 0;
     const pangolin::Geometry modelGeometry = pangolin::LoadGeometry(modelPath);
     if (alignModelToTexture) {
         alignModelViewPointToSurface(modelGeometry, modelTextureNameToAlignTo);
@@ -333,7 +319,7 @@ void Simulator::intervalOverCommand(
     double intervalValue = this->speedFactor * value / (fps * totalCommandTimeInSeconds);
     int intervalIndex = 0;
     while (intervalIndex <= fps * totalCommandTimeInSeconds) {
-        ORB_SLAM2::System::systemUsleep(intervalUsleep);
+        usleep(intervalUsleep);
         func(s_cam, intervalValue);
         intervalIndex += 1;
     }
@@ -435,8 +421,8 @@ void Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeom
 
 void Simulator::setTrack(bool value) {
     if (!this->initSlam && value) {
-        this->SLAM = std::make_shared<ORB_SLAM2::System>(this->vocPath, this->ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true,
-                                               this->loadMap, this->mapLoadPath, true);
+        this->SLAM = std::make_shared<ORB_SLAM2::System>(this->vocPath, this->ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true, true,
+                                               this->loadMap, this->mapLoadPath, this->loadMap);
     }
     this->track = value;
 }

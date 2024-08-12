@@ -91,8 +91,7 @@ public:
 
     float GetMinDistanceInvariance();
     float GetMaxDistanceInvariance();
-    int PredictScale(const float& currentDist, KeyFrame* pKF);
-    int PredictScale(const float& currentDist, Frame* pF);
+    int PredictScale(const float &currentDist, const float &logScaleFactor);
 	void SetMap(Map* map);
 	void SetObservations(std::vector<KeyFrame*>);
 	

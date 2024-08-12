@@ -16,8 +16,5 @@ target_link_libraries(save_keypoints_mapping ORB_SLAM2 Auxiliary)
 add_executable(navigate_to_point navigate_to_point.cc)
 target_link_libraries(navigate_to_point ORB_SLAM2 Auxiliary simulator)
 
-add_executable(demo demo.cc)
-target_link_libraries(demo ORB_SLAM2 MapControl)
-
 add_executable(testExitRoom testExitRoom.cpp)
 target_link_libraries(testExitRoom exitRoom)

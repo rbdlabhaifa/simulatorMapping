@@ -40,16 +40,16 @@ int main(int argc, char **argv) {
     programData >> data;
     programData.close();
 
-    bool bReuse = data["continue"];
+    bool bReuse = data["continueScanning"];
     std::string directory_named_time =
         create_new_directory_named_current_time();
     std::string Slam_lastest_Map_location =
         !bReuse ? directory_named_time + "/Slam_latest_Map.bin"
                 : "Slam_latest_Map.bin";
-    ORB_SLAM2::System SLAM(data["VocabularyPath"], data["DroneYamlPathSlam"], ORB_SLAM2::System::MONOCULAR, true,
+    ORB_SLAM2::System SLAM(data["VocabularyPath"], data["DroneYamlPathSlam"], ORB_SLAM2::System::MONOCULAR, true, true,
                            bReuse, Slam_lastest_Map_location, bReuse);
     bool use_drone = true;
-    if (data["webcam"])
+    if (data["use_webcam"])
         use_drone = false;
     cv::VideoCapture cap;
     cv::VideoWriter writer;
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
             cap >> frame;
         }
         if (frame.empty()) {
-            ORB_SLAM2::System::systemUsleep(20000);
+            usleep(20000);
             continue;
         }
 

@@ -17,18 +17,17 @@ int main(int argc, char **argv)
     std::string model_path = data["modelPath"];
     std::string simulatorOutputDir = data["simulatorOutputDir"];
     std::string mapInputDir = data["mapInputDir"];
-    bool trackImages = data["trackImages"];
     double movementFactor = data["movementFactor"];
     double simulatorStartingSpeed = data["simulatorStartingSpeed"];
 
-    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, trackImages, false, simulatorOutputDir, false,
+    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, false, simulatorOutputDir, false,
                         mapInputDir, movementFactor, simulatorStartingSpeed, vocabulary_path);
 
     auto simulatorThread = simulator.run();
 
     // wait for the 3D model to load
     while (!simulator.isReady()) {
-        ORB_SLAM2::System::systemUsleep(1000);
+        usleep(1000);
     }
 
     std::cout << "to stop press k" << std::endl;
@@ -38,7 +37,7 @@ int main(int argc, char **argv)
 
     while (!simulator.startScanning())
     { // wait for the 3D model to load
-        ORB_SLAM2::System::systemUsleep(10);
+        usleep(10);
     }
 
     simulator.setTrack(true);

@@ -21,12 +21,12 @@
 #ifndef MAPDRAWER_H
 #define MAPDRAWER_H
 
-#include "Map.h"
-#include "MapPoint.h"
-#include "KeyFrame.h"
-#include <pangolin/pangolin.h>
+#include"Map.h"
+#include"MapPoint.h"
+#include"KeyFrame.h"
+#include<pangolin/pangolin.h>
 
-#include <mutex>
+#include<mutex>
 
 namespace ORB_SLAM2
 {
@@ -38,7 +38,7 @@ public:
 
     Map* mpMap;
 
-    void DrawMapPoints();
+    void DrawMapPoints(bool is_simulator=false, std::vector<cv::Point3d> seen_points=std::vector<cv::Point3d>(), std::vector<cv::Point3d> new_points_seen=std::vector<cv::Point3d>());
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
     void SetCurrentCameraPose(const cv::Mat &Tcw);

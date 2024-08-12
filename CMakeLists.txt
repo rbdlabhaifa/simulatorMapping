@@ -61,15 +61,6 @@ target_link_libraries(Auxiliary PUBLIC
         ${Pangolin_LIBRARIES}
 )
 
-add_library(MapControl STATIC
-        src/MapControl/MapControl.cpp
-        src/MapControl/OfflineMapPoint.cpp
-)
-target_link_libraries(MapControl PUBLIC
-        ${Pangolin_LIBRARIES}
-        ORB_SLAM2
-)
-
 add_library(simulator src/simulator/simulator.cpp)
 target_link_libraries(simulator ORB_SLAM2 Auxiliary)
 

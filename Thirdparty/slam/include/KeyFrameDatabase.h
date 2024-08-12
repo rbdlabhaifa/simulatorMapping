@@ -28,8 +28,7 @@
 #include "KeyFrame.h"
 #include "Frame.h"
 #include "ORBVocabulary.h"
-#include <iostream>
-#include <chrono>
+
 #include<mutex>
 
 #include <boost/serialization/serialization.hpp>
@@ -73,7 +72,7 @@ protected:
   ORBVocabulary* mpVoc;
 
   // Inverted file
-  std::vector<vector<KeyFrame*> > mvInvertedFile;
+  std::vector<list<KeyFrame*> > mvInvertedFile;
 
   // Mutex
   std::mutex mMutex;

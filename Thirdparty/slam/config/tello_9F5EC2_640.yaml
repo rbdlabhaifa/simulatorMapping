@@ -19,6 +19,8 @@
 
 Camera.width: 640
 Camera.height: 480
+Camera.orig_width: 640
+Camera.orig_height: 480
 
 Camera.fx: 619.6508392029048
 Camera.fy: 618.5264705043031
@@ -96,8 +98,6 @@ Camera.RGB: 1
 
 # ORB Extractor: Number of features per image
 ORBextractor.nFeatures: 2000
-ORBextractor.trackingNumberOfFeatures: 800
-
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
 ORBextractor.scaleFactor: 1.2
