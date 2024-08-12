@@ -1,6 +1,6 @@
 #include "Auxiliary.h"
-#include "simulator/simulator.h"
 #include "RoomExit/RoomExit.h"
+#include "simulator/simulator.h"
 
 int main(int argc, char **argv)
 {
@@ -26,8 +26,8 @@ int main(int argc, char **argv)
 
     auto simulatorThread = simulator.run();
 
-    while (!simulator.isReady())
-    { // wait for the 3D model to load
+    // wait for the 3D model to load
+    while (!simulator.isReady()) {
         ORB_SLAM2::System::systemUsleep(1000);
     }
 

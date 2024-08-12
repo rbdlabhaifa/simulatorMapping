@@ -1,6 +1,6 @@
 {
-  "VocabularyPath": "/home/liam/dev/rbd/simulatorMapping/Vocabulary/ORBvoc.txt",
-  "DroneYamlPathSlam": "/home/liam/dev/rbd/simulatorMapping/config/tello_9F5EC2_640.yaml",
+  "VocabularyPath": "/home/liam/dev/simulatorMapping/Thirdparty/slam/Vocabulary/ORBvoc.txt",
+  "DroneYamlPathSlam": "/home/liam/dev/simulatorMapping/Thirdparty/slam/config/tello_9F5EC2_640.yaml",
   "offlineVideoTestPath": "/home/liam/Documents/videos/mapping.avi",
   "loadMap": true,
   "loadPartialMapPath": "/home/liam/a.bin",
@@ -32,7 +32,6 @@
   "pitchOffset": -0.35643,
   "rollOffset": -0.0139628,
   "scaleFactor": 0.0305,
-  "useLabICP": true,
   "trackImagesClass": false,
   "mapControlPointsPath": "/home/liam/Documents/slamMaps/simulator_mapping_all2/",
   "useOrbSlam": true

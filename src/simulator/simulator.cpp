@@ -13,7 +13,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool
                      double movementFactor,
                      double speedFactor,
                      std::string vocPath) : stopFlag(false), ready(false), saveMapSignal(false),
-                                            track(false), start(false),
+                                            track(false), start(false), initSlam(false),
                                             movementFactor(movementFactor), modelPath(model_path),
                                             alignModelToTexture(alignModelToTexture),
                                             modelTextureNameToAlignTo(modelTextureNameToAlignTo),
@@ -34,12 +34,16 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
     int nLevels = fSettings["ORBextractor.nLevels"];
-    SLAM = std::make_shared<ORB_SLAM2::System>(vocPath, ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true,
-                                               loadMap, mapLoadPath, true);
 
-    K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-    orbExtractor = std::make_shared<ORB_SLAM2::ORBextractor>(numberOfFeatures, fScaleFactor, nLevels, fIniThFAST,
+    this->K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
+    this->orbExtractor = std::make_shared<ORB_SLAM2::ORBextractor>(numberOfFeatures, fScaleFactor, nLevels, fIniThFAST,
                                                              fMinThFAST);
+
+    // Save parameters for slam initilization
+    this->vocPath = vocPath;
+    this->ORBSLAMConfigFile = ORBSLAMConfigFile;
+    this->loadMap = loadMap;
+    this->mapLoadPath = mapLoadPath;
 }
 
 void Simulator::command(const std::string &command, int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
@@ -427,6 +431,14 @@ void Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeom
     s_cam.SetModelViewMatrix(mvm);
     s_cam.SetProjectionMatrix(proj);
     applyPitchRotationToModelCam(s_cam, -90);
+}
+
+void Simulator::setTrack(bool value) {
+    if (!this->initSlam && value) {
+        this->SLAM = std::make_shared<ORB_SLAM2::System>(this->vocPath, this->ORBSLAMConfigFile, ORB_SLAM2::System::MONOCULAR, true,
+                                               this->loadMap, this->mapLoadPath, true);
+    }
+    this->track = value;
 }
 
 void Simulator::setSpeed(double speed)

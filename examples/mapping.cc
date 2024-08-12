@@ -23,8 +23,7 @@ std::string create_new_directory_named_current_time() {
 }
 
 /**
- * @brief This Program tries to create a map for the executable program
- * tello_main
+ * @brief This Program tries to create a map from saved video or real time video
  *
  * this program is just orbslam with a drone, every movement is manual.
  * This function create the a folder with the files Slam_latest_Map.bin

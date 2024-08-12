@@ -76,4 +76,4 @@ target_link_libraries(simulator ORB_SLAM2 Auxiliary)
 add_library(exitRoom src/RoomExit/RoomExit.cpp)
 target_link_libraries(exitRoom ORB_SLAM2 Auxiliary)
 
-add_subdirectory(exe)
+add_subdirectory(examples)

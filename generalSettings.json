@@ -1,31 +1,38 @@
 {
-  "VocabularyPath": "/home/liam/dev/simulatorMapping/Vocabulary/newVoc.bin",
-  "DroneYamlPathSlam": "/home/liam/dev/simulatorMapping/config/tello_9F5EC2_640.yaml",
+  "VocabularyPath": "/home/liam/dev/simulatorMapping/Thirdparty/slam/Vocabulary/newVoc.bin",
+  "DroneYamlPathSlam": "/home/liam/dev/simulatorMapping/Thirdparty/slam/config/tello_9F5EC2_640.yaml",
   "offlineVideoTestPath": "/home/liam/Documents/all-data/mapping.avi",
   "loadMap": false,
   "loadMapPath": "/home/liam/Documents/all-data/slamMaps/example_mapping11/simulatorMap.bin",
   "saveMap": true,
   "simulatorOutputDir": "/home/liam/Documents/all-data/slamMaps/",
-  "alignModelToTexture": false,
+  "alignModelToTexture": true,
   "modelTextureNameToAlignTo": "floor",
   "mapInputDir": "/home/liam/Documents/all-data/slamMaps/example_mapping11/",
   "continue": false,
   "webcam": true,
-  "startingCameraPosX": 2.84642,
-  "startingCameraPosY": -2.5772,
-  "startingCameraPosZ": 1.00255,
+  "starting_pose": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "target_pose": {
+    "x": 1,
+    "y": 2,
+    "z": 3
+  },
+  "run_with_slam": true,
   "yawRad": 1,
   "pitchRad": 0.159227,
   "rollRad": 1,
   "movingScale": 0.2,
   "rotateScale": 0.2,
-  "modelPath": "/home/liam/Documents/fares/fares.obj",
+  "modelPath": "/home/liam/Documents/all-data/aaa/untitled.obj",
   "pointSize": 10,
   "movementFactor": 0.05,
   "framesFolder": "/home/liam/Documents/all-data/textures/",
   "framesOutput": "/home/liam/Documents/all-data/frames/",
-  "useLabICP": true,
   "simulatorStartingSpeed": 1,
-  "trackImages": false
+  "trackImages": true
 }
 

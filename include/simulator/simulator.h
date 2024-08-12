@@ -115,7 +115,7 @@ public:
      * @brief enabling or disabling the ORBSLAM process.
      *
      */
-    void setTrack(bool value) { track = value; }
+    void setTrack(bool value);
 
     void setSpeed(double speed);
 
@@ -145,6 +145,10 @@ private:
             {"flip", false},
             {"rc", false}};
     std::shared_ptr<ORB_SLAM2::System> SLAM;
+    std::string vocPath;
+    std::string ORBSLAMConfigFile;
+    std::string mapLoadPath;
+    bool loadMap;
     pangolin::OpenGlRenderState s_cam;
     Eigen::Matrix3d K;
     std::shared_ptr < ORB_SLAM2::ORBextractor> orbExtractor;
@@ -153,6 +157,7 @@ private:
     bool stopFlagSLAM;
     bool ready;
     bool start;
+    bool initSlam;
 
     bool saveMapSignal;
     bool track;
@@ -179,7 +184,7 @@ private:
 
     void SLAMThread();
 
-    bool feedSLAM(cv::Mat& img);
+    bool feedSLAM(cv::Mat &img);
 
     void extractSurface(const pangolin::Geometry &modelGeometry, std::string modelTextureNameToAlignTo,
                         Eigen::MatrixXf &surface);
