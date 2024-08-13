@@ -178,13 +178,13 @@ int main() {
     std::time(&now);
     std::strftime(time_buf, 21, "%Y-%m-%d_%H:%S:%MZ", gmtime(&now));
     std::string currentTime(time_buf);
-    std::string vocPath = data["slam_configuration"]["VocabularyPath"];
-    std::string droneYamlPathSlam = data["slam_configuration"]["DroneYamlPathSlam"];
-    std::string videoPath = data["offlineVideoTestPath"];
-    bool loadMap = data["slam_configuration"]["loadMap"];
-    bool isSavingMap = data["slam_configuration"]["saveMap"];
-    std::string loadMapPath = data["slam_configuration"]["loadMapPath"];
-    std::string simulatorOutputDirPath = data["simulator_configuration"]["simulatorOutputDir"];
+    std::string vocPath = data["slam_configuration"]["vocabulary_path"];
+    std::string droneYamlPathSlam = data["slam_configuration"]["drone_yaml_path"];
+    std::string videoPath = data["offline_video_test_path"];
+    bool loadMap = data["slam_configuration"]["load_map"];
+    bool isSavingMap = data["slam_configuration"]["save_map"];
+    std::string loadMapPath = data["slam_configuration"]["load_map_path"];
+    std::string simulatorOutputDirPath = data["simulator_configuration"]["simulator_output_dir"];
     simulatorOutputDir = simulatorOutputDirPath + currentTime + "/";
     std::filesystem::create_directory(simulatorOutputDir);
     SLAM = std::make_unique<ORB_SLAM2::System>(vocPath, droneYamlPathSlam, ORB_SLAM2::System::MONOCULAR, true, true,

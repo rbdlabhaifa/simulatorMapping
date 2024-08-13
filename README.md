@@ -32,12 +32,12 @@ if the path isn't in the `simulatorMapping` directory - change it to the equival
 
 ### 2. Configure the parameters to your machine:
 Open generalSettings.json and change:
-- `slam_configuration/VocabularyPath` to the path of your vocabulary on the project
-- `slam_configuration/DroneYamlPathSlam` to the path of your drone config file
-- `offlineVideoTestPath` to the path of the video you want to run of offline orb slam(described later)
-- `loadMapPath`to the path of the map you created with orb slam
-- `simulatorOutputDir` to the directory you want the output maps will go to
-- `simulator_configuration/modelPath` to the path of your `.obj` model
+- `slam_configuration/vocabulary_path` to the path of your vocabulary on the project
+- `slam_configuration/drone_yaml_path` to the path of your drone config file
+- `offline_video_test_path` to the path of the video you want to run of offline orb slam(described later)
+- `load_map_path`to the path of the map you created with orb slam
+- `simulator_output_dir` to the directory you want the output maps will go to
+- `simulator_configuration/model_path` to the path of your `.obj` model
 
 
 ## II. Usage:
@@ -48,7 +48,10 @@ you will need to press tab from the model viewer in order to start running the s
 
 ### 2. Navigate to point:
 - configure `target_point` in `generalSettings.json`
-- run `./exe/navigate_to_point` from the `build` folder in order to use the simulator to navigate to the target point
+- run `./exe/navigate_to_point` from the `build` folder in order to use the simulator to navigate to the target point*
+
+* This code meant for students to develop their implementation in `examples/navigate_to_point`
+
 ### 3. Create orb slam map from webcam/drone:
 - run `./exe/mapping` from the `build` folder
 

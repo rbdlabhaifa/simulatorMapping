@@ -59,7 +59,7 @@ public:
      * @param vocPath: A string representing the path to the ORBSLAM2 vocabulary file. Defaults to "../Vocabulary/ORBvoc.txt" if not specified.
      */
     Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool alignModelToTexture, std::string modelTextureNameToAlignTo,
-              bool saveMap = false, std::string simulatorOutputDirPath = "../slamMaps/", bool loadMap = false,
+              Eigen::Vector3f startingPoint, bool saveMap = false, std::string simulatorOutputDirPath = "../slamMaps/", bool loadMap = false,
               std::string mapLoadPath = "../slamMaps/example.bin",
               double movementFactor = 0.01,
               double speedFactor = 1.0,
@@ -159,6 +159,7 @@ private:
     bool start;
     bool initSlam;
 
+    Eigen::Vector3f startingPoint;
     bool saveMapSignal;
     bool track;
     double movementFactor{};

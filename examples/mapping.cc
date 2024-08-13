@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
     programData >> data;
     programData.close();
 
-    bool bReuse = data["continueScanning"];
-    std::string vocabularyPath = data["slam_configuration"]["VocabularyPath"];
-    std::string droneYamlPath = data["slam_configuration"]["DroneYamlPathSlam"];
+    bool bReuse = data["continue_scanning"];
+    std::string vocabularyPath = data["slam_configuration"]["vocabulary_path"];
+    std::string droneYamlPath = data["slam_configuration"]["drone_yaml_path"];
 
     std::string directory_named_time =
     create_new_directory_named_current_time();

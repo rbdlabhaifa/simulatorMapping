@@ -1,29 +1,29 @@
 {
   "slam_configuration": {
-    "VocabularyPath": "/home/liam/dev/simulatorMapping/Thirdparty/slam/Vocabulary/ORBvoc.txt",
-    "DroneYamlPathSlam": "/home/liam/dev/simulatorMapping/Thirdparty/slam/config/tello_9F5EC2_640.yaml",
-    "loadMap": false,
-    "loadMapPath": "/home/liam/Documents/all-data/slamMaps/example_mapping11/simulatorMap.bin",
-    "saveMap": true
+    "vocabulary_path": "/home/liam/dev/simulatorMapping/Thirdparty/slam/Vocabulary/ORBvoc.txt",
+    "drone_yaml_path": "/home/liam/dev/simulatorMapping/Thirdparty/slam/config/tello_9F5EC2_640.yaml",
+    "load_map": false,
+    "load_map_path": "/home/liam/Documents/all-data/slamMaps/example_mapping11/simulatorMap.bin",
+    "save_map": true
   },
   "simulator_configuration": {
-    "modelPath": "/home/liam/Documents/all-data/aaa/untitled.obj",
+    "model_path": "/home/liam/Documents/all-data/aaa/untitled.obj",
     "run_with_slam": true,
-    "movementFactor": 0.05,
-    "simulatorStartingSpeed": 1,
+    "movement_factor": 0.05,
+    "simulator_starting_speed": 1,
     "align_model_to_texture": {
       "align": true,
       "texture": "floor"
     },
     "starting_pose": {
-      "x": 0,
-      "y": 0,
-      "z": 0
+      "x": 0.1,
+      "y": -0.1,
+      "z": 0.3
     },
-    "simulatorOutputDir": "/home/liam/Documents/all-data/slamMaps/"
+    "simulator_output_dir": "/home/liam/Documents/all-data/slamMaps/"
   },
-  "offlineVideoTestPath": "/home/liam/Documents/all-data/mapping.avi",
-  "continueScanning": false,
+  "offline_video_test_path": "/home/liam/Documents/all-data/mapping.avi",
+  "continue_scanning": false,
   "use_webcam": true,
   "target_pose": {
     "x": 1,

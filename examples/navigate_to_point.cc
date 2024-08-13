@@ -5,40 +5,6 @@
 #include "simulator/simulator.h"
 #include "RunModel/TextureShader.h"
 
-#define NEAR_PLANE 0.1
-#define FAR_PLANE 20
-
-#define ANIMATION_DURATION 5.0
-#define ANIMATION_STEPS 100.0
-
-void applyYawRotationToModelCam(pangolin::OpenGlRenderState *s_cam, double value) {
-    double rand = double(value) * (M_PI / 180);
-    double c = std::cos(rand);
-    double s = std::sin(rand);
-
-    Eigen::Matrix3d R;
-    R << c, 0, s,
-            0, 1, 0,
-            -s, 0, c;
-
-    Eigen::Matrix4d pangolinR = Eigen::Matrix4d::Identity();
-    pangolinR.block<3, 3>(0, 0) = R;
-
-    auto camMatrix = pangolin::ToEigen<double>(s_cam->GetModelViewMatrix());
-
-    // Left-multiply the rotation
-    camMatrix = pangolinR * camMatrix;
-
-    // Convert back to pangolin matrix and set
-    pangolin::OpenGlMatrix newModelView;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            newModelView.m[j * 4 + i] = camMatrix(i, j);
-        }
-    }
-
-    s_cam->SetModelViewMatrix(newModelView);
-}
 
 int main(int argc, char **argv) {
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
@@ -47,18 +13,20 @@ int main(int argc, char **argv) {
     programData >> data;
     programData.close();
 
-    std::string configPath = data["slam_configuration"]["DroneYamlPathSlam"];
-    std::string vocabulary_path = data["slam_configuration"]["VocabularyPath"];
+    std::string configPath = data["slam_configuration"]["drone_yaml_path"];
+    std::string vocabulary_path = data["slam_configuration"]["vocabulary_path"];
     std::string modelTextureNameToAlignTo = data["simulator_configuration"]["align_model_to_texture"]["texture"];
     bool alignModelToTexture = data["simulator_configuration"]["align_model_to_texture"]["align"];
-    std::string model_path = data["simulator_configuration"]["modelPath"];
-    std::string simulatorOutputDir = data["simulator_configuration"]["simulatorOutputDir"];
-    std::string loadMapPath = data["slam_configuration"]["loadMapPath"];
-    double movementFactor = data["simulator_configuration"]["movementFactor"];
-    double simulatorStartingSpeed = data["simulator_configuration"]["simulatorStartingSpeed"];
+    std::string model_path = data["simulator_configuration"]["model_path"];
+    std::string simulatorOutputDir = data["simulator_configuration"]["simulator_output_dir"];
+    std::string loadMapPath = data["slam_configuration"]["load_map_path"];
+    double movementFactor = data["simulator_configuration"]["movement_factor"];
+    double simulatorStartingSpeed = data["simulator_configuration"]["simulator_starting_speed"];
     bool runWithSlam = data["simulator_configuration"]["run_with_slam"];
+    Eigen::Vector3f startingPoint((float)data["simulator_configuration"]["starting_pose"]["x"], (float)data["simulator_configuration"]["starting_pose"]["y"],
+                                (float)data["simulator_configuration"]["starting_pose"]["z"]);
 
-    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, false, simulatorOutputDir, false,
+    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, startingPoint, false, simulatorOutputDir, false,
                         loadMapPath, movementFactor, simulatorStartingSpeed, vocabulary_path);
     auto simulatorThread = simulator.run();
 
@@ -79,6 +47,8 @@ int main(int argc, char **argv) {
     double targetPointY = data["target_pose"]["y"];
     double targetPointZ = data["target_pose"]["z"];
     Eigen::Vector3d target_point(targetPointX, targetPointY, targetPointZ);
+
+    // Implement moving to target
 
     simulatorThread.join();
 

@@ -10,17 +10,19 @@ int main(int argc, char **argv)
     programData >> data;
     programData.close();
 
-    std::string configPath = data["slam_configuration"]["DroneYamlPathSlam"];
-    std::string vocabulary_path = data["slam_configuration"]["VocabularyPath"];
+    std::string configPath = data["slam_configuration"]["drone_yaml_path"];
+    std::string vocabulary_path = data["slam_configuration"]["vocabulary_path"];
     std::string modelTextureNameToAlignTo = data["simulator_configuration"]["align_model_to_texture"]["texture"];
     bool alignModelToTexture = data["simulator_configuration"]["align_model_to_texture"]["align"];
-    std::string model_path = data["simulator_configuration"]["modelPath"];
-    std::string simulatorOutputDir = data["simulator_configuration"]["simulatorOutputDir"];
-    std::string loadMapPath = data["slam_configuration"]["loadMapPath"];
-    double movementFactor = data["simulator_configuration"]["movementFactor"];
-    double simulatorStartingSpeed = data["simulator_configuration"]["simulatorStartingSpeed"];
+    std::string model_path = data["simulator_configuration"]["model_path"];
+    std::string simulatorOutputDir = data["simulator_configuration"]["simulator_output_dir"];
+    std::string loadMapPath = data["slam_configuration"]["load_map_path"];
+    double movementFactor = data["simulator_configuration"]["movement_factor"];
+    double simulatorStartingSpeed = data["simulator_configuration"]["simulator_starting_speed"];
+    Eigen::Vector3f startingPoint((float)data["simulator_configuration"]["starting_pose"]["x"], (float)data["simulator_configuration"]["starting_pose"]["y"],
+                                (float)data["simulator_configuration"]["starting_pose"]["z"]);
 
-    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, false, simulatorOutputDir, false,
+    Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, startingPoint, false, simulatorOutputDir, false,
                         loadMapPath, movementFactor, simulatorStartingSpeed, vocabulary_path);
 
     auto simulatorThread = simulator.run();

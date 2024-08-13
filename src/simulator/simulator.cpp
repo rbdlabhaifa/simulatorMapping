@@ -8,7 +8,7 @@ cv::Mat Simulator::getCurrentLocation() {
 }
 
 Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool alignModelToTexture,
-                     std::string modelTextureNameToAlignTo,
+                     std::string modelTextureNameToAlignTo, Eigen::Vector3f startingPoint,
                      bool saveMap, std::string simulatorOutputDirPath, bool loadMap, std::string mapLoadPath,
                      double movementFactor,
                      double speedFactor,
@@ -16,6 +16,7 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool
                                             track(false), start(false), initSlam(false),
                                             movementFactor(movementFactor), modelPath(model_path),
                                             alignModelToTexture(alignModelToTexture),
+                                            startingPoint(startingPoint),
                                             modelTextureNameToAlignTo(modelTextureNameToAlignTo),
                                             isSaveMap(saveMap),
                                             cull_backfaces(false), isInitalized(false),
@@ -102,7 +103,7 @@ void Simulator::simulatorRunThread() {
     s_cam = pangolin::OpenGlRenderState(
             pangolin::ProjectionMatrix(viewportDesiredSize(0), viewportDesiredSize(1), K(0, 0), K(1, 1), K(0, 2),
                                        K(1, 2), 0.1, 20),
-            pangolin::ModelViewLookAt(0.1, -0.1, 0.3, 0, 0, 0, 0.0, -1.0,
+            pangolin::ModelViewLookAt(this->startingPoint.x(), this->startingPoint.y(), this->startingPoint.z(), 0, 0, 0, 0.0, -1.0,
                                       pangolin::AxisY)); // the first 3 value are meaningless because we change them later
 
     bool show_bounds = false;
