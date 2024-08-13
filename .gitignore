@@ -50,3 +50,10 @@ videos/
 **/Debug**
 CMakeSettings.json
 leaves_to_weights.pkl
+Thirdparty/slam/Vocabulary/ORBvoc.txt
+Thirdparty/json/
+Thirdparty/matplotlib-cpp/
+Thirdparty/spdlog/
+Thirdparty/ctello/
+Thirdparty/opencv_contrib/
+Thirdparty/opencv/
