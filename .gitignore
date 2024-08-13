@@ -50,3 +50,4 @@ videos/
 **/Debug**
 CMakeSettings.json
 leaves_to_weights.pkl
+Thirdparty/slam/Vocabulary/ORBvoc.txt

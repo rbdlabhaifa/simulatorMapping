@@ -41,12 +41,14 @@ int main(int argc, char **argv) {
     programData.close();
 
     bool bReuse = data["continueScanning"];
+    std::string vocabularyPath = data["slam_configuration"]["VocabularyPath"];
+    std::string droneYamlPath = data["slam_configuration"]["DroneYamlPathSlam"];
+
     std::string directory_named_time =
-        create_new_directory_named_current_time();
-    std::string Slam_lastest_Map_location =
-        !bReuse ? directory_named_time + "/Slam_latest_Map.bin"
-                : "Slam_latest_Map.bin";
-    ORB_SLAM2::System SLAM(data["VocabularyPath"], data["DroneYamlPathSlam"], ORB_SLAM2::System::MONOCULAR, true, true,
+    create_new_directory_named_current_time();
+    std::string Slam_lastest_Map_location = !bReuse ? directory_named_time + "/Slam_latest_Map.bin" : "Slam_latest_Map.bin";
+
+    ORB_SLAM2::System SLAM(vocabularyPath, droneYamlPath, ORB_SLAM2::System::MONOCULAR, true, true,
                            bReuse, Slam_lastest_Map_location, bReuse);
     bool use_drone = true;
     if (data["use_webcam"])

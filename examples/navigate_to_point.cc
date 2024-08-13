@@ -47,19 +47,19 @@ int main(int argc, char **argv) {
     programData >> data;
     programData.close();
 
-    std::string configPath = data["DroneYamlPathSlam"];
-    std::string vocabulary_path = data["VocabularyPath"];
-    std::string modelTextureNameToAlignTo = data["modelTextureNameToAlignTo"];
-    bool alignModelToTexture = data["alignModelToTexture"];
-    std::string model_path = data["modelPath"];
-    std::string simulatorOutputDir = data["simulatorOutputDir"];
-    std::string mapInputDir = data["mapInputDir"];
-    double movementFactor = data["movementFactor"];
-    double simulatorStartingSpeed = data["simulatorStartingSpeed"];
-    bool runWithSlam = data["run_with_slam"];
+    std::string configPath = data["slam_configuration"]["DroneYamlPathSlam"];
+    std::string vocabulary_path = data["slam_configuration"]["VocabularyPath"];
+    std::string modelTextureNameToAlignTo = data["simulator_configuration"]["align_model_to_texture"]["texture"];
+    bool alignModelToTexture = data["simulator_configuration"]["align_model_to_texture"]["align"];
+    std::string model_path = data["simulator_configuration"]["modelPath"];
+    std::string simulatorOutputDir = data["simulator_configuration"]["simulatorOutputDir"];
+    std::string loadMapPath = data["slam_configuration"]["loadMapPath"];
+    double movementFactor = data["simulator_configuration"]["movementFactor"];
+    double simulatorStartingSpeed = data["simulator_configuration"]["simulatorStartingSpeed"];
+    bool runWithSlam = data["simulator_configuration"]["run_with_slam"];
 
     Simulator simulator(configPath, model_path, alignModelToTexture, modelTextureNameToAlignTo, false, simulatorOutputDir, false,
-                        mapInputDir, movementFactor, simulatorStartingSpeed, vocabulary_path);
+                        loadMapPath, movementFactor, simulatorStartingSpeed, vocabulary_path);
     auto simulatorThread = simulator.run();
 
     // wait for the 3D model to load
