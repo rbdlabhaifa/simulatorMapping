@@ -10,8 +10,9 @@ sudo apt-get install -y libboost-all-dev libopenblas-dev libbluetooth-dev libpcl
 sudo apt-get -y install libxkbcommon-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync0-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev
 chmod +x opencv3.4.16Install.sh
 bash opencv3.4.16Install.sh
+cd "$cwd"
 
-cd ~
+cd Thirdparty/
 git clone https://gitlab.com/libeigen/eigen.git
 cd eigen
 git checkout 3.4.0
@@ -24,7 +25,7 @@ if [ ! -f "/usr/local/include/Eigen" ]; then
 fi
 cd "$cwd"
 
-cd ~
+cd Thirdparty/
 git clone https://github.com/nlohmann/json.git
 cd json
 mkdir build
@@ -32,7 +33,7 @@ cd build
 cmake ..
 sudo make -j3 install
 
-cd ~
+cd Thirdparty/
 git clone https://github.com/lava/matplotlib-cpp.git
 cd matplotlib-cpp
 mkdir build
@@ -40,7 +41,7 @@ cd build
 cmake ..
 sudo make -j3 install
 
-cd ~
+cd Thirdparty/
 git clone https://github.com/gabime/spdlog.git
 cd spdlog
 mkdir build
@@ -48,7 +49,7 @@ cd build
 cmake ..
 sudo make -j3 install
 
-cd ~
+cd Thirdparty/
 git clone https://github.com/liamvanunu/ctello.git
 cd ctello
 mkdir build

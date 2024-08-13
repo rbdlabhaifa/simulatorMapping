@@ -6,7 +6,7 @@ sudo apt-get install -y build-essential cmake git pkg-config libgtk-3-dev libpro
     libtbb2 libtbb-dev libdc1394-22-dev libopenexr-dev qt5-default libgtk2.0-dev libtbb-dev libatlas-base-dev libfaac-dev libmp3lame-dev libtheora-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev libvorbis-dev libxvidcore-dev libopencore-amrnb-dev libopencore-amrwb-dev x264 v4l-utils
 
-cd ~
+cd Thirdparty/
 git clone https://github.com/opencv/opencv.git
 git clone https://github.com/opencv/opencv_contrib.git
 cd opencv
