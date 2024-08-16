@@ -26,5 +26,7 @@ class Auxiliary
 {
 public:
     static std::string GetGeneralSettingsPath();
+
+    static void drawPoints(std::vector<std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>> &pointsToDraw);
 };
 #endif // ORB_SLAM2_AUXILIARY_H

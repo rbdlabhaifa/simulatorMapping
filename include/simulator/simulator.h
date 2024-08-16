@@ -2,20 +2,26 @@
 #define ORB_SLAM2_SIMULATOR_H
 
 #include <memory>
-#include <pangolin/pangolin.h>
-#include <pangolin/geometry/geometry.h>
-#include <pangolin/gl/glsl.h>
-#include <pangolin/gl/glvbo.h>
-#include <functional>
-#include <pangolin/display/display.h>
-#include <pangolin/display/pangolin_gl.h>
-#include <pangolin/utils/file_utils.h>
-#include <pangolin/geometry/glgeometry.h>
-#include "ORBextractor.h"
-#include "System.h"
 #include <Eigen/SVD>
 #include <filesystem>
+#include <functional>
+#include <pangolin/gl/glsl.h>
+#include <pangolin/pangolin.h>
+#include <pangolin/gl/glvbo.h>
+#include <pangolin/display/display.h>
+#include <pangolin/utils/file_utils.h>
+#include <pangolin/geometry/geometry.h>
+#include <pangolin/display/pangolin_gl.h>
+#include <pangolin/geometry/glgeometry.h>
+
+#include "ORBextractor.h"
+#include "System.h"
+
 #include "RunModel/TextureShader.h"
+#include "Auxiliary.h"
+
+
+
 /**
  *  @class Simulator
  *  @brief This class provides a simulation environment for virtual robotic navigation and mapping.
@@ -85,7 +91,17 @@ public:
      * - The last column represents the translation vector.
      * - The y-axis indicates the height in reverse (i.e., negative values correspond to upward direction).
      */
-    cv::Mat getCurrentLocation();
+    cv::Mat getCurrentLocationSlam();
+    /**
+     * @brief Fetches the current location matrix from Pangolin.
+     *
+     * @return A 4x4 location matrix where:
+     * - The first 3x3 sub-matrix represents the rotation matrix.
+     * - The last column represents the translation vector.
+     * - The y-axis indicates the height in reverse (i.e., negative values correspond to upward direction).
+
+     */
+    Eigen::Matrix4d getCurrentLocation();
     /**
      * @brief Retrieves the current map from ORBSLAM2.
      *
@@ -125,6 +141,10 @@ public:
 
     std::shared_ptr<ORB_SLAM2::System> GetSLAM() { return SLAM; }
 
+    void drawPoint(cv::Point3d point, float size, Eigen::Vector3d color);
+
+    void cleanPoints();
+
 private:
     /**
      * @brief A map for controlling the virtual robot's actions.
@@ -158,6 +178,8 @@ private:
     bool ready;
     bool start;
     bool initSlam;
+
+    std::vector<std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>> points;
 
     Eigen::Vector3f startingPoint;
     bool saveMapSignal;

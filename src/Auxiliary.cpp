@@ -11,3 +11,14 @@ std::string Auxiliary::GetGeneralSettingsPath()
     settingPath += "/../generalSettings.json";
     return settingPath;
 }
+
+void Auxiliary::drawPoints(std::vector<std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>> &pointsToDraw)
+{
+    for (auto &point: pointsToDraw) {
+        glPointSize(point.second.first);
+        glBegin(GL_POINTS);
+        glColor3f((float) (point.second.second.x()), (float) (point.second.second.y()), (float) (point.second.second.z()));
+        glVertex3f((float) (point.first.x), (float) (point.first.y), (float) (point.first.z));
+        glEnd();
+    }
+}

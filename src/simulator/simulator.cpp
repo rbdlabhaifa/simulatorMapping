@@ -1,6 +1,11 @@
 #include "simulator/simulator.h"
 
-cv::Mat Simulator::getCurrentLocation() {
+Eigen::Matrix4d Simulator::getCurrentLocation() {
+    Eigen::Matrix4d camMatrix = pangolin::ToEigen<double>(this->s_cam.GetModelViewMatrix());
+    return camMatrix;
+}
+
+cv::Mat Simulator::getCurrentLocationSlam() {
     locationLock.lock();
     cv::Mat locationCopy = Tcw.clone();
     locationLock.unlock();
@@ -45,6 +50,8 @@ Simulator::Simulator(std::string ORBSLAMConfigFile, std::string model_path, bool
     this->ORBSLAMConfigFile = ORBSLAMConfigFile;
     this->loadMap = loadMap;
     this->mapLoadPath = mapLoadPath;
+
+    this->points = std::vector<std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>>();
 }
 
 void Simulator::command(const std::string &command, int intervalUsleep, double fps, int totalCommandTimeInSeconds) {
@@ -100,7 +107,7 @@ void Simulator::simulatorRunThread() {
 
     // we manually need to restore the properties of the context
     glEnable(GL_DEPTH_TEST);
-    s_cam = pangolin::OpenGlRenderState(
+    this->s_cam = pangolin::OpenGlRenderState(
             pangolin::ProjectionMatrix(viewportDesiredSize(0), viewportDesiredSize(1), K(0, 0), K(1, 1), K(0, 2),
                                        K(1, 2), 0.1, 20),
             pangolin::ModelViewLookAt(this->startingPoint.x(), this->startingPoint.y(), this->startingPoint.z(), 0, 0, 0, 0.0, -1.0,
@@ -121,14 +128,14 @@ void Simulator::simulatorRunThread() {
     pangolin::RegisterKeyPressCallback('x', [&]() { show_x0 = !show_x0; });
     pangolin::RegisterKeyPressCallback('y', [&]() { show_y0 = !show_y0; });
     pangolin::RegisterKeyPressCallback('z', [&]() { show_z0 = !show_z0; });
-    pangolin::RegisterKeyPressCallback('w', [&]() { applyForwardToModelCam(s_cam, movementFactor); });
-    pangolin::RegisterKeyPressCallback('a', [&]() { applyRightToModelCam(s_cam, movementFactor); });
-    pangolin::RegisterKeyPressCallback('s', [&]() { applyForwardToModelCam(s_cam, -movementFactor); });
-    pangolin::RegisterKeyPressCallback('d', [&]() { applyRightToModelCam(s_cam, -movementFactor); });
-    pangolin::RegisterKeyPressCallback('e', [&]() { applyYawRotationToModelCam(s_cam, 1); });
-    pangolin::RegisterKeyPressCallback('q', [&]() { applyYawRotationToModelCam(s_cam, -1); });
-    pangolin::RegisterKeyPressCallback('r', [&]() { applyUpModelCam(s_cam, -movementFactor); }); // ORBSLAM y axis is reversed
-    pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('w', [&]() { applyForwardToModelCam(this->s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('a', [&]() { applyRightToModelCam(this->s_cam, movementFactor); });
+    pangolin::RegisterKeyPressCallback('s', [&]() { applyForwardToModelCam(this->s_cam, -movementFactor); });
+    pangolin::RegisterKeyPressCallback('d', [&]() { applyRightToModelCam(this->s_cam, -movementFactor); });
+    pangolin::RegisterKeyPressCallback('e', [&]() { applyYawRotationToModelCam(this->s_cam, 1); });
+    pangolin::RegisterKeyPressCallback('q', [&]() { applyYawRotationToModelCam(this->s_cam, -1); });
+    pangolin::RegisterKeyPressCallback('r', [&]() { applyUpModelCam(this->s_cam, -movementFactor); }); // ORBSLAM y axis is reversed
+    pangolin::RegisterKeyPressCallback('f', [&]() { applyUpModelCam(this->s_cam, movementFactor); });
     pangolin::RegisterKeyPressCallback('1', [&]() { slower(); });
     pangolin::RegisterKeyPressCallback('2', [&]() { faster(); });
     auto LoadProgram = [&]() {
@@ -137,7 +144,7 @@ void Simulator::simulatorRunThread() {
         program.Link();
     };
     LoadProgram();
-    pangolin::Handler3D handler(s_cam);
+    pangolin::Handler3D handler(this->s_cam);
     pangolin::View &d_cam = pangolin::Display("simulator_d_cam")
             .SetBounds(0.0, 1.0, 0.0, 1.0, ((float) -viewportDesiredSize[0] / (float) viewportDesiredSize[1]))
             .SetHandler(&handler);
@@ -160,15 +167,14 @@ void Simulator::simulatorRunThread() {
         ready = true;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         if (d_cam.IsShown()) {
-            d_cam.Activate(s_cam);
+            d_cam.Activate(this->s_cam);
             if (cull_backfaces) {
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_BACK);
             }
 
-
             program.Bind();
-            program.SetUniform("KT_cw", s_cam.GetProjectionMatrix() * s_cam.GetModelViewMatrix());
+            program.SetUniform("KT_cw", this->s_cam.GetProjectionMatrix() * this->s_cam.GetModelViewMatrix());
             pangolin::GlDraw(program, geomToRender, nullptr);
             program.Unbind();
             std::vector<unsigned char> buffer(4 * width * height);
@@ -178,10 +184,12 @@ void Simulator::simulatorRunThread() {
             cv::cvtColor(imgBuffer, currentImg, cv::COLOR_RGBA2GRAY);
             cv::flip(currentImg, currentImg, 0);
             imgLock.unlock();
-            s_cam.Apply();
-
+            this->s_cam.Apply();
 
             glDisable(GL_CULL_FACE);
+
+            Auxiliary::drawPoints(this->points);
+
             pangolin::FinishFrame();
 
 
@@ -198,9 +206,8 @@ void Simulator::simulatorRunThread() {
                           << std::endl;
             }
 
-            //             drawPoints(seenPoints, keypoint_points);
         } else {
-            s_cam.Apply();
+            this->s_cam.Apply();
             pangolin::FinishFrame();
 
         }
@@ -321,7 +328,7 @@ void Simulator::intervalOverCommand(
     int intervalIndex = 0;
     while (intervalIndex <= fps * totalCommandTimeInSeconds) {
         usleep(intervalUsleep);
-        func(s_cam, intervalValue);
+        func(this->s_cam, intervalValue);
         intervalIndex += 1;
     }
 }
@@ -415,9 +422,9 @@ void Simulator::alignModelViewPointToSurface(const pangolin::Geometry &modelGeom
                                                pangolin::AxisY);
     const auto proj = pangolin::ProjectionMatrix(viewportDesiredSize(0), viewportDesiredSize(1), K(0, 0), K(1, 1),
                                                  K(0, 2), K(1, 2), 0.1, 20);
-    s_cam.SetModelViewMatrix(mvm);
-    s_cam.SetProjectionMatrix(proj);
-    applyPitchRotationToModelCam(s_cam, -90);
+    this->s_cam.SetModelViewMatrix(mvm);
+    this->s_cam.SetProjectionMatrix(proj);
+    applyPitchRotationToModelCam(this->s_cam, -90);
 }
 
 void Simulator::setTrack(bool value) {
@@ -450,4 +457,15 @@ void Simulator::slower()
     if(this->speedFactor > 0.5){
         this->speedFactor -= 0.1;
     }
+}
+
+void Simulator::drawPoint(cv::Point3d point, float size, Eigen::Vector3d color)
+{
+    std::pair<float, Eigen::Vector3d> sizeAndColor(size, color);
+    this->points.push_back(std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>(point, sizeAndColor));
+}
+
+void Simulator::cleanPoints()
+{
+    this->points = std::vector<std::pair<cv::Point3d, std::pair<float, Eigen::Vector3d>>>();
 }

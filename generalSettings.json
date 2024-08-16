@@ -8,7 +8,7 @@
   },
   "simulator_configuration": {
     "model_path": "/home/liam/Documents/all-data/aaa/untitled.obj",
-    "run_with_slam": true,
+    "run_with_slam": false,
     "movement_factor": 0.05,
     "simulator_starting_speed": 1,
     "align_model_to_texture": {

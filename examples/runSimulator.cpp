@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     std::sort(exitPoints.begin(), exitPoints.end(), [&](auto &p1, auto &p2) {
         return p1.first < p2.first;
     });
-    cv::Mat cvCurrentLocation = simulator.getCurrentLocation().rowRange(0, 2).col(3);
+    cv::Mat cvCurrentLocation = simulator.getCurrentLocationSlam().rowRange(0, 2).col(3);
     Eigen::Vector3d currentLocation = ORB_SLAM2::Converter::toVector3d(cvCurrentLocation);
 
     double currentAngle = std::atan2(currentLocation.z(),currentLocation.x());

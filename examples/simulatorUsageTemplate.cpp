@@ -7,12 +7,14 @@
 
 
 int main(int argc, char **argv) {
+    // Load the generalSettings file
     std::string settingPath = Auxiliary::GetGeneralSettingsPath();
     std::ifstream programData(settingPath);
     nlohmann::json data;
     programData >> data;
     programData.close();
 
+    // Load Config parameters of the simulator
     std::string configPath = data["slam_configuration"]["drone_yaml_path"];
     std::string vocabulary_path = data["slam_configuration"]["vocabulary_path"];
     std::string modelTextureNameToAlignTo = data["simulator_configuration"]["align_model_to_texture"]["texture"];
@@ -32,10 +34,10 @@ int main(int argc, char **argv) {
 
     // wait for the 3D model to load
     while (!simulator.isReady()) {
-        usleep(1000);
+        usleep(10);
     }
 
-    // If with slam, wait for slam to load
+    // If we want slam, wait until its loaded
     if (runWithSlam) {
         simulator.setTrack(true);
         while (!simulator.startScanning()) {
@@ -44,13 +46,37 @@ int main(int argc, char **argv) {
         // Waits here until Tab is clicked!
     }
 
-    // Options
-    double targetPointX = data["target_pose"]["x"];
-    double targetPointY = data["target_pose"]["y"];
-    double targetPointZ = data["target_pose"]["z"];
-    Eigen::Vector3d target_point(targetPointX, targetPointY, targetPointZ);
+    // Implement here
+    
+    // Example
+    // Forward 1
+    simulator.command("forward 1");
 
-    // Implement moving to target
+    // Draw point, pay attention to reversed y
+    Eigen::Matrix4d pose = simulator.getCurrentLocation();
+    float pointSize = 10.5;
+    Eigen::Vector3d color(0, 1, 0);
+    simulator.drawPoint(cv::Point3d(pose(0, 3), -pose(1, 3), pose(2, 3)), pointSize, color);
+
+    // Back 1 and clockwise 10 degrees
+    simulator.command("back 1");
+    simulator.command("cw 10");
+
+    // Draw another point
+    pose = simulator.getCurrentLocation();
+    pointSize = 20.5;
+    color = Eigen::Vector3d(1, 0, 0);
+    simulator.drawPoint(cv::Point3d(pose(0, 3), -pose(1, 3), pose(2, 3)), pointSize, color);
+
+    // Back 0.7 and clockwise 10 degrees
+    simulator.command("back 0.7");
+    simulator.command("cw 10");
+
+    // Clear all points
+    simulator.cleanPoints();
+
+    // Back 0.5
+    simulator.command("back 0.5");
 
     simulatorThread.join();
 

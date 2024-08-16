@@ -12,3 +12,6 @@ target_link_libraries(navigate_to_point ORB_SLAM2 Auxiliary simulator)
 
 add_executable(getExitPoints getExitPoints.cpp)
 target_link_libraries(getExitPoints exitRoom)
+
+add_executable(simulatorUsageTemplate simulatorUsageTemplate.cpp)
+target_link_libraries(simulatorUsageTemplate simulator ORB_SLAM2 Auxiliary)
