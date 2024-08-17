@@ -9,7 +9,7 @@
 ## Students Guide
 
 For comprehensive guide about the simulator: 
-Add Here
+https://drive.google.com/file/d/1HKZ_ecanpfv_IFJg1f98f6U__ivAlVef/view?usp=sharing
 
 ## I. Installation:
 
