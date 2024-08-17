@@ -24,7 +24,7 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D WITH_V4L=ON \
     -D WITH_QT=ON \
     -D WITH_OPENGL=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules \
+    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
     -D BUILD_EXAMPLES=ON ..
 sudo make -j3 install
 
