@@ -42,21 +42,21 @@ Open generalSettings.json and change:
 
 ## II. Usage:
 ### 1. Run simulator:
-- run `./exe/runSimulator` from the `build` folder in order to use the simulator within the model
+- run `./examples/runSimulator` from the `build` folder in order to use the simulator within the model
 pay attention to the prints:
 you will need to press tab from the model viewer in order to start running the slam through the simulator with pre defined moves
 
 ### 2. Navigate to point:
 - configure `target_point` in `generalSettings.json`
-- run `./exe/navigate_to_point` from the `build` folder in order to use the simulator to navigate to the target point*
+- run `./examples/navigate_to_point` from the `build` folder in order to use the simulator to navigate to the target point*
 
 * This code meant for students to develop their implementation in `examples/navigate_to_point`
 
 ### 3. Create orb slam map from webcam/drone:
-- run `./exe/mapping` from the `build` folder
+- run `./examples/mapping` from the `build` folder
 
 ### 4. create Orb Slam map from video:
-- run `./exe/offline_orb_slam` from the `build` folder
+- run `./examples/offline_orb_slam` from the `build` folder
 
 ### 5. Add your room exit code:
 optional if you want to find room exit and navigate to the destanation:
