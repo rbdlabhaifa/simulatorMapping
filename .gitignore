@@ -51,6 +51,7 @@ videos/
 CMakeSettings.json
 leaves_to_weights.pkl
 Thirdparty/slam/Vocabulary/ORBvoc.txt
+Thirdparty/eigen/
 Thirdparty/json/
 Thirdparty/matplotlib-cpp/
 Thirdparty/spdlog/
