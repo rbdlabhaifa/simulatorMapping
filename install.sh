@@ -1,6 +1,7 @@
 #!/bin/bash
 cwd=$(pwd)
 
+sudo apt-get update
 sudo apt-get install -y python3-numpy
 sudo ln -sf /usr/lib/python3/dist-packages/numpy/core/include/numpy /usr/include/numpy
 
