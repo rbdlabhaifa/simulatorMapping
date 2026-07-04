@@ -37,6 +37,8 @@ Vocabulary/*.txt
 
 cmake-build-debug/
 
+generalSettings.json
+
 simulatorDataSets/
 
 **/**/build/
